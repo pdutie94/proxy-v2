@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "worker": "tsx --env-file=.env src/worker/index.ts",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"

@@ -1,8 +1,7 @@
 import { serverRepository } from '../repositories/server.repository';
 import { ServerSchema } from '../schemas/server.schema';
 import { encrypt } from '@/utils/crypto';
-import { addJob } from '@/worker/queue/job.queue';
-import { JobType, ServerAuthType } from '@prisma/client';
+import { ServerAuthType } from '@prisma/client';
 import prisma from '@/lib/prisma';
 
 export class ServerService {
@@ -13,39 +12,15 @@ export class ServerService {
   async createServer(data: ServerSchema) {
     const { password, ...rest } = data;
     
-    const server = await serverRepository.create({
+    return serverRepository.create({
       ...rest,
       passwordEncrypted: password ? encrypt(password) : null,
       status: 'PENDING',
     });
-
-    // Create a job record in DB
-    const job = await prisma.serverJob.create({
-      data: {
-        type: JobType.SETUP_SERVER,
-        serverId: server.id,
-        status: 'WAITING',
-      },
-    });
-
-    // Dispatch job to queue
-    /* 
-    try {
-      await addJob(JobType.SETUP_SERVER, {
-        serverId: server.id,
-        jobId: job.id,
-      });
-    } catch (error) {
-      console.error('[ServerService] Failed to dispatch setup job. Is Redis running?', error);
-    }
-    */
-
-    return server;
   }
 
   async deleteServer(id: string) {
-    // Check if server has proxies
-    const proxyCount = await prisma.proxy.count({ where: { serverId: id } });
+    const proxyCount = await prisma.proxy.count({ where: { id: id } });
     if (proxyCount > 0) {
       throw new Error('Cannot delete server with active proxies. Delete proxies first.');
     }

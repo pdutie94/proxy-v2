@@ -10,9 +10,10 @@ import {
   Box,
   SkeletonBodyText,
   InlineStack,
-  Modal
+  Modal,
+  Tooltip
 } from "@shopify/polaris";
-import { DeleteIcon, EditIcon } from "@shopify/polaris-icons";
+import { DeleteIcon, EditIcon, PlayIcon, RefreshIcon } from "@shopify/polaris-icons";
 import { Server } from '@prisma/client';
 import { useState, useCallback } from 'react';
 
@@ -21,7 +22,7 @@ interface ServerListProps {
 }
 
 export function ServerList({ onEdit }: ServerListProps) {
-  const { servers, isLoading, deleteMutation } = useServers();
+  const { servers, isLoading, deleteMutation, setupMutation, resetMutation } = useServers();
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const resourceName = {
@@ -57,24 +58,55 @@ export function ServerList({ onEdit }: ServerListProps) {
         </IndexTable.Cell>
         <IndexTable.Cell>{server.host}</IndexTable.Cell>
         <IndexTable.Cell>
-          <Badge tone={server.status === 'ONLINE' ? 'success' : server.status === 'PENDING' ? 'attention' : 'critical'}>
-            {server.status === 'ONLINE' ? 'TRỰC TUYẾN' : server.status === 'PENDING' ? 'ĐANG CHỜ' : 'LỖI'}
+          <Badge tone={
+            (server.status as any) === 'ONLINE' ? 'success' : 
+            (server.status as any) === 'SETTING_UP' ? 'attention' : 
+            (server.status as any) === 'PENDING' ? 'attention' : 
+            'critical'
+          }>
+            {(server.status as any) === 'ONLINE' ? 'TRỰC TUYẾN' : 
+             (server.status as any) === 'SETTING_UP' ? 'ĐANG CÀI ĐẶT' : 
+             (server.status as any) === 'PENDING' ? 'ĐANG CHỜ' : 
+             'LỖI'}
           </Badge>
         </IndexTable.Cell>
         <IndexTable.Cell>{server.maxProxies}</IndexTable.Cell>
         <IndexTable.Cell>
           <InlineStack align="end" gap="200">
-            <Button 
-              icon={EditIcon} 
-              variant="tertiary" 
-              onClick={() => onEdit(server)}
-            />
-            <Button 
-              icon={DeleteIcon} 
-              variant="tertiary" 
-              tone="critical"
-              onClick={() => setDeleteId(server.id)}
-            />
+            <Tooltip content="Thiết lập Server">
+              <Button 
+                icon={PlayIcon} 
+                variant="tertiary" 
+                onClick={() => setupMutation.mutate(server.id)}
+                loading={setupMutation.isPending && setupMutation.variables === server.id}
+                disabled={(server.status as any) === 'SETTING_UP'}
+              />
+            </Tooltip>
+            <Tooltip content="Reset Server (Xóa hết Proxy)">
+              <Button 
+                icon={RefreshIcon} 
+                variant="tertiary" 
+                tone="critical"
+                onClick={() => resetMutation.mutate(server.id)}
+                loading={resetMutation.isPending && resetMutation.variables === server.id}
+                disabled={(server.status as any) === 'SETTING_UP'}
+              />
+            </Tooltip>
+            <Tooltip content="Chỉnh sửa">
+              <Button 
+                icon={EditIcon} 
+                variant="tertiary" 
+                onClick={() => onEdit(server)}
+              />
+            </Tooltip>
+            <Tooltip content="Xóa Server">
+              <Button 
+                icon={DeleteIcon} 
+                variant="tertiary" 
+                tone="critical"
+                onClick={() => setDeleteId(server.id)}
+              />
+            </Tooltip>
           </InlineStack>
         </IndexTable.Cell>
       </IndexTable.Row>

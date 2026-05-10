@@ -25,6 +25,7 @@ enum ServerAuthType {
 // Server statuses
 enum ServerStatus {
   PENDING
+  SETTING_UP
   ONLINE
   OFFLINE
   ERROR
@@ -45,6 +46,7 @@ enum JobType {
   ROTATE_PROXY
   DELETE_PROXY
   EXPIRE_PROXY
+  RESET_SERVER
 }
 
 // Job statuses

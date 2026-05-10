@@ -1,0 +1,178 @@
+🚀 PROXY SERVER SETUP (OPTIMIZED V3 - <5000 PORTS)
+⚠️ TRIẾT LÝ THIẾT KẾ
+GOST chạy 1 lần / port → chạy cố định
+Rotate IP chỉ đổi kernel NAT + IPv6 mapping
+Không “bash per port loop” khi bulk
+State nằm trong file:
+/root/proxy-ipv6.txt → mapping PORT|IP|MARK
+/root/proxies.txt → credentials
+
+1. SYSTEM TUNING (CHẠY 1 LẦN)
+   apt update && apt install -y iptables-persistent curl xxd dos2unix lsof
+
+cat >> /etc/sysctl.conf << 'EOF'
+net.ipv6.conf.all.autoconf=0
+net.ipv6.conf.default.autoconf=0
+net.ipv6.conf.eth0.autoconf=0
+net.ipv6.conf.all.use_tempaddr=0
+net.ipv6.conf.default.use_tempaddr=0
+EOF
+
+sysctl -p 
+
+2. CÀI GOST
+cd /tmp
+wget https://github.com/go-gost/gost/releases/download/v3.2.6/gost_3.2.6_linux_amd64.tar.gz
+tar xzf gost_3.2.6_linux_amd64.tar.gz
+mv gost /usr/bin/gost
+chmod +x /usr/bin/gost 
+
+3. STATE FILE INIT
+mkdir -p /root/proxy-state
+touch /root/proxy-ipv6.txt
+touch /root/proxies.txt 
+
+4. CREATE PROXY (FAST - NO LOOP HEAVY)
+
+👉 Mỗi lần tạo N port nhưng KHÔNG fork process nhiều
+
+cat > /usr/local/bin/proxy-create << 'EOF'
+#!/bin/bash
+PREFIX="2a01:4ff:1f0:513b"
+START=${1:-10000}
+COUNT=${2:-10}
+for ((i=0;i<COUNT;i++)); do
+PORT=$((START + i))
+  MARK=$((PORT + 1000))
+USER=$(tr -dc a-zA-Z0-9 </dev/urandom | head -c6)
+  PASS=$(tr -dc a-zA-Z0-9 </dev/urandom | head -c8)
+IPV6="${PREFIX}:$(printf '%x:%x:%x:%x' $RANDOM $RANDOM $RANDOM $RANDOM)"
+  useradd -r -M -s /bin/false gost$PORT 2>/dev/null
+ip -6 addr add $IPV6/64 dev eth0 nodad
+
+iptables -t mangle -A OUTPUT -m owner --uid-owner gost$PORT -j MARK --set-mark $MARK
+ip6tables -t nat -A POSTROUTING -m mark --mark $MARK -j SNAT --to-source $IPV6
+
+# CHỈ chạy nếu chưa tồn tại (Tránh rớt kết nối khách cũ)
+
+if ! pgrep -f "gost.\*:$PORT" >/dev/null; then
+    runuser -u gost$PORT -- gost -L "socks5://$USER:$PASS@:$PORT" >> /var/log/gost.log 2>&1 &
+  fi
+  echo "$PORT|$IPV6|$MARK" >> /root/proxy-ipv6.txt
+echo "$(curl -s -4 ipify.org):$PORT:$USER:$PASS" >> /root/proxies.txt
+done
+ip6tables-save > /etc/iptables/rules.v6
+EOF
+
+chmod +x /usr/local/bin/proxy-create 
+
+5. SINGLE ROTATE (NHANH + SAFE)
+cat > /usr/local/bin/proxy-rotate-one << 'EOF'
+#!/bin/bash
+
+PREFIX="2a01:4ff:1f0:513b"
+PORT=$1
+MARK=$((PORT + 1000))
+
+OLD=$(grep "^$PORT|" /root/proxy-ipv6.txt)
+OLD_IP=$(echo $OLD | cut -d'|' -f2)
+
+NEW_IP="${PREFIX}:$(printf '%x:%x:%x:%x' $RANDOM $RANDOM $RANDOM $RANDOM)"
+
+ip -6 addr add $NEW_IP/64 dev eth0 nodad
+
+ip6tables -t nat -D POSTROUTING -m mark --mark $MARK -j SNAT --to-source $OLD_IP 2>/dev/null
+ip6tables -t nat -A POSTROUTING -m mark --mark $MARK -j SNAT --to-source $NEW_IP
+
+ip -6 addr del $OLD_IP/64 dev eth0 2>/dev/null
+
+sed -i "s|$PORT|$PORT|g" /root/proxy-ipv6.txt
+sed -i "s|$OLD_IP|$NEW_IP|g" /root/proxy-ipv6.txt
+
+ip6tables-save > /etc/iptables/rules.v6
+EOF
+
+chmod +x /usr/local/bin/proxy-rotate-one 
+
+6. BULK ROTATE (KHÔNG LOOP BASH PER PORT ❌)
+
+👉 QUAN TRỌNG: chỉ 1 pass + batch update
+
+cat > /usr/local/bin/proxy-rotate-all << 'EOF'
+#!/bin/bash
+PREFIX="2a01:4ff:1f0:513b"
+TMP_MAP="/tmp/proxy_new.txt"
+TMP_RULES="/tmp/ip6.rules"
+
+> $TMP_MAP
+
+# 1. Tạo IPv6 mới và chuẩn bị file nạp iptables-restore
+
+{
+echo "\*nat"
+echo ":POSTROUTING ACCEPT [0:0]"
+while IFS='|' read -r PORT OLD_IP MARK; do
+NEW_IP="${PREFIX}:$(printf '%x:%x:%x:%x' $RANDOM $RANDOM $RANDOM $RANDOM)"
+    ip -6 addr add $NEW_IP/64 dev eth0 nodad 2>/dev/null
+    ip -6 addr del $OLD_IP/64 dev eth0 2>/dev/null
+    echo "-A POSTROUTING -m mark --mark $MARK -j SNAT --to-source $NEW_IP"
+    echo "$PORT|$NEW_IP|$MARK" >> $TMP_MAP
+done < /root/proxy-ipv6.txt
+echo "COMMIT"
+} > $TMP_RULES
+
+# 2. Nạp toàn bộ NAT cùng lúc (Cực nhanh cho 5000 port)
+ip6tables-restore --noflush < $TMP_RULES
+mv $TMP_MAP /root/proxy-ipv6.txt
+ip6tables-save > /etc/iptables/rules.v6
+echo "BULK ROTATE DONE"
+EOF
+
+chmod +x /usr/local/bin/proxy-rotate-all 
+
+7. RESTORE (SAFE BOOT)
+cat > /usr/local/bin/proxy-restore << 'EOF'
+#!/bin/bash
+
+sleep 5
+
+while IFS='|' read -r PORT IP MARK; do
+ip -6 addr add $IP/64 dev eth0 nodad
+
+if ! pgrep -f "gost.\*:$PORT" >/dev/null; then
+    CRE=$(grep ":$PORT:" /root/proxies.txt | head -n1)
+    U=$(echo $CRE | cut -d: -f3)
+    P=$(echo $CRE | cut -d: -f4)
+    runuser -u gost$PORT -- gost -L "socks5://$U:$P@$PORT" &
+fi
+
+done < /root/proxy-ipv6.txt
+EOF
+
+chmod +x /usr/local/bin/proxy-restore 
+
+8. SYSTEMD
+cat > /etc/systemd/system/proxy.service << 'EOF'
+[Unit]
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/proxy-restore
+Type=oneshot
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable proxy.service
+⚡ FINAL ARCHITECTURE
+CLIENT
+↓
+IPv4:PORT (GOST SOCKS5)
+↓
+UID Routing (iptables mangle)
+↓
+SNAT IPv6 (kernel)
+↓
+Internet exit IPv6 pool

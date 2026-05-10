@@ -38,16 +38,15 @@ export class ProxyService {
     });
 
     // Dispatch job
-    /*
     try {
       await addJob(JobType.PROVISION_PROXY, {
         proxyId: proxy.id,
         jobId: job.id,
+        serverId: serverId,
       });
     } catch (error) {
       console.error('[ProxyService] Failed to dispatch provision job. Is Redis running?', error);
     }
-    */
 
     return proxy;
   }
@@ -67,27 +66,42 @@ export class ProxyService {
     });
 
     // Dispatch job
-    /*
     try {
       await addJob(JobType.DELETE_PROXY, {
-        proxyId: proxy.id,
+        port: proxy.port,
+        serverId: proxy.serverId,
         jobId: job.id,
       });
     } catch (error) {
       console.error('[ProxyService] Failed to dispatch delete job. Is Redis running?', error);
     }
-    */
 
-    // Delete from DB (The worker will handle the remote cleanup based on the job data)
-    // Actually, rules say "DB là source of truth". 
-    // We should probably keep it until the worker finishes, or delete and let worker sync.
-    // In "MVP Proxy delete flow": remove DB -> enqueue sync job -> reload config.
     return proxyRepository.delete(id);
   }
 
-  async toggleProxy(id: string, isEnabled: boolean) {
-    return proxyRepository.update(id, { isEnabled });
-    // This should also trigger a sync job to the server
+  async rotateProxy(id: string) {
+    const proxy = await proxyRepository.findById(id);
+    if (!proxy) throw new Error('Proxy not found');
+
+    const job = await prisma.serverJob.create({
+      data: {
+        type: JobType.ROTATE_PROXY,
+        serverId: proxy.serverId,
+        proxyId: proxy.id,
+        status: 'WAITING',
+      },
+    });
+
+    try {
+      await addJob(JobType.ROTATE_PROXY, {
+        proxyId: proxy.id,
+        jobId: job.id,
+      });
+    } catch (error) {
+      console.error('[ProxyService] Failed to dispatch rotate job.', error);
+    }
+
+    return proxy;
   }
 }
 
