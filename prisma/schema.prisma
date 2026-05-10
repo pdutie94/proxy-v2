@@ -1,0 +1,128 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// User roles
+enum Role {
+  ADMIN
+  USER
+}
+
+// Server authentication types
+enum ServerAuthType {
+  PASSWORD
+  SSH_KEY
+}
+
+// Server statuses
+enum ServerStatus {
+  PENDING
+  ONLINE
+  OFFLINE
+  ERROR
+}
+
+// Proxy statuses
+enum ProxyStatus {
+  CREATING
+  ACTIVE
+  EXPIRED
+  ERROR
+}
+
+// Job types
+enum JobType {
+  SETUP_SERVER
+  PROVISION_PROXY
+  ROTATE_PROXY
+  DELETE_PROXY
+  EXPIRE_PROXY
+}
+
+// Job statuses
+enum JobStatus {
+  WAITING
+  ACTIVE
+  COMPLETED
+  FAILED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Server {
+  id                String         @id @default(cuid())
+  name              String
+  host              String
+  port              Int            @default(22)
+  username          String
+  authType          ServerAuthType @default(PASSWORD)
+  passwordEncrypted String?
+  privateKey        String?        @db.Text
+  provider          String?
+  status            ServerStatus   @default(PENDING)
+  maxProxies        Int            @default(100)
+  notes             String?        @db.Text
+  jobs              ServerJob[]
+  proxies           Proxy[]
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  @@index([status])
+}
+
+model Proxy {
+  id            String      @id @default(cuid())
+  serverId      String
+  server        Server      @relation(fields: [serverId], references: [id])
+  port          Int
+  username      String
+  password      String
+  ipv6          String?
+  status        ProxyStatus @default(CREATING)
+  isEnabled     Boolean     @default(true)
+  expiresAt     DateTime?
+  lastRotatedAt DateTime?
+  jobs          ServerJob[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([serverId])
+  @@index([status])
+  @@index([expiresAt])
+  @@unique([serverId, port])
+}
+
+model ServerJob {
+  id         String    @id @default(cuid())
+  type       JobType
+  status     JobStatus @default(WAITING)
+  serverId   String?
+  server     Server?   @relation(fields: [serverId], references: [id])
+  proxyId    String?
+  proxy      Proxy?    @relation(fields: [proxyId], references: [id])
+  logs       String?   @db.LongText
+  startedAt  DateTime?
+  finishedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([serverId])
+  @@index([proxyId])
+  @@index([status])
+  @@index([type])
+}
