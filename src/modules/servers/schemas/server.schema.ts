@@ -1,15 +1,13 @@
 import { z } from 'zod';
-import { ServerAuthType } from '@prisma/client';
 
 export const serverSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  host: z.string().min(1, 'Host/IP is required'),
-  port: z.number().int().default(22),
-  username: z.string().min(1, 'Username is required'),
-  authType: z.nativeEnum(ServerAuthType).default(ServerAuthType.PASSWORD),
+  name: z.string().min(1, 'Tên server là bắt buộc'),
+  host: z.string().min(1, 'Địa chỉ host là bắt buộc'),
+  port: z.number().default(22),
+  username: z.string().min(1, 'Tài khoản SSH là bắt buộc'),
   password: z.string().optional(),
-  privateKey: z.string().optional(),
-  maxProxies: z.number().int().min(1).default(100),
+  ipv6: z.string().optional(),
+  maxProxies: z.number().default(100),
   provider: z.string().optional(),
   notes: z.string().optional(),
 });

@@ -1,95 +1,106 @@
 "use client";
 
-import { Page, Layout, Card, BlockStack, Text, TextField, Button, Box, InlineStack, Banner } from "@shopify/polaris";
+import { 
+  Page, 
+  Layout, 
+  Card, 
+  Text, 
+  FormLayout, 
+  TextField, 
+  Button, 
+  BlockStack,
+  Box,
+  Divider,
+  InlineGrid,
+  Badge
+} from "@shopify/polaris";
 import { useState } from "react";
+import { toast } from "sonner";
 
 export default function SettingsPage() {
-  const [systemName, setSystemName] = useState("ProxyV2");
-  const [apiEndpoint, setApiEndpoint] = useState("https://api.proxyv2.io");
+  const [siteName, setSiteName] = useState("Proxy Manager");
+
+  const handleSave = () => {
+    toast.success("Đã lưu cài đặt hệ thống");
+  };
 
   return (
-    <Page
-      fullWidth
-      title="Settings"
-      primaryAction={{
-        content: "Save changes",
-        onAction: () => console.log("Saving settings"),
-      }}
-    >
+    <Page title="Cài đặt hệ thống">
       <Layout>
-        <Layout.Section>
-          <BlockStack gap="400">
-            <Card>
-              <BlockStack gap="400">
-                <Text as="h2" variant="headingMd">General Settings</Text>
-                <FormLayout>
-                  <TextField
-                    label="System Name"
-                    value={systemName}
-                    onChange={setSystemName}
-                    autoComplete="off"
-                  />
-                  <TextField
-                    label="API Gateway Endpoint"
-                    value={apiEndpoint}
-                    onChange={setApiEndpoint}
-                    autoComplete="off"
-                    helpText="The primary endpoint for worker communications."
-                  />
-                </FormLayout>
-              </BlockStack>
-            </Card>
-
-            <Card>
-              <BlockStack gap="400">
-                <Text as="h2" variant="headingMd">Infrastructure</Text>
-                <Banner tone="info">
-                  <p>Settings related to remote SSH connections and port allocations.</p>
-                </Banner>
-                <FormLayout>
-                  <TextField
-                    label="Default SSH User"
-                    placeholder="root"
-                    autoComplete="off"
-                  />
-                  <TextField
-                    label="Port Range Start"
-                    type="number"
-                    placeholder="10000"
-                    autoComplete="off"
-                  />
-                </FormLayout>
-              </BlockStack>
-            </Card>
-          </BlockStack>
-        </Layout.Section>
-        
-        <Layout.Section variant="oneThird">
+        <Layout.AnnotatedSection
+          id="generalSettings"
+          title="Thông tin chung"
+          description="Cấu hình tên hiển thị và các thông tin cơ bản của hệ thống."
+        >
           <Card>
-            <BlockStack gap="400">
-              <Text as="h2" variant="headingMd">System Info</Text>
-              <BlockStack gap="200">
-                <InlineStack align="space-between">
-                  <Text as="p" tone="subdued">Version</Text>
-                  <Text as="p" fontWeight="bold">1.0.0-mvp</Text>
-                </InlineStack>
-                <InlineStack align="space-between">
-                  <Text as="p" tone="subdued">Environment</Text>
-                  <Text as="p" fontWeight="bold">Production</Text>
-                </InlineStack>
-                <InlineStack align="space-between">
-                  <Text as="p" tone="subdued">Database</Text>
-                  <Text as="p" fontWeight="bold" tone="success">Connected</Text>
-                </InlineStack>
-              </BlockStack>
-            </BlockStack>
+            <Box padding="400">
+              <FormLayout>
+                <TextField
+                  label="Tên Website"
+                  value={siteName}
+                  onChange={setSiteName}
+                  autoComplete="off"
+                />
+                <Button variant="primary" onClick={handleSave}>Lưu thay đổi</Button>
+              </FormLayout>
+            </Box>
           </Card>
-        </Layout.Section>
+        </Layout.AnnotatedSection>
+
+        <Layout.AnnotatedSection
+          id="systemStatus"
+          title="Trạng thái hạ tầng"
+          description="Kiểm tra kết nối tới các thành phần cốt lõi của hệ thống."
+        >
+          <Card>
+            <Box padding="400">
+              <BlockStack gap="400">
+                <InlineGrid columns="1fr auto">
+                  <Text as="p" fontWeight="medium">Cơ sở dữ liệu (MySQL)</Text>
+                  <Badge tone="success">Đang kết nối</Badge>
+                </InlineGrid>
+                <Divider />
+                <InlineGrid columns="1fr auto">
+                  <Text as="p" fontWeight="medium">Hàng đợi (Redis)</Text>
+                  <Badge tone="attention">Chưa kết nối (Phase 2)</Badge>
+                </InlineGrid>
+                <Divider />
+                <InlineGrid columns="1fr auto">
+                  <Text as="p" fontWeight="medium">SSH Service</Text>
+                  <Badge tone="attention">Chờ khởi tạo (Phase 3)</Badge>
+                </InlineGrid>
+              </BlockStack>
+            </Box>
+          </Card>
+        </Layout.AnnotatedSection>
+
+        <Layout.AnnotatedSection
+          id="apiSettings"
+          title="Cấu hình API & Bảo mật"
+          description="Quản lý các tham số bảo mật và kết nối API."
+        >
+          <Card>
+            <Box padding="400">
+              <FormLayout>
+                <TextField
+                  label="JWT Secret"
+                  type="password"
+                  value="************************"
+                  disabled
+                  autoComplete="off"
+                  helpText="Được cấu hình trong tệp .env"
+                />
+                <TextField
+                  label="Auth URL"
+                  value="http://localhost:3000"
+                  disabled
+                  autoComplete="off"
+                />
+              </FormLayout>
+            </Box>
+          </Card>
+        </Layout.AnnotatedSection>
       </Layout>
     </Page>
   );
-}
-
-function FormLayout({ children }: { children: React.ReactNode }) {
-  return <BlockStack gap="400">{children}</BlockStack>;
 }

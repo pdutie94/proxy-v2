@@ -38,10 +38,16 @@ export class ProxyService {
     });
 
     // Dispatch job
-    await addJob(JobType.PROVISION_PROXY, {
-      proxyId: proxy.id,
-      jobId: job.id,
-    });
+    /*
+    try {
+      await addJob(JobType.PROVISION_PROXY, {
+        proxyId: proxy.id,
+        jobId: job.id,
+      });
+    } catch (error) {
+      console.error('[ProxyService] Failed to dispatch provision job. Is Redis running?', error);
+    }
+    */
 
     return proxy;
   }
@@ -61,10 +67,16 @@ export class ProxyService {
     });
 
     // Dispatch job
-    await addJob(JobType.DELETE_PROXY, {
-      proxyId: proxy.id,
-      jobId: job.id,
-    });
+    /*
+    try {
+      await addJob(JobType.DELETE_PROXY, {
+        proxyId: proxy.id,
+        jobId: job.id,
+      });
+    } catch (error) {
+      console.error('[ProxyService] Failed to dispatch delete job. Is Redis running?', error);
+    }
+    */
 
     // Delete from DB (The worker will handle the remote cleanup based on the job data)
     // Actually, rules say "DB là source of truth". 

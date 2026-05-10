@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useCallback } from 'react';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { loginSchema, LoginSchema } from '../schemas/login.schema';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { 
-  Card, 
   Form, 
   FormLayout, 
   TextField, 
@@ -13,65 +15,58 @@ import {
   BlockStack, 
   Box,
   Banner,
-  Divider
+  Card,
+  InlineStack
 } from "@shopify/polaris";
+import { LockIcon, EmailIcon } from "@shopify/polaris-icons";
 
 export function LoginForm() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = useCallback(async () => {
-    setIsLoading(true);
-    setError('');
+  const { control, handleSubmit, formState: { errors } } = useForm<LoginSchema>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    }
+  });
 
+  const onSubmit = async (data: LoginSchema) => {
+    setLoading(true);
+    setError(null);
     try {
       const result = await signIn('credentials', {
-        email,
-        password,
+        email: data.email,
+        password: data.password,
         redirect: false,
       });
 
       if (result?.error) {
-        setError('Invalid email or password');
+        setError('Email hoặc mật khẩu không chính xác');
       } else {
         router.push('/dashboard');
+        router.refresh();
       }
     } catch (err) {
-      setError('Something went wrong');
+      setError('Đã xảy ra lỗi khi đăng nhập');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  }, [email, password, router]);
+  };
 
   return (
     <Box maxWidth="400px" width="100%">
-      {/* Container for border glow effect */}
-      <div style={{
-        padding: '1px',
-        background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.02) 100%)',
-        borderRadius: '12px',
-        boxShadow: '0 20px 40px rgba(0,0,0,0.4)'
-      }}>
-        <Card roundedAbove="md">
+      <Card>
+        <Box padding="600">
           <BlockStack gap="600">
             <BlockStack gap="200" align="center">
-              <div style={{ textAlign: 'center' }}>
-                <img 
-                  src="/logo.png" 
-                  alt="ProxyV2 Logo" 
-                  style={{ 
-                    height: '52px', 
-                    marginBottom: '16px',
-                    filter: 'drop-shadow(0 0 10px rgba(16, 185, 129, 0.2))'
-                  }} 
-                />
-              </div>
-              <Text as="h1" variant="headingXl" alignment="center">Welcome back</Text>
+              <Text as="h1" variant="headingLg" alignment="center">
+                Đăng nhập hệ thống
+              </Text>
               <Text as="p" variant="bodyMd" tone="subdued" alignment="center">
-                Log in to manage your high-scale infrastructure.
+                Vui lòng nhập thông tin để quản lý Proxy
               </Text>
             </BlockStack>
 
@@ -81,49 +76,67 @@ export function LoginForm() {
               </Banner>
             )}
 
-            <Form onSubmit={handleSubmit}>
+            <Form onSubmit={handleSubmit(onSubmit)}>
               <FormLayout>
-                <TextField
-                  label="Email"
-                  value={email}
-                  onChange={setEmail}
-                  type="email"
-                  autoComplete="email"
-                  placeholder="admin@proxy.com"
-                  focused
+                <Controller
+                  name="email"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      label="Địa chỉ Email"
+                      prefix={<EmailIcon width="20" />}
+                      autoComplete="email"
+                      placeholder="admin@example.com"
+                      value={field.value}
+                      onChange={field.onChange}
+                      error={errors.email?.message ? "Email không hợp lệ" : undefined}
+                    />
+                  )}
                 />
-                <TextField
-                  label="Password"
-                  value={password}
-                  onChange={setPassword}
-                  type="password"
-                  autoComplete="current-password"
-                  placeholder="••••••••"
+                <Controller
+                  name="password"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      label="Mật khẩu"
+                      prefix={<LockIcon width="20" />}
+                      type="password"
+                      autoComplete="current-password"
+                      placeholder="••••••••"
+                      value={field.value}
+                      onChange={field.onChange}
+                      error={errors.password?.message ? "Mật khẩu tối thiểu 6 ký tự" : undefined}
+                    />
+                  )}
                 />
-                <Box paddingBlockStart="200">
+                <Box paddingTop="200">
                   <Button 
                     variant="primary" 
                     submit 
-                    loading={isLoading} 
-                    fullWidth
+                    fullWidth 
                     size="large"
+                    loading={loading}
                   >
-                    Sign in to Dashboard
+                    Đăng nhập ngay
                   </Button>
                 </Box>
               </FormLayout>
             </Form>
 
             <Divider />
-
-            <BlockStack gap="200" align="center">
-              <Text as="p" variant="bodySm" tone="subdued" alignment="center">
-                Professional Proxy Management System
+            
+            <InlineStack align="center">
+              <Text as="p" variant="bodyXs" tone="subdued">
+                © {new Date().getFullYear()} Antigravity Proxy V2
               </Text>
-            </BlockStack>
+            </InlineStack>
           </BlockStack>
-        </Card>
-      </div>
+        </Box>
+      </Card>
     </Box>
   );
+}
+
+function Divider() {
+  return <Box borderTopWidth="1px" borderColor="border-subdued" />;
 }

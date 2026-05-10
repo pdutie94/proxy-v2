@@ -3,12 +3,12 @@
 import { Frame, TopBar, Navigation } from "@shopify/polaris";
 import { 
   HomeIcon, 
-  OrderIcon, 
-  PersonIcon, 
+  OrderIcon,
+  ShieldCheckMarkIcon,
+  PersonIcon,
   SettingsIcon,
-  ExitIcon,
-  ChartVerticalIcon,
-  ShieldCheckMarkIcon
+  NoteIcon,
+  ExitIcon
 } from "@shopify/polaris-icons";
 import { usePathname } from "next/navigation";
 import { useCallback, useState } from "react";
@@ -63,32 +63,32 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
       <Navigation.Section
         items={[
           {
-            label: "Home",
+            label: "Bảng điều khiển",
             icon: HomeIcon,
             url: "/dashboard",
             selected: pathname === "/dashboard",
           },
           {
-            label: "Servers",
+            label: "Máy chủ",
             icon: OrderIcon,
             url: "/dashboard/servers",
             selected: pathname.startsWith("/dashboard/servers"),
           },
           {
-            label: "Proxies",
+            label: "Proxy",
             icon: ShieldCheckMarkIcon,
             url: "/dashboard/proxies",
             selected: pathname.startsWith("/dashboard/proxies"),
           },
           {
-            label: "Users",
+            label: "Người dùng",
             icon: PersonIcon,
             url: "/dashboard/users",
             selected: pathname.startsWith("/dashboard/users"),
           },
           {
-            label: "Analytics",
-            icon: ChartVerticalIcon,
+            label: "Nhật ký hệ thống",
+            icon: NoteIcon,
             url: "/dashboard/logs",
             selected: pathname.startsWith("/dashboard/logs"),
           },
@@ -98,7 +98,7 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
         separator
         items={[
           {
-            label: "Settings",
+            label: "Cài đặt",
             icon: SettingsIcon,
             url: "/dashboard/settings",
             selected: pathname.startsWith("/dashboard/settings"),

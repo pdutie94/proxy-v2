@@ -19,3 +19,22 @@ export async function DELETE(
     return NextResponse.json({ success: false, message: error.message }, { status: 400 });
   }
 }
+
+export async function PATCH(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  const session = await auth();
+  if (!session || (session.user as any).role !== 'ADMIN') {
+    return NextResponse.json({ success: false, message: 'Forbidden' }, { status: 403 });
+  }
+
+  try {
+    const { id } = await params;
+    const body = await req.json();
+    const user = await userService.updateUser(id, body);
+    return NextResponse.json({ success: true, data: user });
+  } catch (error: any) {
+    return NextResponse.json({ success: false, message: error.message }, { status: 400 });
+  }
+}

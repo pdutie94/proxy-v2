@@ -7,107 +7,123 @@ import {
   Badge, 
   Text, 
   Button, 
-  Box, 
-  ProgressBar,
+  Box,
+  SkeletonBodyText,
   InlineStack,
-  Tooltip,
-  SkeletonBodyText
+  Modal
 } from "@shopify/polaris";
-import { DeleteIcon, EditIcon, PlayIcon } from "@shopify/polaris-icons";
+import { DeleteIcon, EditIcon } from "@shopify/polaris-icons";
+import { Server } from '@prisma/client';
+import { useState, useCallback } from 'react';
 
-export function ServerList() {
+interface ServerListProps {
+  onEdit: (server: Server) => void;
+}
+
+export function ServerList({ onEdit }: ServerListProps) {
   const { servers, isLoading, deleteMutation } = useServers();
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const resourceName = {
-    singular: 'server',
-    plural: 'servers',
+    singular: 'máy chủ',
+    plural: 'máy chủ',
   };
+
+  const handleDelete = useCallback(() => {
+    if (deleteId) {
+      deleteMutation.mutate(deleteId, {
+        onSuccess: () => setDeleteId(null),
+      });
+    }
+  }, [deleteId, deleteMutation]);
 
   if (isLoading) {
     return (
       <Card>
         <Box padding="400">
-          <SkeletonBodyText lines={8} />
+          <SkeletonBodyText lines={5} />
         </Box>
       </Card>
     );
   }
 
   const rowMarkup = servers.map(
-    (server, index) => {
-      const statusTone = server.status === 'ONLINE' ? 'success' : server.status === 'PENDING' ? 'attention' : 'critical';
-      const utilization = 0; 
-
-      return (
-        <IndexTable.Row id={server.id} key={server.id} position={index}>
-          <IndexTable.Cell>
-            <Box paddingBlock="200">
-              <Text as="span" fontWeight="bold">{server.name}</Text>
-              <Text as="p" variant="bodySm" tone="subdued">{server.provider || 'VPS Provider'}</Text>
-            </Box>
-          </IndexTable.Cell>
-          <IndexTable.Cell>
-            <Text as="span" variant="bodySm" fontWeight="medium">
-              {server.host}:{server.port}
-            </Text>
-          </IndexTable.Cell>
-          <IndexTable.Cell>
-            <div style={{ width: '100px' }}>
-              <Box paddingBlockEnd="100">
-                <InlineStack align="space-between">
-                  <Text as="span" variant="bodyXs" tone="subdued">0 / {server.maxProxies}</Text>
-                  <Text as="span" variant="bodyXs" tone="subdued">{utilization}%</Text>
-                </InlineStack>
-              </Box>
-              <ProgressBar progress={utilization} size="small" tone="primary" />
-            </div>
-          </IndexTable.Cell>
-          <IndexTable.Cell>
-            <Badge tone={statusTone}>{server.status}</Badge>
-          </IndexTable.Cell>
-          <IndexTable.Cell>
-            <InlineStack align="end" gap="100">
-              <Tooltip content="Setup/Sync">
-                <Button icon={PlayIcon} variant="tertiary" />
-              </Tooltip>
-              <Tooltip content="Edit">
-                <Button icon={EditIcon} variant="tertiary" />
-              </Tooltip>
-              <Tooltip content="Delete">
-                <Button 
-                  icon={DeleteIcon} 
-                  variant="tertiary" 
-                  tone="critical"
-                  onClick={() => {
-                    if (confirm('Are you sure you want to delete this server?')) {
-                      deleteMutation.mutate(server.id);
-                    }
-                  }}
-                />
-              </Tooltip>
-            </InlineStack>
-          </IndexTable.Cell>
-        </IndexTable.Row>
-      );
-    },
+    (server, index) => (
+      <IndexTable.Row id={server.id} key={server.id} position={index}>
+        <IndexTable.Cell>
+          <Text as="span" fontWeight="bold">
+            {server.name}
+          </Text>
+        </IndexTable.Cell>
+        <IndexTable.Cell>{server.host}</IndexTable.Cell>
+        <IndexTable.Cell>
+          <Badge tone={server.status === 'ONLINE' ? 'success' : server.status === 'PENDING' ? 'attention' : 'critical'}>
+            {server.status === 'ONLINE' ? 'TRỰC TUYẾN' : server.status === 'PENDING' ? 'ĐANG CHỜ' : 'LỖI'}
+          </Badge>
+        </IndexTable.Cell>
+        <IndexTable.Cell>{server.maxProxies}</IndexTable.Cell>
+        <IndexTable.Cell>
+          <InlineStack align="end" gap="200">
+            <Button 
+              icon={EditIcon} 
+              variant="tertiary" 
+              onClick={() => onEdit(server)}
+            />
+            <Button 
+              icon={DeleteIcon} 
+              variant="tertiary" 
+              tone="critical"
+              onClick={() => setDeleteId(server.id)}
+            />
+          </InlineStack>
+        </IndexTable.Cell>
+      </IndexTable.Row>
+    ),
   );
 
   return (
-    <Card padding="0">
-      <IndexTable
-        resourceName={resourceName}
-        itemCount={servers.length}
-        headings={[
-          { title: 'Server' },
-          { title: 'Host' },
-          { title: 'Capacity' },
-          { title: 'Status' },
-          { title: 'Actions', alignment: 'end' },
+    <>
+      <Card padding="0">
+        <IndexTable
+          resourceName={resourceName}
+          itemCount={servers.length}
+          headings={[
+            { title: 'Tên Máy chủ' },
+            { title: 'Địa chỉ IP' },
+            { title: 'Trạng thái' },
+            { title: 'Giới hạn Proxy' },
+            { title: 'Thao tác', alignment: 'end' },
+          ]}
+          selectable={false}
+        >
+          {rowMarkup}
+        </IndexTable>
+      </Card>
+
+      {/* Modal xác nhận xóa */}
+      <Modal
+        open={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        title="Xác nhận xóa máy chủ?"
+        primaryAction={{
+          content: 'Xóa máy chủ',
+          onAction: handleDelete,
+          destructive: true,
+          loading: deleteMutation.isPending,
+        }}
+        secondaryActions={[
+          {
+            content: 'Hủy bỏ',
+            onAction: () => setDeleteId(null),
+          },
         ]}
-        selectable={false}
       >
-        {rowMarkup}
-      </IndexTable>
-    </Card>
+        <Modal.Section>
+          <Text as="p">
+            Bạn có chắc chắn muốn xóa máy chủ này? Hành động này không thể hoàn tác và sẽ ảnh hưởng đến các Proxy đang chạy trên máy chủ này.
+          </Text>
+        </Modal.Section>
+      </Modal>
+    </>
   );
 }

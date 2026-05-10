@@ -4,153 +4,198 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { serverSchema, ServerSchema } from '../schemas/server.schema';
 import { useServers } from '@/hooks/use-servers';
-import { ServerAuthType } from '@prisma/client';
 import { 
   Form, 
   FormLayout, 
   TextField, 
-  Select, 
-  Button, 
-  InlineStack,
-  BlockStack
+  Box
 } from "@shopify/polaris";
-import { useCallback } from 'react';
+import { useCallback, forwardRef, useImperativeHandle, useEffect } from 'react';
+import { Server } from '@prisma/client';
 
 interface AddServerFormProps {
   onClose: () => void;
+  server?: Server; // Dữ liệu server để chỉnh sửa (tùy chọn)
 }
 
-export function AddServerForm({ onClose }: AddServerFormProps) {
-  const { createMutation } = useServers();
-  const { control, handleSubmit, watch, formState: { errors } } = useForm<ServerSchema>({
-    resolver: zodResolver(serverSchema),
-    defaultValues: {
-      authType: ServerAuthType.PASSWORD,
-      port: 22,
-      maxProxies: 100,
-    },
-  });
+export interface AddServerFormRef {
+  submit: () => void;
+}
 
-  const authType = watch('authType');
-
-  const onSubmit = useCallback((data: ServerSchema) => {
-    createMutation.mutate(data, {
-      onSuccess: () => onClose(),
+export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
+  ({ onClose, server }, ref) => {
+    const { createMutation, updateMutation } = useServers();
+    
+    const { control, handleSubmit, formState: { errors }, reset } = useForm<ServerSchema>({
+      resolver: zodResolver(serverSchema),
+      defaultValues: {
+        name: '',
+        host: '',
+        port: 22,
+        username: 'root',
+        password: '',
+        ipv6: '',
+        maxProxies: 100,
+      }
     });
-  }, [createMutation, onClose]);
 
-  const authTypeOptions = [
-    { label: 'Password', value: ServerAuthType.PASSWORD },
-    { label: 'SSH Key', value: ServerAuthType.SSH_KEY },
-  ];
+    // Cập nhật dữ liệu form khi có server được truyền vào (chế độ chỉnh sửa)
+    useEffect(() => {
+      if (server) {
+        reset({
+          name: server.name,
+          host: server.host,
+          port: server.port,
+          username: server.username,
+          ipv6: server.ipv6 || '',
+          maxProxies: server.maxProxies,
+          password: '', // Không reset password vì nó được mã hóa trong DB
+        });
+      }
+    }, [server, reset]);
 
-  return (
-    <Form id="add-server-form" onSubmit={handleSubmit(onSubmit)}>
-      <FormLayout>
-        <FormLayout.Group>
-          <Controller
-            name="name"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                label="Server Name"
-                placeholder="Primary Server"
-                autoComplete="off"
-                value={field.value}
-                onChange={field.onChange}
-                error={errors.name?.message}
-              />
-            )}
-          />
-          <Controller
-            name="host"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                label="Host / IP"
-                placeholder="1.2.3.4"
-                autoComplete="off"
-                value={field.value}
-                onChange={field.onChange}
-                error={errors.host?.message}
-              />
-            )}
-          />
-        </FormLayout.Group>
+    const onSubmit = useCallback((data: ServerSchema) => {
+      if (server) {
+        // Chế độ chỉnh sửa
+        updateMutation.mutate({ id: server.id, data }, {
+          onSuccess: () => onClose(),
+        });
+      } else {
+        // Chế độ thêm mới
+        createMutation.mutate(data, {
+          onSuccess: () => onClose(),
+        });
+      }
+    }, [createMutation, updateMutation, onClose, server]);
 
-        <FormLayout.Group>
-          <Controller
-            name="port"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                label="SSH Port"
-                type="number"
-                autoComplete="off"
-                value={field.value?.toString()}
-                onChange={(val) => field.onChange(parseInt(val))}
-              />
-            )}
-          />
-          <Controller
-            name="username"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                label="SSH User"
-                placeholder="root"
-                autoComplete="username"
-                value={field.value}
-                onChange={field.onChange}
-              />
-            )}
-          />
-          <Controller
-            name="authType"
-            control={control}
-            render={({ field }) => (
-              <Select
-                label="Auth Type"
-                options={authTypeOptions}
-                onChange={field.onChange}
-                value={field.value}
-              />
-            )}
-          />
-        </FormLayout.Group>
+    // Expose the submit method to the parent component
+    useImperativeHandle(ref, () => ({
+      submit: () => {
+        handleSubmit(onSubmit)();
+      }
+    }));
 
-        {authType === ServerAuthType.PASSWORD ? (
-          <Controller
-            name="password"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                label="SSH Password"
-                type="password"
-                autoComplete="current-password"
-                placeholder="••••••••"
-                value={field.value}
-                onChange={field.onChange}
+    return (
+      <Form onSubmit={handleSubmit(onSubmit)}>
+        <Box padding="400">
+          <FormLayout>
+            <FormLayout.Group>
+              <Controller
+                name="name"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    label="Tên Máy chủ"
+                    autoComplete="off"
+                    placeholder="Ví dụ: US-West-01"
+                    value={field.value}
+                    onChange={field.onChange}
+                    error={errors.name?.message}
+                  />
+                )}
               />
-            )}
-          />
-        ) : (
-          <Controller
-            name="privateKey"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                label="Private Key"
-                multiline={4}
-                placeholder="-----BEGIN RSA PRIVATE KEY-----"
-                autoComplete="off"
-                value={field.value}
-                onChange={field.onChange}
+              <Controller
+                name="host"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    label="Địa chỉ IP / Hostname"
+                    autoComplete="off"
+                    placeholder="Ví dụ: 1.2.3.4"
+                    value={field.value}
+                    onChange={field.onChange}
+                    error={errors.host?.message}
+                  />
+                )}
               />
-            )}
-          />
-        )}
-      </FormLayout>
-    </Form>
-  );
-}
+            </FormLayout.Group>
+
+            <FormLayout.Group>
+              <Controller
+                name="port"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    label="Cổng SSH"
+                    type="number"
+                    autoComplete="off"
+                    placeholder="22"
+                    value={field.value?.toString()}
+                    onChange={(val) => field.onChange(parseInt(val))}
+                    error={errors.port?.message}
+                  />
+                )}
+              />
+              <Controller
+                name="username"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    label="Tài khoản SSH"
+                    autoComplete="username"
+                    placeholder="root"
+                    value={field.value}
+                    onChange={field.onChange}
+                    error={errors.username?.message}
+                  />
+                )}
+              />
+            </FormLayout.Group>
+
+            <FormLayout.Group>
+              <Controller
+                name="password"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    label={server ? "Mật khẩu SSH (Để trống nếu không đổi)" : "Mật khẩu SSH"}
+                    type="password"
+                    autoComplete="current-password"
+                    placeholder="Mật khẩu"
+                    value={field.value}
+                    onChange={field.onChange}
+                    error={errors.password?.message}
+                  />
+                )}
+              />
+              <Controller
+                name="ipv6"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    label="IPv6 (Tùy chọn)"
+                    autoComplete="off"
+                    placeholder="2001:db8::1"
+                    value={field.value}
+                    onChange={field.onChange}
+                  />
+                )}
+              />
+            </FormLayout.Group>
+
+            <FormLayout.Group>
+              <Controller
+                name="maxProxies"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    label="Số lượng Proxy tối đa"
+                    type="number"
+                    autoComplete="off"
+                    placeholder="100"
+                    value={field.value?.toString()}
+                    onChange={(val) => field.onChange(parseInt(val))}
+                    error={errors.maxProxies?.message}
+                  />
+                )}
+              />
+              <Box />
+            </FormLayout.Group>
+          </FormLayout>
+        </Box>
+      </Form>
+    );
+  }
+);
+
+AddServerForm.displayName = 'AddServerForm';

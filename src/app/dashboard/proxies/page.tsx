@@ -1,46 +1,70 @@
 "use client";
 
-import { useState } from 'react';
-import { ProxyList } from '@/modules/proxies/components/proxy-list';
-import { AddProxyForm } from '@/modules/proxies/components/add-proxy-form';
-import { Page, Modal, BlockStack } from "@shopify/polaris";
+import { Page, Modal } from "@shopify/polaris";
+import { PlusIcon } from "@shopify/polaris-icons";
+import { useState, useCallback, useRef } from "react";
+import { ProxyList } from "@/modules/proxies/components/proxy-list";
+import { AddProxyForm, AddProxyFormRef } from "@/modules/proxies/components/add-proxy-form";
+import { useProxies } from "@/hooks/use-proxies";
+import { Proxy } from "@prisma/client";
 
 export default function ProxiesPage() {
-  const [showAddForm, setShowAddForm] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingProxy, setEditingProxy] = useState<Proxy | undefined>(undefined);
+  
+  const { createMutation, updateMutation } = useProxies();
+  const formRef = useRef<AddProxyFormRef>(null);
+
+  const toggleModal = useCallback(() => {
+    if (isModalOpen) {
+      setEditingProxy(undefined);
+    }
+    setIsModalOpen((open) => !open);
+  }, [isModalOpen]);
+
+  const handleEdit = useCallback((proxy: Proxy) => {
+    setEditingProxy(proxy);
+    setIsModalOpen(true);
+  }, []);
+
+  const handlePrimaryAction = useCallback(() => {
+    formRef.current?.submit();
+  }, []);
 
   return (
     <Page
       fullWidth
-      title="Proxies"
+      title="Quản lý Proxy"
+      subtitle="Danh sách các Proxy đã được khởi tạo trên hệ thống"
       primaryAction={{
-        content: "Create Proxy",
-        onAction: () => setShowAddForm(true),
+        content: 'Tạo Proxy mới',
+        icon: PlusIcon,
+        onAction: toggleModal,
       }}
     >
-      <BlockStack gap="400">
-        <ProxyList />
-      </BlockStack>
+      <ProxyList onEdit={handleEdit} />
 
       <Modal
-        open={showAddForm}
-        onClose={() => setShowAddForm(false)}
-        title="Create new proxy"
+        open={isModalOpen}
+        onClose={toggleModal}
+        title={editingProxy ? "Chỉnh sửa Proxy" : "Tạo Proxy mới"}
         primaryAction={{
-          content: 'Create Proxy',
-          onAction: () => {
-            document.getElementById('add-proxy-form')?.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
-          },
+          content: editingProxy ? 'Cập nhật' : 'Tạo ngay',
+          onAction: handlePrimaryAction,
+          loading: createMutation.isPending || updateMutation.isPending,
         }}
         secondaryActions={[
           {
-            content: 'Cancel',
-            onAction: () => setShowAddForm(false),
+            content: 'Hủy bỏ',
+            onAction: toggleModal,
           },
         ]}
       >
-        <Modal.Section>
-          <AddProxyForm onClose={() => setShowAddForm(false)} />
-        </Modal.Section>
+        <AddProxyForm 
+          ref={formRef} 
+          onClose={toggleModal} 
+          proxy={editingProxy}
+        />
       </Modal>
     </Page>
   );

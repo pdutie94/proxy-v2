@@ -4,91 +4,121 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { userSchema, UserSchema } from '../schemas/user.schema';
 import { useUsers } from '@/hooks/use-users';
-import { Role } from '@prisma/client';
 import { 
   Form, 
   FormLayout, 
   TextField, 
   Select, 
-  Button, 
-  InlineStack,
-  BlockStack
+  Box
 } from "@shopify/polaris";
-import { useCallback } from 'react';
+import { useCallback, forwardRef, useImperativeHandle, useEffect } from 'react';
+import { User } from '@prisma/client';
 
 interface AddUserFormProps {
   onClose: () => void;
+  user?: User;
 }
 
-export function AddUserForm({ onClose }: AddUserFormProps) {
-  const { createMutation } = useUsers();
-  const { control, handleSubmit, formState: { errors } } = useForm<UserSchema>({
-    resolver: zodResolver(userSchema),
-    defaultValues: {
-      role: Role.USER,
-    }
-  });
+export interface AddUserFormRef {
+  submit: () => void;
+}
 
-  const onSubmit = useCallback((data: UserSchema) => {
-    createMutation.mutate(data, {
-      onSuccess: () => onClose(),
+export const AddUserForm = forwardRef<AddUserFormRef, AddUserFormProps>(
+  ({ onClose, user }, ref) => {
+    const { createMutation, updateMutation } = useUsers();
+    
+    const { control, handleSubmit, formState: { errors }, reset } = useForm<UserSchema>({
+      resolver: zodResolver(userSchema),
+      defaultValues: {
+        email: '',
+        password: '',
+        role: 'USER',
+      }
     });
-  }, [createMutation, onClose]);
 
-  const roleOptions = [
-    { label: 'User', value: Role.USER },
-    { label: 'Admin', value: Role.ADMIN },
-  ];
+    useEffect(() => {
+      if (user) {
+        reset({
+          email: user.email,
+          role: user.role,
+          password: '', // Không reset mật khẩu cũ
+        });
+      }
+    }, [user, reset]);
 
-  return (
-    <Form id="add-user-form" onSubmit={handleSubmit(onSubmit)}>
-      <FormLayout>
-        <FormLayout.Group>
-          <Controller
-            name="email"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                label="Email Address"
-                type="email"
-                autoComplete="email"
-                placeholder="user@example.com"
-                value={field.value}
-                onChange={field.onChange}
-                error={errors.email?.message}
-              />
-            )}
-          />
-          <Controller
-            name="password"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                label="Password"
-                type="password"
-                autoComplete="new-password"
-                placeholder="••••••••"
-                value={field.value}
-                onChange={field.onChange}
-                error={errors.password?.message}
-              />
-            )}
-          />
-        </FormLayout.Group>
+    const onSubmit = useCallback((data: UserSchema) => {
+      if (user) {
+        updateMutation.mutate({ id: user.id, data }, {
+          onSuccess: () => onClose(),
+        });
+      } else {
+        createMutation.mutate(data, {
+          onSuccess: () => onClose(),
+        });
+      }
+    }, [createMutation, updateMutation, onClose, user]);
 
-        <Controller
-          name="role"
-          control={control}
-          render={({ field }) => (
-            <Select
-              label="Role"
-              options={roleOptions}
-              onChange={field.onChange}
-              value={field.value}
+    useImperativeHandle(ref, () => ({
+      submit: () => {
+        handleSubmit(onSubmit)();
+      }
+    }));
+
+    return (
+      <Form onSubmit={handleSubmit(onSubmit)}>
+        <Box padding="400">
+          <FormLayout>
+            <Controller
+              name="email"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  label="Địa chỉ Email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="vidu@example.com"
+                  value={field.value}
+                  onChange={field.onChange}
+                  error={errors.email?.message}
+                />
+              )}
             />
-          )}
-        />
-      </FormLayout>
-    </Form>
-  );
-}
+            <Controller
+              name="password"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  label={user ? "Mật khẩu mới (Để trống nếu không đổi)" : "Mật khẩu"}
+                  type="password"
+                  autoComplete="new-password"
+                  placeholder="Tối thiểu 6 ký tự"
+                  value={field.value}
+                  onChange={field.onChange}
+                  error={errors.password?.message}
+                />
+              )}
+            />
+            <Controller
+              name="role"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  label="Vai trò hệ thống"
+                  options={[
+                    { label: 'Người dùng', value: 'USER' },
+                    { label: 'Quản trị viên', value: 'ADMIN' },
+                  ]}
+                  onChange={field.onChange}
+                  value={field.value}
+                  error={errors.role?.message}
+                />
+              )}
+            />
+          </FormLayout>
+        </Box>
+      </Form>
+    );
+  }
+);
+
+AddUserForm.displayName = 'AddUserForm';

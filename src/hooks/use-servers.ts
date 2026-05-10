@@ -28,7 +28,27 @@ export function useServers() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['servers'] });
-      toast.success('Server added successfully');
+      toast.success('Đã thêm máy chủ thành công');
+    },
+    onError: (error: any) => {
+      toast.error(error.message);
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      const res = await fetch(`/api/servers/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const dataRes = await res.json();
+      if (!dataRes.success) throw new Error(dataRes.message);
+      return dataRes.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['servers'] });
+      toast.success('Đã cập nhật máy chủ');
     },
     onError: (error: any) => {
       toast.error(error.message);
@@ -45,7 +65,7 @@ export function useServers() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['servers'] });
-      toast.success('Server deleted');
+      toast.success('Đã xóa máy chủ');
     },
     onError: (error: any) => {
       toast.error(error.message);
@@ -56,6 +76,7 @@ export function useServers() {
     servers: serversQuery.data || [],
     isLoading: serversQuery.isLoading,
     createMutation,
+    updateMutation,
     deleteMutation,
   };
 }

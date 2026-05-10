@@ -74,6 +74,7 @@ model Server {
   passwordEncrypted String?
   privateKey        String?        @db.Text
   provider          String?
+  ipv6              String?
   status            ServerStatus   @default(PENDING)
   maxProxies        Int            @default(100)
   notes             String?        @db.Text

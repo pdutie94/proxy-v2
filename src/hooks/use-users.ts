@@ -28,7 +28,27 @@ export function useUsers() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
-      toast.success('User added successfully');
+      toast.success('Đã thêm người dùng thành công');
+    },
+    onError: (error: any) => {
+      toast.error(error.message);
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      const res = await fetch(`/api/users/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const dataRes = await res.json();
+      if (!dataRes.success) throw new Error(dataRes.message);
+      return dataRes.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast.success('Đã cập nhật người dùng');
     },
     onError: (error: any) => {
       toast.error(error.message);
@@ -45,7 +65,7 @@ export function useUsers() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
-      toast.success('User deleted');
+      toast.success('Đã xóa người dùng');
     },
     onError: (error: any) => {
       toast.error(error.message);
@@ -56,6 +76,7 @@ export function useUsers() {
     users: usersQuery.data || [],
     isLoading: usersQuery.isLoading,
     createMutation,
+    updateMutation,
     deleteMutation,
   };
 }

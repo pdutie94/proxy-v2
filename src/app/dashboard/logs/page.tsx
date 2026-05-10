@@ -1,76 +1,73 @@
 "use client";
 
-import { Page, Card, IndexTable, Text, Badge, Box, BlockStack } from "@shopify/polaris";
+import { 
+  Page, 
+  Card, 
+  IndexTable, 
+  Text, 
+  Badge, 
+  Box,
+  Divider,
+  EmptyState
+} from "@shopify/polaris";
+import { format } from "date-fns";
 
 export default function LogsPage() {
-  const resourceName = {
-    singular: 'log',
-    plural: 'logs',
-  };
-
-  // Mock data for now
-  const logs = [
-    {
-      id: '1',
-      event: 'Server Setup',
-      status: 'completed',
-      target: '192.168.1.1',
-      time: '2 minutes ago',
-    },
-    {
-      id: '2',
-      event: 'Proxy Rotation',
-      status: 'active',
-      target: 'Proxy #4421',
-      time: '5 minutes ago',
-    },
-    {
-      id: '3',
-      event: 'System Check',
-      status: 'failed',
-      target: 'Main Gateway',
-      time: '1 hour ago',
-    }
-  ];
-
-  const rowMarkup = logs.map(
-    ({ id, event, status, target, time }, index) => (
-      <IndexTable.Row id={id} key={id} position={index}>
-        <IndexTable.Cell>
-          <Text as="span" fontWeight="bold">
-            {event}
-          </Text>
-        </IndexTable.Cell>
-        <IndexTable.Cell>
-          <Badge tone={status === 'completed' ? 'success' : status === 'failed' ? 'critical' : 'attention'}>
-            {status.toUpperCase()}
-          </Badge>
-        </IndexTable.Cell>
-        <IndexTable.Cell>{target}</IndexTable.Cell>
-        <IndexTable.Cell>{time}</IndexTable.Cell>
-      </IndexTable.Row>
-    ),
-  );
+  // Mock data for logs
+  const logs: any[] = [];
 
   return (
-    <Page fullWidth title="System Analytics">
-      <BlockStack gap="400">
-        <Card padding="0">
-          <IndexTable
-            resourceName={resourceName}
-            itemCount={logs.length}
-            headings={[
-              { title: 'Event' },
-              { title: 'Status' },
-              { title: 'Target' },
-              { title: 'Time' },
-            ]}
-            selectable={false}
-          >
-            {rowMarkup}
-          </IndexTable>
-        </Card>
-      </BlockStack>
+    <Page 
+      title="Nhật ký hệ thống"
+      subtitle="Theo dõi chi tiết các hoạt động và tiến trình xử lý trên máy chủ"
+    >
+      <Card padding="0">
+        <IndexTable
+          resourceName={{ singular: 'nhật ký', plural: 'nhật ký' }}
+          itemCount={logs.length}
+          headings={[
+            { title: 'Thời gian' },
+            { title: 'Loại công việc' },
+            { title: 'Máy chủ' },
+            { title: 'Trạng thái' },
+            { title: 'Chi tiết' },
+          ]}
+          selectable={false}
+        >
+          {logs.length === 0 ? (
+            <IndexTable.Row id="empty" position={0}>
+              <IndexTable.Cell colSpan={5}>
+                <Box padding="1000">
+                  <EmptyState
+                    heading="Chưa có nhật ký nào"
+                    image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png"
+                  >
+                    <p>Các hoạt động thiết lập máy chủ và khởi tạo proxy sẽ được hiển thị tại đây.</p>
+                  </EmptyState>
+                </Box>
+              </IndexTable.Cell>
+            </IndexTable.Row>
+          ) : (
+            logs.map((log, index) => (
+              <IndexTable.Row id={log.id} key={log.id} position={index}>
+                <IndexTable.Cell>{format(new Date(log.createdAt), 'dd/MM/yyyy HH:mm')}</IndexTable.Cell>
+                <IndexTable.Cell>{log.type}</IndexTable.Cell>
+                <IndexTable.Cell>{log.server?.name || '-'}</IndexTable.Cell>
+                <IndexTable.Cell>
+                  <Badge tone={log.status === 'COMPLETED' ? 'success' : 'attention'}>
+                    {log.status}
+                  </Badge>
+                </IndexTable.Cell>
+                <IndexTable.Cell>
+                  <Text as="span" tone="subdued" variant="bodySm">
+                    {log.logs?.substring(0, 50)}...
+                  </Text>
+                </IndexTable.Cell>
+              </IndexTable.Row>
+            ))
+          )}
+        </IndexTable>
+      </Card>
     </Page>
   );
 }

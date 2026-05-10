@@ -29,10 +29,16 @@ export class ServerService {
     });
 
     // Dispatch job to queue
-    await addJob(JobType.SETUP_SERVER, {
-      serverId: server.id,
-      jobId: job.id,
-    });
+    /* 
+    try {
+      await addJob(JobType.SETUP_SERVER, {
+        serverId: server.id,
+        jobId: job.id,
+      });
+    } catch (error) {
+      console.error('[ServerService] Failed to dispatch setup job. Is Redis running?', error);
+    }
+    */
 
     return server;
   }
