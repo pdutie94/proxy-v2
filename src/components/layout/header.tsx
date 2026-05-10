@@ -1,5 +1,6 @@
 import { auth } from '@/auth';
 import { User } from 'lucide-react';
+import { MobileTrigger } from './mobile-trigger';
 
 export async function Header() {
   const session = await auth();
@@ -7,6 +8,7 @@ export async function Header() {
   return (
     <header className="sticky top-0 z-30 flex h-12 w-full items-center justify-between border-b bg-white px-4">
       <div className="flex items-center">
+        <MobileTrigger />
         <h1 className="text-sm font-semibold text-slate-900">
           Dashboard
         </h1>
@@ -14,7 +16,7 @@ export async function Header() {
       
       <div className="flex items-center gap-3">
         <div className="flex flex-col items-end leading-none">
-          <span className="text-[13px] font-medium text-slate-700">{session?.user?.email}</span>
+          <span className="text-[12px] font-medium text-slate-700">{session?.user?.email}</span>
           <span className="text-[10px] text-slate-500 uppercase font-bold tracking-tight">
             {(session?.user as any)?.role || 'USER'}
           </span>

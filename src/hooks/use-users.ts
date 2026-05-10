@@ -1,0 +1,61 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { User } from '@prisma/client';
+import { toast } from 'sonner';
+
+export function useUsers() {
+  const queryClient = useQueryClient();
+
+  const usersQuery = useQuery({
+    queryKey: ['users'],
+    queryFn: async () => {
+      const res = await fetch('/api/users');
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message);
+      return data.data as User[];
+    },
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async (newData: any) => {
+      const res = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newData),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message);
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast.success('User added successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.message);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/users/${id}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast.success('User deleted');
+    },
+    onError: (error: any) => {
+      toast.error(error.message);
+    },
+  });
+
+  return {
+    users: usersQuery.data || [],
+    isLoading: usersQuery.isLoading,
+    createMutation,
+    deleteMutation,
+  };
+}

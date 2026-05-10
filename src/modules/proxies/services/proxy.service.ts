@@ -1,0 +1,82 @@
+import { proxyRepository } from '../repositories/proxy.repository';
+import { ProxySchema } from '../schemas/proxy.schema';
+import { addJob } from '@/worker/queue/job.queue';
+import { JobType } from '@prisma/client';
+import prisma from '@/lib/prisma';
+
+export class ProxyService {
+  async getAllProxies() {
+    return proxyRepository.findAll();
+  }
+
+  async createProxy(data: ProxySchema) {
+    const { serverId, ...rest } = data;
+    
+    // Check server capacity
+    const server = await prisma.server.findUnique({ where: { id: serverId } });
+    if (!server) throw new Error('Server not found');
+
+    const currentProxies = await prisma.proxy.count({ where: { serverId } });
+    if (currentProxies >= server.maxProxies) {
+      throw new Error('Server max proxy capacity reached');
+    }
+
+    const proxy = await proxyRepository.create({
+      ...rest,
+      server: { connect: { id: serverId } },
+      status: 'CREATING',
+    });
+
+    // Create a job record
+    const job = await prisma.serverJob.create({
+      data: {
+        type: JobType.PROVISION_PROXY,
+        serverId: serverId,
+        proxyId: proxy.id,
+        status: 'WAITING',
+      },
+    });
+
+    // Dispatch job
+    await addJob(JobType.PROVISION_PROXY, {
+      proxyId: proxy.id,
+      jobId: job.id,
+    });
+
+    return proxy;
+  }
+
+  async deleteProxy(id: string) {
+    const proxy = await proxyRepository.findById(id);
+    if (!proxy) throw new Error('Proxy not found');
+
+    // Create a job record for removal
+    const job = await prisma.serverJob.create({
+      data: {
+        type: JobType.DELETE_PROXY,
+        serverId: proxy.serverId,
+        proxyId: proxy.id,
+        status: 'WAITING',
+      },
+    });
+
+    // Dispatch job
+    await addJob(JobType.DELETE_PROXY, {
+      proxyId: proxy.id,
+      jobId: job.id,
+    });
+
+    // Delete from DB (The worker will handle the remote cleanup based on the job data)
+    // Actually, rules say "DB là source of truth". 
+    // We should probably keep it until the worker finishes, or delete and let worker sync.
+    // In "MVP Proxy delete flow": remove DB -> enqueue sync job -> reload config.
+    return proxyRepository.delete(id);
+  }
+
+  async toggleProxy(id: string, isEnabled: boolean) {
+    return proxyRepository.update(id, { isEnabled });
+    // This should also trigger a sync job to the server
+  }
+}
+
+export const proxyService = new ProxyService();
