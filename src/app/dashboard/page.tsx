@@ -1,41 +1,162 @@
-import { Server, ShieldCheck, ListOrdered, Activity } from 'lucide-react';
+"use client";
+
+import { 
+  Page, 
+  Layout, 
+  Card, 
+  Text, 
+  BlockStack, 
+  Box, 
+  Grid,
+  Banner,
+  List,
+  InlineStack,
+  Link as PolarisLink
+} from "@shopify/polaris";
+import { useRouter } from "next/navigation";
 
 export default function DashboardPage() {
-  const stats = [
-    { label: 'Total Servers', value: '0', icon: Server, color: 'text-blue-600' },
-    { label: 'Active Proxies', value: '0', icon: ShieldCheck, color: 'text-green-600' },
-    { label: 'Active Jobs', value: '0', icon: ListOrdered, color: 'text-amber-600' },
-    { label: 'System Health', value: 'Stable', icon: Activity, color: 'text-emerald-600' },
-  ];
+  const router = useRouter();
 
   return (
-    <div className="space-y-4">
-      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
-          <div key={stat.label} className="bg-white border border-slate-200 rounded-md p-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-slate-500">{stat.label}</span>
-              <stat.icon className={stat.color + " h-4 w-4"} />
-            </div>
-            <p className="mt-1 text-lg font-semibold text-slate-900">{stat.value}</p>
-          </div>
-        ))}
-      </div>
-      
-      <div className="bg-white border border-slate-200 rounded-md p-4">
-        <h2 className="text-base font-semibold text-slate-900">Welcome to ProxyV2</h2>
-        <p className="mt-1 text-sm text-slate-600 leading-relaxed">
-          Your MVP Proxy Management Dashboard is ready. This is a compact, functional interface designed for high-efficiency infrastructure management.
-        </p>
-        <div className="mt-4 flex gap-2">
-          <button className="h-8 px-3 text-xs bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
-            Quick Add Server
-          </button>
-          <button className="h-8 px-3 text-xs bg-white border border-slate-300 text-slate-700 rounded-md hover:bg-slate-50 transition-colors">
-            View Logs
-          </button>
-        </div>
-      </div>
-    </div>
+    <Page 
+      fullWidth
+      title="Overview"
+      primaryAction={{
+        content: "Add server",
+        onAction: () => router.push("/dashboard/servers")
+      }}
+      secondaryActions={[
+        {
+          content: "Export data",
+          onAction: () => console.log("Exporting"),
+        }
+      ]}
+    >
+      <BlockStack gap="400">
+        {/* Stats Grid */}
+        <Grid>
+          <Grid.Cell columnSpan={{ xs: 6, sm: 3, md: 3, lg: 3, xl: 3 }}>
+            <Card>
+              <BlockStack gap="200">
+                <Box borderInlineStartWidth="400" borderColor="border-info" paddingInlineStart="200">
+                  <Text as="h2" variant="bodySm" fontWeight="medium" tone="subdued">TOTAL SERVERS</Text>
+                  <Box paddingBlockStart="100">
+                    <Text as="p" variant="headingLg" fontWeight="bold">0</Text>
+                  </Box>
+                </Box>
+              </BlockStack>
+            </Card>
+          </Grid.Cell>
+          <Grid.Cell columnSpan={{ xs: 6, sm: 3, md: 3, lg: 3, xl: 3 }}>
+            <Card>
+              <BlockStack gap="200">
+                <Box borderInlineStartWidth="400" borderColor="border-success" paddingInlineStart="200">
+                  <Text as="h2" variant="bodySm" fontWeight="medium" tone="subdued">ACTIVE PROXIES</Text>
+                  <Box paddingBlockStart="100">
+                    <Text as="p" variant="headingLg" fontWeight="bold">0</Text>
+                  </Box>
+                </Box>
+              </BlockStack>
+            </Card>
+          </Grid.Cell>
+          <Grid.Cell columnSpan={{ xs: 6, sm: 3, md: 3, lg: 3, xl: 3 }}>
+            <Card>
+              <BlockStack gap="200">
+                <Box borderInlineStartWidth="400" borderColor="border-warning" paddingInlineStart="200">
+                  <Text as="h2" variant="bodySm" fontWeight="medium" tone="subdued">ACTIVE JOBS</Text>
+                  <Box paddingBlockStart="100">
+                    <Text as="p" variant="headingLg" fontWeight="bold">0</Text>
+                  </Box>
+                </Box>
+              </BlockStack>
+            </Card>
+          </Grid.Cell>
+          <Grid.Cell columnSpan={{ xs: 6, sm: 3, md: 3, lg: 3, xl: 3 }}>
+            <Card>
+              <BlockStack gap="200">
+                <Box borderInlineStartWidth="400" borderColor="border-success" paddingInlineStart="200">
+                  <Text as="h2" variant="bodySm" fontWeight="medium" tone="subdued">SYSTEM STATUS</Text>
+                  <Box paddingBlockStart="100">
+                    <Text as="p" variant="headingLg" fontWeight="bold" tone="success">STABLE</Text>
+                  </Box>
+                </Box>
+              </BlockStack>
+            </Card>
+          </Grid.Cell>
+        </Grid>
+
+        <Layout>
+          <Layout.Section>
+            <Card roundedAbove="sm">
+              <BlockStack gap="400">
+                <Text as="h2" variant="headingMd">Getting Started</Text>
+                <Banner title="Configure your infrastructure" tone="info">
+                  <p>Follow these steps to start provisioning high-performance proxies.</p>
+                </Banner>
+                <Box paddingBlockStart="200">
+                  <List type="number">
+                    <List.Item>
+                      <Text as="span" fontWeight="bold">Connect your first server:</Text> Go to the {" "}
+                      <PolarisLink url="/dashboard/servers">Servers</PolarisLink> page and add a remote VPS via SSH.
+                    </List.Item>
+                    <List.Item>
+                      <Text as="span" fontWeight="bold">Provision Proxies:</Text> Once the server is online, use the Proxies page to allocate IPv6 ports.
+                    </List.Item>
+                    <List.Item>
+                      <Text as="span" fontWeight="bold">Monitor Activity:</Text> Track deployment status and rotation logs in the Analytics section.
+                    </List.Item>
+                  </List>
+                </Box>
+              </BlockStack>
+            </Card>
+          </Layout.Section>
+          
+          <Layout.Section variant="oneThird">
+            <Card>
+              <BlockStack gap="300">
+                <Text as="h2" variant="headingMd">System Overview</Text>
+                <Box borderBlockEndWidth="025" borderColor="border-subdued" paddingBlockEnd="200">
+                  <Grid>
+                    <Grid.Cell columnSpan={{ xs: 3, md: 3 }}>
+                      <Text as="p" tone="subdued">Ports</Text>
+                    </Grid.Cell>
+                    <Grid.Cell columnSpan={{ xs: 3, md: 3 }}>
+                      <InlineStack align="end">
+                        <Text as="p" fontWeight="bold">0 / 5000</Text>
+                      </InlineStack>
+                    </Grid.Cell>
+                  </Grid>
+                </Box>
+                <Box borderBlockEndWidth="025" borderColor="border-subdued" paddingBlockEnd="200">
+                  <Grid>
+                    <Grid.Cell columnSpan={{ xs: 3, md: 3 }}>
+                      <Text as="p" tone="subdued">Uptime</Text>
+                    </Grid.Cell>
+                    <Grid.Cell columnSpan={{ xs: 3, md: 3 }}>
+                      <InlineStack align="end">
+                        <Text as="p" fontWeight="bold">99.9%</Text>
+                      </InlineStack>
+                    </Grid.Cell>
+                  </Grid>
+                </Box>
+                <Box paddingBlockEnd="200">
+                  <Grid>
+                    <Grid.Cell columnSpan={{ xs: 3, md: 3 }}>
+                      <Text as="p" tone="subdued">Worker</Text>
+                    </Grid.Cell>
+                    <Grid.Cell columnSpan={{ xs: 3, md: 3 }}>
+                      <InlineStack align="end">
+                        <Text as="p" fontWeight="bold" tone="success">Online</Text>
+                      </InlineStack>
+                    </Grid.Cell>
+                  </Grid>
+                </Box>
+              </BlockStack>
+            </Card>
+          </Layout.Section>
+        </Layout>
+      </BlockStack>
+    </Page>
   );
 }

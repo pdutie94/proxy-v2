@@ -1,32 +1,122 @@
 "use client";
 
-import { useSidebarStore } from '@/hooks/use-sidebar-store';
-import { cn } from '@/lib/utils';
-import { Sidebar } from './sidebar';
+import { Frame, TopBar, Navigation } from "@shopify/polaris";
+import { 
+  HomeIcon, 
+  OrderIcon, 
+  PersonIcon, 
+  SettingsIcon,
+  ExitIcon,
+  ChartVerticalIcon,
+  ShieldCheckMarkIcon
+} from "@shopify/polaris-icons";
+import { usePathname } from "next/navigation";
+import { useCallback, useState } from "react";
+import { signOut, useSession } from "next-auth/react";
 
 interface DashboardContainerProps {
-  header: React.ReactNode;
   children: React.ReactNode;
 }
 
-export function DashboardContainer({ header, children }: DashboardContainerProps) {
-  const { isCollapsed } = useSidebarStore();
+export function DashboardContainer({ children }: DashboardContainerProps) {
+  const pathname = usePathname();
+  const { data: session } = useSession();
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+  const toggleMobileOpen = useCallback(
+    () => setIsMobileOpen((open) => !open),
+    []
+  );
+
+  const logo = {
+    width: 32,
+    topBarSource: "/logo.png",
+    url: "/dashboard",
+    accessibilityLabel: "ProxyV2 Logo",
+  };
+
+  const userMenuMarkup = (
+    <TopBar.UserMenu
+      actions={[
+        {
+          items: [{ content: "Log out", onAction: () => signOut(), icon: ExitIcon }],
+        },
+      ]}
+      name={session?.user?.email?.split("@")[0] || "Admin"}
+      detail={(session?.user as any)?.role || "ADMIN"}
+      initials={session?.user?.email?.slice(0, 2).toUpperCase()}
+      open={false}
+      onToggle={() => {}}
+    />
+  );
+
+  const topBarMarkup = (
+    <TopBar
+      showNavigationToggle
+      userMenu={userMenuMarkup}
+      onNavigationToggle={toggleMobileOpen}
+    />
+  );
+
+  const navigationMarkup = (
+    <Navigation location={pathname}>
+      <Navigation.Section
+        items={[
+          {
+            label: "Home",
+            icon: HomeIcon,
+            url: "/dashboard",
+            selected: pathname === "/dashboard",
+          },
+          {
+            label: "Servers",
+            icon: OrderIcon,
+            url: "/dashboard/servers",
+            selected: pathname.startsWith("/dashboard/servers"),
+          },
+          {
+            label: "Proxies",
+            icon: ShieldCheckMarkIcon,
+            url: "/dashboard/proxies",
+            selected: pathname.startsWith("/dashboard/proxies"),
+          },
+          {
+            label: "Users",
+            icon: PersonIcon,
+            url: "/dashboard/users",
+            selected: pathname.startsWith("/dashboard/users"),
+          },
+          {
+            label: "Analytics",
+            icon: ChartVerticalIcon,
+            url: "/dashboard/logs",
+            selected: pathname.startsWith("/dashboard/logs"),
+          },
+        ]}
+      />
+      <Navigation.Section
+        separator
+        items={[
+          {
+            label: "Settings",
+            icon: SettingsIcon,
+            url: "/dashboard/settings",
+            selected: pathname.startsWith("/dashboard/settings"),
+          },
+        ]}
+      />
+    </Navigation>
+  );
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
-      <Sidebar />
-      <div 
-        className={cn(
-          "transition-all duration-300",
-          "md:pl-[240px]",
-          isCollapsed ? "md:pl-[70px]" : "md:pl-[240px]"
-        )}
-      >
-        {header}
-        <main className="p-4 max-w-[1000px] mx-auto">
-          {children}
-        </main>
-      </div>
-    </div>
+    <Frame
+      logo={logo}
+      topBar={topBarMarkup}
+      navigation={navigationMarkup}
+      showMobileNavigation={isMobileOpen}
+      onNavigationDismiss={toggleMobileOpen}
+    >
+      {children}
+    </Frame>
   );
 }

@@ -1,9 +1,20 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { ShieldCheck, Loader2 } from 'lucide-react';
+import { 
+  Card, 
+  Form, 
+  FormLayout, 
+  TextField, 
+  Button, 
+  Text, 
+  BlockStack, 
+  Box,
+  Banner,
+  Divider
+} from "@shopify/polaris";
 
 export function LoginForm() {
   const router = useRouter();
@@ -12,8 +23,7 @@ export function LoginForm() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = useCallback(async () => {
     setIsLoading(true);
     setError('');
 
@@ -34,64 +44,86 @@ export function LoginForm() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [email, password, router]);
 
   return (
-    <div className="w-full max-w-[360px] bg-white border border-slate-200 rounded-md p-6">
-      <div className="text-center mb-6">
-        <div className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-slate-50 border border-slate-200 text-blue-600">
-          <ShieldCheck className="h-6 w-6" />
-        </div>
-        <h2 className="mt-3 text-lg font-semibold text-slate-900">ProxyV2 Login</h2>
-        <p className="text-xs text-slate-500 mt-1">
-          Access your proxy infrastructure
-        </p>
+    <Box maxWidth="400px" width="100%">
+      {/* Container for border glow effect */}
+      <div style={{
+        padding: '1px',
+        background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.02) 100%)',
+        borderRadius: '12px',
+        boxShadow: '0 20px 40px rgba(0,0,0,0.4)'
+      }}>
+        <Card roundedAbove="md">
+          <BlockStack gap="600">
+            <BlockStack gap="200" align="center">
+              <div style={{ textAlign: 'center' }}>
+                <img 
+                  src="/logo.png" 
+                  alt="ProxyV2 Logo" 
+                  style={{ 
+                    height: '52px', 
+                    marginBottom: '16px',
+                    filter: 'drop-shadow(0 0 10px rgba(16, 185, 129, 0.2))'
+                  }} 
+                />
+              </div>
+              <Text as="h1" variant="headingXl" alignment="center">Welcome back</Text>
+              <Text as="p" variant="bodyMd" tone="subdued" alignment="center">
+                Log in to manage your high-scale infrastructure.
+              </Text>
+            </BlockStack>
+
+            {error && (
+              <Banner tone="critical">
+                <p>{error}</p>
+              </Banner>
+            )}
+
+            <Form onSubmit={handleSubmit}>
+              <FormLayout>
+                <TextField
+                  label="Email"
+                  value={email}
+                  onChange={setEmail}
+                  type="email"
+                  autoComplete="email"
+                  placeholder="admin@proxy.com"
+                  focused
+                />
+                <TextField
+                  label="Password"
+                  value={password}
+                  onChange={setPassword}
+                  type="password"
+                  autoComplete="current-password"
+                  placeholder="••••••••"
+                />
+                <Box paddingBlockStart="200">
+                  <Button 
+                    variant="primary" 
+                    submit 
+                    loading={isLoading} 
+                    fullWidth
+                    size="large"
+                  >
+                    Sign in to Dashboard
+                  </Button>
+                </Box>
+              </FormLayout>
+            </Form>
+
+            <Divider />
+
+            <BlockStack gap="200" align="center">
+              <Text as="p" variant="bodySm" tone="subdued" alignment="center">
+                Professional Proxy Management System
+              </Text>
+            </BlockStack>
+          </BlockStack>
+        </Card>
       </div>
-
-      <form className="space-y-4" onSubmit={handleSubmit}>
-        {error && (
-          <div className="rounded-md bg-red-50 border border-red-100 p-2 text-xs text-red-600 text-center">
-            {error}
-          </div>
-        )}
-        
-        <div className="space-y-3">
-          <div className="space-y-1">
-            <label className="text-xs font-medium text-slate-600">Email Address</label>
-            <input
-              type="email"
-              required
-              className="h-9 w-full rounded-md border border-slate-300 bg-white px-2.5 text-sm outline-none focus:ring-1 focus:ring-blue-500 transition-all"
-              placeholder="admin@proxy.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
-          <div className="space-y-1">
-            <label className="text-xs font-medium text-slate-600">Password</label>
-            <input
-              type="password"
-              required
-              className="h-9 w-full rounded-md border border-slate-300 bg-white px-2.5 text-sm outline-none focus:ring-1 focus:ring-blue-500 transition-all"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
-        </div>
-
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="flex h-9 w-full items-center justify-center rounded-md bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition-colors disabled:opacity-50"
-        >
-          {isLoading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            "Sign In"
-          )}
-        </button>
-      </form>
-    </div>
+    </Box>
   );
 }

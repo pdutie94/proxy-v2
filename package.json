@@ -11,6 +11,8 @@
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
     "@prisma/client": "^6.19.3",
+    "@shopify/polaris": "^13.9.5",
+    "@shopify/polaris-icons": "^9.3.1",
     "@tanstack/react-query": "^5.100.9",
     "bcryptjs": "^3.0.3",
     "bullmq": "^5.76.6",

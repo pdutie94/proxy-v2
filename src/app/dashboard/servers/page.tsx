@@ -3,31 +3,45 @@
 import { useState } from 'react';
 import { ServerList } from '@/modules/servers/components/server-list';
 import { AddServerForm } from '@/modules/servers/components/add-server-form';
-import { Plus } from 'lucide-react';
+import { Page, Modal, BlockStack } from "@shopify/polaris";
 
 export default function ServersPage() {
   const [showAddForm, setShowAddForm] = useState(false);
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-slate-900">Servers</h1>
-        {!showAddForm && (
-          <button 
-            onClick={() => setShowAddForm(true)}
-            className="h-8 px-3 bg-blue-600 text-white text-xs font-medium rounded-md hover:bg-blue-700 transition-colors flex items-center gap-1.5"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Add Server
-          </button>
-        )}
-      </div>
+    <Page
+      fullWidth
+      title="Servers"
+      primaryAction={{
+        content: "Add Server",
+        onAction: () => setShowAddForm(true),
+      }}
+    >
+      <BlockStack gap="400">
+        <ServerList />
+      </BlockStack>
 
-      {showAddForm && (
-        <AddServerForm onClose={() => setShowAddForm(false)} />
-      )}
-
-      <ServerList />
-    </div>
+      <Modal
+        open={showAddForm}
+        onClose={() => setShowAddForm(false)}
+        title="Add new server"
+        primaryAction={{
+          content: 'Save Server',
+          onAction: () => {
+            document.getElementById('add-server-form')?.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+          },
+        }}
+        secondaryActions={[
+          {
+            content: 'Cancel',
+            onAction: () => setShowAddForm(false),
+          },
+        ]}
+      >
+        <Modal.Section>
+          <AddServerForm onClose={() => setShowAddForm(false)} />
+        </Modal.Section>
+      </Modal>
+    </Page>
   );
 }

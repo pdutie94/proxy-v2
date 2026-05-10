@@ -1,4 +1,3 @@
-import { Header } from '@/components/layout/header';
 import { DashboardContainer } from '@/components/layout/dashboard-container';
 
 export default function DashboardLayout({
@@ -7,7 +6,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <DashboardContainer header={<Header />}>
+    <DashboardContainer>
       {children}
     </DashboardContainer>
   );

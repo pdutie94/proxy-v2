@@ -3,31 +3,45 @@
 import { useState } from 'react';
 import { ProxyList } from '@/modules/proxies/components/proxy-list';
 import { AddProxyForm } from '@/modules/proxies/components/add-proxy-form';
-import { Plus } from 'lucide-react';
+import { Page, Modal, BlockStack } from "@shopify/polaris";
 
 export default function ProxiesPage() {
   const [showAddForm, setShowAddForm] = useState(false);
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-slate-900">Proxies</h1>
-        {!showAddForm && (
-          <button 
-            onClick={() => setShowAddForm(true)}
-            className="h-8 px-3 bg-blue-600 text-white text-xs font-medium rounded-md hover:bg-blue-700 transition-colors flex items-center gap-1.5"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Create Proxy
-          </button>
-        )}
-      </div>
+    <Page
+      fullWidth
+      title="Proxies"
+      primaryAction={{
+        content: "Create Proxy",
+        onAction: () => setShowAddForm(true),
+      }}
+    >
+      <BlockStack gap="400">
+        <ProxyList />
+      </BlockStack>
 
-      {showAddForm && (
-        <AddProxyForm onClose={() => setShowAddForm(false)} />
-      )}
-
-      <ProxyList />
-    </div>
+      <Modal
+        open={showAddForm}
+        onClose={() => setShowAddForm(false)}
+        title="Create new proxy"
+        primaryAction={{
+          content: 'Create Proxy',
+          onAction: () => {
+            document.getElementById('add-proxy-form')?.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+          },
+        }}
+        secondaryActions={[
+          {
+            content: 'Cancel',
+            onAction: () => setShowAddForm(false),
+          },
+        ]}
+      >
+        <Modal.Section>
+          <AddProxyForm onClose={() => setShowAddForm(false)} />
+        </Modal.Section>
+      </Modal>
+    </Page>
   );
 }

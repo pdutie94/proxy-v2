@@ -3,31 +3,45 @@
 import { useState } from 'react';
 import { UserList } from '@/modules/users/components/user-list';
 import { AddUserForm } from '@/modules/users/components/add-user-form';
-import { UserPlus } from 'lucide-react';
+import { Page, Modal, BlockStack } from "@shopify/polaris";
 
 export default function UsersPage() {
   const [showAddForm, setShowAddForm] = useState(false);
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-slate-900">User Management</h1>
-        {!showAddForm && (
-          <button 
-            onClick={() => setShowAddForm(true)}
-            className="h-8 px-3 bg-blue-600 text-white text-xs font-medium rounded-md hover:bg-blue-700 transition-colors flex items-center gap-1.5"
-          >
-            <UserPlus className="h-3.5 w-3.5" />
-            Add User
-          </button>
-        )}
-      </div>
+    <Page
+      fullWidth
+      title="Users"
+      primaryAction={{
+        content: "Add User",
+        onAction: () => setShowAddForm(true),
+      }}
+    >
+      <BlockStack gap="400">
+        <UserList />
+      </BlockStack>
 
-      {showAddForm && (
-        <AddUserForm onClose={() => setShowAddForm(false)} />
-      )}
-
-      <UserList />
-    </div>
+      <Modal
+        open={showAddForm}
+        onClose={() => setShowAddForm(false)}
+        title="Add new user"
+        primaryAction={{
+          content: 'Save User',
+          onAction: () => {
+            document.getElementById('add-user-form')?.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+          },
+        }}
+        secondaryActions={[
+          {
+            content: 'Cancel',
+            onAction: () => setShowAddForm(false),
+          },
+        ]}
+      >
+        <Modal.Section>
+          <AddUserForm onClose={() => setShowAddForm(false)} />
+        </Modal.Section>
+      </Modal>
+    </Page>
   );
 }
