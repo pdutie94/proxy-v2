@@ -132,6 +132,26 @@ export function useProxies() {
     },
   });
 
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const res = await fetch('/api/proxies/bulk-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids }),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message);
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['proxies'] });
+      toast.success(data.message);
+    },
+    onError: (error: any) => {
+      toast.error(error.message);
+    },
+  });
+
   return {
     proxies: proxiesQuery.data || [],
     isLoading: proxiesQuery.isLoading,
@@ -139,6 +159,7 @@ export function useProxies() {
     bulkCreateMutation,
     updateMutation,
     deleteMutation,
+    bulkDeleteMutation,
     rotateProxyMutation,
     checkGoogleMutation,
   };

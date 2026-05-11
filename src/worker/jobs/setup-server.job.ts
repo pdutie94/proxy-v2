@@ -113,7 +113,7 @@ pkill -f "gost.*:\$PORT"
 
 if [ "\$TYPE" == "ipv4" ]; then
     # Chế độ IPv4: Không thêm IPv6, không dùng ip6tables
-    runuser -u "\$LINUX_USER" -- gost -L "socks5://\$USER:\$PASS@:\$PORT" -F "direct://?prefer=ipv4" >> /var/log/gost.log 2>&1 &
+    runuser -u "\$LINUX_USER" -- gost -L "socks5://\$USER:\$PASS@:\$PORT?udp=true" -F "direct://?prefer=ipv4" >> /var/log/gost.log 2>&1 &
     echo "\$PORT|ipv4|\$MARK" >> /root/proxy-ipv6.txt
 else
     # Chế độ IPv6: Mặc định
@@ -121,7 +121,7 @@ else
     ip -6 addr add \$IPV6/64 dev eth0 nodad
     ip6tables -t mangle -A OUTPUT -m owner --uid-owner "\$LINUX_UID" -j MARK --set-mark "\$MARK"
     ip6tables -t nat -A POSTROUTING -m mark --mark "\$MARK" -j SNAT --to-source "\$IPV6"
-    runuser -u "\$LINUX_USER" -- gost -L "socks5://\$USER:\$PASS@:\$PORT" -F "direct://?prefer=ipv6" >> /var/log/gost.log 2>&1 &
+    runuser -u "\$LINUX_USER" -- gost -L "socks5://\$USER:\$PASS@:\$PORT?udp=true" -F "direct://?prefer=ipv6" >> /var/log/gost.log 2>&1 &
     echo "\$PORT|\$IPV6|\$MARK" >> /root/proxy-ipv6.txt
 fi
 
@@ -199,7 +199,7 @@ while IFS='|' read -r PORT IP MARK; do
     U=\$(echo \$CRE | cut -d: -f3)
     P=\$(echo \$CRE | cut -d: -f4)
     [ -z "\$U" ] && continue
-    runuser -u "\$LINUX_USER" -- gost -L "socks5://\$U:\$P@:\$PORT" -F "direct://?prefer=ipv6" >> /var/log/gost.log 2>&1 &
+    runuser -u "\$LINUX_USER" -- gost -L "socks5://\$U:\$P@:\$PORT?udp=true" -F "direct://?prefer=ipv6" >> /var/log/gost.log 2>&1 &
   fi
 done < /root/proxy-ipv6.txt
 EOF`;

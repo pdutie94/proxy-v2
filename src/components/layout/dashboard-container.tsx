@@ -58,6 +58,9 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
     />
   );
 
+  const userRole = (session?.user as any)?.role || "USER";
+  const isAdmin = userRole === "ADMIN";
+
   const navigationMarkup = (
     <Navigation location={pathname}>
       <Navigation.Section
@@ -68,43 +71,53 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
             url: "/dashboard",
             selected: pathname === "/dashboard",
           },
-          {
-            label: "Máy chủ",
-            icon: OrderIcon,
-            url: "/dashboard/servers",
-            selected: pathname.startsWith("/dashboard/servers"),
-          },
-          {
-            label: "Proxy",
-            icon: ShieldCheckMarkIcon,
-            url: "/dashboard/proxies",
-            selected: pathname.startsWith("/dashboard/proxies"),
-          },
-          {
-            label: "Người dùng",
-            icon: PersonIcon,
-            url: "/dashboard/users",
-            selected: pathname.startsWith("/dashboard/users"),
-          },
-          {
-            label: "Nhật ký hệ thống",
-            icon: NoteIcon,
-            url: "/dashboard/logs",
-            selected: pathname.startsWith("/dashboard/logs"),
-          },
+          ...(isAdmin ? [
+            {
+              label: "Máy chủ",
+              icon: OrderIcon,
+              url: "/dashboard/servers",
+              selected: pathname.startsWith("/dashboard/servers"),
+            },
+          ] : []),
+          ...(isAdmin || userRole === "MODERATOR" ? [
+            {
+              label: "Proxy",
+              icon: ShieldCheckMarkIcon,
+              url: "/dashboard/proxies",
+              selected: pathname.startsWith("/dashboard/proxies"),
+            },
+          ] : []),
+          ...(isAdmin ? [
+            {
+              label: "Người dùng",
+              icon: PersonIcon,
+              url: "/dashboard/users",
+              selected: pathname.startsWith("/dashboard/users"),
+            },
+          ] : []),
+          ...(isAdmin || userRole === "MODERATOR" ? [
+            {
+              label: "Nhật ký hệ thống",
+              icon: NoteIcon,
+              url: "/dashboard/logs",
+              selected: pathname.startsWith("/dashboard/logs"),
+            },
+          ] : []),
         ]}
       />
-      <Navigation.Section
-        separator
-        items={[
-          {
-            label: "Cài đặt",
-            icon: SettingsIcon,
-            url: "/dashboard/settings",
-            selected: pathname.startsWith("/dashboard/settings"),
-          },
-        ]}
-      />
+      {isAdmin && (
+        <Navigation.Section
+          separator
+          items={[
+            {
+              label: "Cài đặt",
+              icon: SettingsIcon,
+              url: "/dashboard/settings",
+              selected: pathname.startsWith("/dashboard/settings"),
+            },
+          ]}
+        />
+      )}
     </Navigation>
   );
 

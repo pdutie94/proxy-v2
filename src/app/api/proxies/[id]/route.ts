@@ -9,6 +9,11 @@ export async function DELETE(
   const session = await auth();
   if (!session) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
 
+  const userRole = (session?.user as any)?.role || "USER";
+  if (userRole !== "ADMIN") {
+    return NextResponse.json({ success: false, message: 'Bạn không có quyền xóa Proxy' }, { status: 403 });
+  }
+
   try {
     const { id } = await params;
     await proxyService.deleteProxy(id);

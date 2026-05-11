@@ -223,6 +223,48 @@ export class ProxyService {
 
     return proxy;
   }
+
+  async bulkDelete(ids: string[]) {
+    const proxies = await prisma.proxy.findMany({
+      where: { id: { in: ids } },
+      include: { server: true }
+    });
+
+    if (proxies.length === 0) return;
+
+    const { addJob } = await import('@/worker/queue/job.queue');
+
+    // Create jobs and delete in a transaction
+    await prisma.$transaction(async (tx) => {
+      for (const proxy of proxies) {
+        // 1. Create a job record
+        const job = await tx.serverJob.create({
+          data: {
+            type: JobType.DELETE_PROXY,
+            serverId: proxy.serverId,
+            proxyId: proxy.id,
+            status: 'WAITING',
+          },
+        });
+
+        // 2. Dispatch job
+        try {
+          await addJob(JobType.DELETE_PROXY, {
+            port: proxy.port,
+            serverId: proxy.serverId,
+            jobId: job.id,
+          });
+        } catch (error) {
+          console.error(`[ProxyService] Failed to dispatch delete job for port ${proxy.port}`, error);
+        }
+      }
+
+      // 3. Delete from DB
+      await tx.proxy.deleteMany({
+        where: { id: { in: ids } }
+      });
+    });
+  }
 }
 
 export const proxyService = new ProxyService();

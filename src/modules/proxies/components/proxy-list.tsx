@@ -22,6 +22,7 @@ import { format } from "date-fns";
 import { Proxy, Server } from '@prisma/client';
 import { useState, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
+import { useSession } from 'next-auth/react';
 
 interface ProxyWithServer extends Proxy {
   server: Server;
@@ -32,9 +33,12 @@ interface ProxyListProps {
 }
 
 export function ProxyList({ onEdit }: ProxyListProps) {
-  const { proxies, isLoading, deleteMutation, rotateProxyMutation, checkGoogleMutation } = useProxies();
+  const { proxies, isLoading, deleteMutation, bulkDeleteMutation, rotateProxyMutation, checkGoogleMutation } = useProxies();
+  const { data: session } = useSession();
+  const userRole = (session?.user as any)?.role || "USER";
+  const canDelete = userRole === "ADMIN";
+
   const { servers } = useServers();
-  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   // Filters State
   const { mode, setMode } = useSetIndexFiltersMode();
@@ -94,7 +98,40 @@ export function ProxyList({ onEdit }: ProxyListProps) {
 
   const allResourcesSelected = useMemo(() => {
     return filteredProxies.length > 0 && selectedResources.length === filteredProxies.length;
-  }, [filteredProxies, selectedResources]);
+  }, [selectedResources, filteredProxies]);
+
+  const clearSelection = useCallback(() => setSelectedResources([]), []);
+
+  const [activeDeleteModal, setActiveDeleteModal] = useState(false);
+  const [proxyToDelete, setProxyToDelete] = useState<string | null>(null);
+  const [isBulkDelete, setIsBulkDelete] = useState(false);
+
+  const handleDeleteClick = (id: string) => {
+    setProxyToDelete(id);
+    setIsBulkDelete(false);
+    setActiveDeleteModal(true);
+  };
+
+  const handleBulkDeleteClick = () => {
+    setIsBulkDelete(true);
+    setProxyToDelete(null);
+    setActiveDeleteModal(true);
+  };
+
+  const confirmDelete = () => {
+    if (isBulkDelete) {
+      bulkDeleteMutation.mutate(selectedResources, {
+        onSuccess: () => {
+          clearSelection();
+          setActiveDeleteModal(false);
+        }
+      });
+    } else if (proxyToDelete) {
+      deleteMutation.mutate(proxyToDelete, {
+        onSuccess: () => setActiveDeleteModal(false)
+      });
+    }
+  };
 
   const indeterminate = useMemo(() => {
     return selectedResources.length > 0 && selectedResources.length < filteredProxies.length;
@@ -125,13 +162,7 @@ export function ProxyList({ onEdit }: ProxyListProps) {
     setSelectedResources([]);
   }, [selectedResources, checkGoogleMutation]);
 
-  const handleDelete = useCallback(() => {
-    if (deleteId) {
-      deleteMutation.mutate(deleteId, {
-        onSuccess: () => setDeleteId(null),
-      });
-    }
-  }, [deleteId, deleteMutation]);
+
 
   if (isLoading) {
     return (
@@ -172,7 +203,7 @@ export function ProxyList({ onEdit }: ProxyListProps) {
             <Button icon={SearchIcon} variant="tertiary" onClick={() => checkGoogleMutation.mutate(proxy.id)} loading={checkGoogleMutation.isPending && checkGoogleMutation.variables === proxy.id} disabled={proxy.status !== 'ACTIVE'} />
             <Button icon={RefreshIcon} variant="tertiary" onClick={() => rotateProxyMutation.mutate(proxy.id)} loading={rotateProxyMutation.isPending && rotateProxyMutation.variables === proxy.id} disabled={proxy.status !== 'ACTIVE'} />
             <Button icon={EditIcon} variant="tertiary" onClick={() => onEdit(proxy)} />
-            <Button icon={DeleteIcon} variant="tertiary" tone="critical" onClick={() => setDeleteId(proxy.id)} />
+            {canDelete && <Button icon={DeleteIcon} variant="tertiary" tone="critical" onClick={() => handleDeleteClick(proxy.id)} />}
           </InlineStack>
         </IndexTable.Cell>
       </IndexTable.Row>
@@ -180,7 +211,7 @@ export function ProxyList({ onEdit }: ProxyListProps) {
   );
 
   return (
-    <>
+    <Box paddingBlockEnd="400">
       <Box paddingBlockEnd="400">
         <InlineStack align="space-between">
           <InlineStack gap="200">
@@ -200,6 +231,15 @@ export function ProxyList({ onEdit }: ProxyListProps) {
                 >
                   Check Google {selectedResources.length} Proxy
                 </Button>
+                {canDelete && (
+                  <Button 
+                    icon={DeleteIcon} 
+                    tone="critical"
+                    onClick={handleBulkDeleteClick}
+                  >
+                    Xóa {selectedResources.length} Proxy
+                  </Button>
+                )}
               </>
             )}
           </InlineStack>
@@ -277,21 +317,25 @@ export function ProxyList({ onEdit }: ProxyListProps) {
       </Card>
 
       <Modal
-        open={!!deleteId}
-        onClose={() => setDeleteId(null)}
-        title="Xác nhận xóa Proxy?"
+        open={activeDeleteModal}
+        onClose={() => setActiveDeleteModal(false)}
+        title={isBulkDelete ? "Xác nhận xóa hàng loạt?" : "Xác nhận xóa Proxy?"}
         primaryAction={{
-          content: 'Xóa Proxy',
-          onAction: handleDelete,
+          content: 'Xóa',
+          onAction: confirmDelete,
           destructive: true,
-          loading: deleteMutation.isPending,
+          loading: deleteMutation.isPending || bulkDeleteMutation.isPending,
         }}
-        secondaryActions={[{ content: 'Hủy bỏ', onAction: () => setDeleteId(null) }]}
+        secondaryActions={[{ content: 'Hủy bỏ', onAction: () => setActiveDeleteModal(false) }]}
       >
         <Modal.Section>
-          <Text as="p">Bạn có chắc chắn muốn xóa Proxy này? Cấu hình sẽ bị gỡ bỏ khỏi máy chủ và không thể khôi phục.</Text>
+          <Text as="p">
+            {isBulkDelete 
+              ? `Bạn có chắc chắn muốn xóa ${selectedResources.length} Proxy đã chọn? Cấu hình sẽ bị gỡ bỏ khỏi máy chủ và không thể khôi phục.`
+              : "Bạn có chắc chắn muốn xóa Proxy này? Cấu hình sẽ bị gỡ bỏ khỏi máy chủ và không thể khôi phục."}
+          </Text>
         </Modal.Section>
       </Modal>
-    </>
+    </Box>
   );
 }

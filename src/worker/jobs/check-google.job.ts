@@ -36,9 +36,9 @@ export async function processCheckGoogle(job: Job) {
 
     // 2. Thực hiện lệnh kiểm tra qua proxy
     const searchUrl = 'https://www.google.com/search?q=test_proxy_health_' + Math.random().toString(36).substring(7);
-    const apiUrl = 'https://aisandbox-pa.googleapis.com/v1/video:batchAsyncGenerateVideoText'; // Endpoint khách hay bị block
+    const apiUrl = 'https://aisandbox-pa.googleapis.com/v1:batchLog'; // Endpoint mới từ screenshot khách gửi
     
-    await addLog(`Bắt đầu kiểm tra đa điểm Google...`);
+    await addLog(`Bắt đầu kiểm tra đa điểm Google AI...`);
 
     // Kiểm tra Google Search
     const searchCmd = `curl -s -L -o /dev/null -w "%{http_code}" -x socks5h://${proxy.username}:${proxy.password}@${proxy.server.host}:${proxy.port} "${searchUrl}"`;
@@ -47,27 +47,27 @@ export async function processCheckGoogle(job: Job) {
     const searchCode = searchResult.stdout.trim();
     await addLog(`-> Phản hồi Search: ${searchCode}`);
 
-    // Kiểm tra Google API
-    const apiCmd = `curl -s -L -o /dev/null -w "%{http_code}" -x socks5h://${proxy.username}:${proxy.password}@${proxy.server.host}:${proxy.port} "${apiUrl}"`;
-    await addLog(`[2/2] Check Google API (aisandbox-pa)...`);
+    // Kiểm tra Google AI API
+    const apiCmd = `curl -s -L -o /dev/null -w "%{http_code}" -X POST -H "Content-Type: application/json" -d '{"appEvents":[]}' -x socks5h://${proxy.username}:${proxy.password}@${proxy.server.host}:${proxy.port} "${apiUrl}"`;
+    await addLog(`[2/2] Check Google AI API (batchLog)...`);
     const apiResult = await ssh.execute(apiCmd);
     const apiCode = apiResult.stdout.trim();
     await addLog(`-> Phản hồi API: ${apiCode}`);
 
     // Đánh giá tổng thể
     let finalResult = '';
-    // 401/400/404 ở API là bình thường vì ta curl không có token/payload, miễn không phải 403/429
+    // 200 ở batchLog là sạch, 403/429 là bị chặn, 400 có thể là do payload giả lập nhưng vẫn là dấu hiệu kết nối được
     const isSearchOk = searchCode === '200';
     const isApiOk = !['403', '429', '000'].includes(apiCode);
 
     if (isSearchOk && isApiOk) {
-      finalResult = 'KẾT QUẢ: Proxy SẠCH. Hoạt động tốt với Google Search và API.';
+      finalResult = 'KẾT QUẢ: Proxy SẠCH. Hoạt động tốt với Google Search và AI API.';
     } else if (searchCode === '403' || searchCode === '429' || apiCode === '403' || apiCode === '429') {
-      finalResult = 'KẾT QUẢ: Proxy bị CHẶN (Blocked/UNUSUAL_ACTIVITY). Không dùng được cho Veo 3.';
+      finalResult = 'KẾT QUẢ: Proxy bị CHẶN (Blocked/UNUSUAL_ACTIVITY). Hãy Rotate ngay!';
     } else if (searchCode === '000' || apiCode === '000') {
-      finalResult = 'KẾT QUẢ: LỖI KẾT NỐI. Proxy có thể đang offline.';
+      finalResult = 'KẾT QUẢ: LỖI KẾT NỐI. Proxy có thể đang offline hoặc server chặn port.';
     } else {
-      finalResult = `KẾT QUẢ: CẢNH BÁO. Phản hồi không xác định (Search:${searchCode}, API:${apiCode}).`;
+      finalResult = `KẾT QUẢ: CẢNH BÁO. Phản hồi không xác định (Search:${searchCode}, AI-API:${apiCode}).`;
     }
 
     await addLog(finalResult);

@@ -106,6 +106,7 @@ export const AddUserForm = forwardRef<AddUserFormRef, AddUserFormProps>(
                   label="Vai trò hệ thống"
                   options={[
                     { label: 'Người dùng', value: 'USER' },
+                    { label: 'Điều hành viên (Moderator)', value: 'MODERATOR' },
                     { label: 'Quản trị viên', value: 'ADMIN' },
                   ]}
                   onChange={field.onChange}
