@@ -192,7 +192,7 @@ export function ProxyList({ onEdit }: ProxyListProps) {
         </IndexTable.Cell>
         <IndexTable.Cell>
           <Badge tone={proxy.status === 'ACTIVE' ? 'success' : proxy.status === 'CREATING' ? 'attention' : 'critical'}>
-            {proxy.status === 'ACTIVE' ? 'HOẠT ĐỘNG' : proxy.status === 'CREATING' ? 'ĐANG KHỞI TẠO' : 'LỖI'}
+            {proxy.status === 'ACTIVE' ? 'Hoạt động' : proxy.status === 'CREATING' ? 'Đang khởi tạo' : 'Lỗi'}
           </Badge>
         </IndexTable.Cell>
         <IndexTable.Cell>

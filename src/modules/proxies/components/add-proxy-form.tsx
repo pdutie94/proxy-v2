@@ -14,9 +14,16 @@ import {
   Box,
   Icon,
   ChoiceList,
-  Button
+  Button,
+  InlineGrid,
+  BlockStack,
+  Text,
+  ButtonGroup,
+  Label,
+  Tooltip,
+  InlineStack
 } from "@shopify/polaris";
-import { CalendarIcon, RefreshIcon } from "@shopify/polaris-icons";
+import { CalendarIcon, RefreshIcon, InfoIcon } from "@shopify/polaris-icons";
 import { useCallback, useState, useMemo, forwardRef, useImperativeHandle, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Proxy } from '@prisma/client';
@@ -143,7 +150,16 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
               control={form.control}
               render={({ field }) => (
                 <TextField
-                  label="Số lượng Proxy"
+                  label={
+                    <InlineStack gap="100">
+                      <Text as="span">Số lượng Proxy</Text>
+                      {!proxy && (
+                        <Tooltip content="Tối đa 1000 proxy một lần tạo">
+                          <Icon source={InfoIcon} color="subdued" />
+                        </Tooltip>
+                      )}
+                    </InlineStack>
+                  }
                   type="number"
                   autoComplete="off"
                   placeholder="10"
@@ -151,7 +167,6 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
                   onChange={(val) => field.onChange(parseInt(val))}
                   error={form.formState.errors.count?.message}
                   disabled={!!proxy}
-                  helpText={!proxy ? "Tối đa 1000 proxy một lần tạo" : "Đang ở chế độ chỉnh sửa"}
                 />
               )}
             />
@@ -163,14 +178,22 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
               control={form.control}
               render={({ field }) => (
                 <TextField
-                  label={proxy ? "Cổng (Port)" : "Cổng bắt đầu"}
+                  label={
+                    <InlineStack gap="100">
+                      <Text as="span">{proxy ? "Cổng (Port)" : "Cổng bắt đầu"}</Text>
+                      {!proxy && (
+                        <Tooltip content="Các port sẽ được tăng dần từ cổng này">
+                          <Icon source={InfoIcon} color="subdued" />
+                        </Tooltip>
+                      )}
+                    </InlineStack>
+                  }
                   type="number"
                   autoComplete="off"
                   placeholder="10000"
                   value={field.value?.toString()}
                   onChange={(val) => field.onChange(parseInt(val))}
                   error={form.formState.errors.startPort?.message}
-                  helpText={!proxy ? "Các port sẽ được tăng dần từ cổng này" : ""}
                 />
               )}
             />
@@ -213,15 +236,25 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
               name="ipType"
               control={form.control}
               render={({ field }) => (
-                <ChoiceList
-                  title="Loại IP Outbound"
-                  choices={[
-                    { label: 'IPv4 (Dùng IP Server)', value: 'IPv4' },
-                    { label: 'IPv6 (Xoay IP ngẫu nhiên)', value: 'IPv6' },
-                  ]}
-                  selected={[field.value]}
-                  onChange={(val) => field.onChange(val[0])}
-                />
+                <BlockStack gap="100">
+                  <Label id="ipType">Loại IP Outbound</Label>
+                  <ButtonGroup variant="segmented">
+                    <Button 
+                      pressed={field.value === 'IPv4'} 
+                      onClick={() => field.onChange('IPv4')}
+                      size="large"
+                    >
+                      IPv4
+                    </Button>
+                    <Button 
+                      pressed={field.value === 'IPv6'} 
+                      onClick={() => field.onChange('IPv6')}
+                      size="large"
+                    >
+                      IPv6
+                    </Button>
+                  </ButtonGroup>
+                </BlockStack>
               )}
             />
           </FormLayout.Group>

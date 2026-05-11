@@ -53,7 +53,10 @@ UseAutonomousPrefix=no
 UseOnLinkPrefix=yes
 EOF`,
       "systemctl restart systemd-networkd",
-      "apt update && apt install -y iptables-persistent curl xxd dos2unix lsof wget iproute2",
+      "export DEBIAN_FRONTEND=noninteractive",
+      "echo 'iptables-persistent iptables-persistent/autosave_v4 boolean true' | debconf-set-selections",
+      "echo 'iptables-persistent iptables-persistent/autosave_v6 boolean true' | debconf-set-selections",
+      "apt-get update && apt-get install -y -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold' iptables-persistent curl xxd dos2unix lsof wget iproute2",
       "ip -6 route add default via fe80::1 dev eth0 2>/dev/null", // Ensure IPv6 Route
       `cat >> /etc/sysctl.conf << 'EOF'
 net.ipv6.conf.all.autoconf=0
