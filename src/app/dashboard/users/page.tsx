@@ -33,7 +33,6 @@ export default function UsersPage() {
 
   return (
     <Page
-      fullWidth
       title="Người dùng"
       subtitle="Quản lý danh sách quản trị viên và người vận hành hệ thống"
       primaryAction={{

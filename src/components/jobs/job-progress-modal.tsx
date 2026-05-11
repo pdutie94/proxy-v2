@@ -99,10 +99,10 @@ export const JobProgressModal = ({ jobId, open, onClose, onCompleted }: JobProgr
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'COMPLETED': return <Badge tone="success">Thành công</Badge>;
-      case 'FAILED': return <Badge tone="critical">Thất bại</Badge>;
-      case 'ACTIVE': return <Badge tone="info">Đang chạy</Badge>;
-      default: return <Badge>Đang chờ</Badge>;
+      case 'COMPLETED': return <Badge tone="success">THÀNH CÔNG</Badge>;
+      case 'FAILED': return <Badge tone="critical">THẤT BẠI</Badge>;
+      case 'ACTIVE': return <Badge tone="info">ĐANG CHẠY</Badge>;
+      default: return <Badge>ĐANG CHỜ</Badge>;
     }
   };
 

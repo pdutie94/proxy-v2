@@ -2,7 +2,7 @@
 
 import { 
   Page, 
-  Card, 
+  LegacyCard, 
   IndexTable, 
   Text, 
   Badge, 
@@ -12,17 +12,46 @@ import {
   Modal,
   Scrollable,
   InlineStack,
-  SkeletonBodyText
+  SkeletonBodyText,
+  IndexFilters,
+  IndexFiltersMode,
+  useBreakpoints,
+  Tooltip,
 } from "@shopify/polaris";
 import { ViewIcon, DeleteIcon } from "@shopify/polaris-icons";
 import { format } from "date-fns";
 import { useLogs } from "@/hooks/use-logs";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 
 export default function LogsPage() {
-  const { logs, isLoading, clearLogs, isClearing } = useLogs(100); // Lấy nhiều hơn để xem
+  const { logs, isLoading, clearLogs, isClearing } = useLogs(500); 
+  const { smDown } = useBreakpoints();
   const [selectedLog, setSelectedLog] = useState<any>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  
+  const [selectedTab, setSelectedTab] = useState(0);
+  const [page, setPage] = useState(1);
+  const itemsPerPage = 20;
+
+  const tabs = [
+    { id: 'all', content: 'Tất cả' },
+    { id: 'completed', content: 'Thành công' },
+    { id: 'failed', content: 'Thất bại' },
+    { id: 'active', content: 'Đang chạy' },
+  ];
+
+  const filteredLogs = useMemo(() => {
+    return logs.filter((log: any) => {
+      if (selectedTab === 1 && log.status !== 'COMPLETED') return false;
+      if (selectedTab === 2 && log.status !== 'FAILED') return false;
+      if (selectedTab === 3 && log.status !== 'ACTIVE') return false;
+      return true;
+    });
+  }, [logs, selectedTab]);
+
+  const totalPages = Math.ceil(filteredLogs.length / itemsPerPage);
+  const startIndex = (page - 1) * itemsPerPage;
+  const paginatedLogs = filteredLogs.slice(startIndex, startIndex + itemsPerPage);
 
   const getJobTitle = (job: any) => {
     switch (job.type) {
@@ -40,10 +69,10 @@ export default function LogsPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'COMPLETED': return <Badge tone="success">THÀNH CÔNG</Badge>;
-      case 'FAILED': return <Badge tone="critical">THẤT BẠI</Badge>;
-      case 'ACTIVE': return <Badge tone="attention">ĐANG CHẠY</Badge>;
-      default: return <Badge tone="info">ĐANG CHỜ</Badge>;
+      case 'COMPLETED': return <Badge tone="success">Thành công</Badge>;
+      case 'FAILED': return <Badge tone="critical">Thất bại</Badge>;
+      case 'ACTIVE': return <Badge tone="attention">Đang chạy</Badge>;
+      default: return <Badge tone="info">Đang chờ</Badge>;
     }
   };
 
@@ -55,14 +84,42 @@ export default function LogsPage() {
   if (isLoading) {
     return (
       <Page title="Nhật ký hệ thống">
-        <Card>
+        <LegacyCard>
           <Box padding="400">
             <SkeletonBodyText lines={10} />
           </Box>
-        </Card>
+        </LegacyCard>
       </Page>
     );
   }
+
+  const rowMarkup = paginatedLogs.map((log: any, index: number) => (
+    <IndexTable.Row id={log.id} key={log.id} position={index}>
+      <IndexTable.Cell>
+        <Text as="span" variant="bodySm">
+          {format(new Date(log.createdAt), 'dd/MM/yyyy HH:mm:ss')}
+        </Text>
+      </IndexTable.Cell>
+      <IndexTable.Cell>
+        <Text as="span" fontWeight="medium">{getJobTitle(log)}</Text>
+      </IndexTable.Cell>
+      <IndexTable.Cell>{log.server?.name || '-'}</IndexTable.Cell>
+      <IndexTable.Cell>
+        {getStatusBadge(log.status)}
+      </IndexTable.Cell>
+      <IndexTable.Cell>
+        <InlineStack align="end">
+          <Tooltip content="Xem chi tiết">
+            <Button 
+              icon={ViewIcon} 
+              variant="tertiary" 
+              onClick={() => setSelectedLog(log)}
+            />
+          </Tooltip>
+        </InlineStack>
+      </IndexTable.Cell>
+    </IndexTable.Row>
+  ));
 
   return (
     <Page 
@@ -76,63 +133,43 @@ export default function LogsPage() {
         disabled: logs.length === 0
       }}
     >
-      <Card padding="0">
+      <LegacyCard>
+        <IndexFilters
+          tabs={tabs}
+          selected={selectedTab}
+          onSelect={(index) => {
+            setSelectedTab(index);
+            setPage(1);
+          }}
+          mode={IndexFiltersMode.Filtering}
+          setMode={() => {}}
+          filters={[]}
+          onClearAll={() => {}}
+          hideFilters
+          hideQueryField
+        />
         <IndexTable
           resourceName={{ singular: 'nhật ký', plural: 'nhật ký' }}
-          itemCount={logs.length}
+          itemCount={filteredLogs.length}
           headings={[
             { title: 'Thời gian' },
             { title: 'Loại công việc' },
             { title: 'Máy chủ' },
             { title: 'Trạng thái' },
-            { title: 'Hành động', alignment: 'end' },
+            { title: 'Thao tác', alignment: 'end' },
           ]}
           selectable={false}
+          pagination={{
+            hasNext: page < totalPages,
+            hasPrevious: page > 1,
+            onNext: () => setPage(page + 1),
+            onPrevious: () => setPage(page - 1),
+          }}
         >
-          {logs.length === 0 ? (
-            <IndexTable.Row id="empty" position={0}>
-              <IndexTable.Cell colSpan={5}>
-                <Box padding="1000">
-                  <EmptyState
-                    heading="Chưa có nhật ký nào"
-                    image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png"
-                  >
-                    <p>Các hoạt động thiết lập máy chủ và khởi tạo proxy sẽ được hiển thị tại đây.</p>
-                  </EmptyState>
-                </Box>
-              </IndexTable.Cell>
-            </IndexTable.Row>
-          ) : (
-            logs.map((log: any, index: number) => (
-              <IndexTable.Row id={log.id} key={log.id} position={index}>
-                <IndexTable.Cell>
-                  <Text as="span" variant="bodySm">
-                    {format(new Date(log.createdAt), 'dd/MM/yyyy HH:mm:ss')}
-                  </Text>
-                </IndexTable.Cell>
-                <IndexTable.Cell>
-                  <Text as="span" fontWeight="medium">{getJobTitle(log)}</Text>
-                </IndexTable.Cell>
-                <IndexTable.Cell>{log.server?.name || '-'}</IndexTable.Cell>
-                <IndexTable.Cell>
-                  {getStatusBadge(log.status)}
-                </IndexTable.Cell>
-                <IndexTable.Cell>
-                  <InlineStack align="end">
-                    <Button 
-                      icon={ViewIcon} 
-                      variant="tertiary" 
-                      onClick={() => setSelectedLog(log)}
-                    />
-                  </InlineStack>
-                </IndexTable.Cell>
-              </IndexTable.Row>
-            ))
-          )}
+          {rowMarkup}
         </IndexTable>
-      </Card>
+      </LegacyCard>
 
-      {/* Modal xem chi tiết log */}
       <Modal
         open={!!selectedLog}
         onClose={() => setSelectedLog(null)}
@@ -157,7 +194,6 @@ export default function LogsPage() {
         </Modal.Section>
       </Modal>
 
-      {/* Modal xác nhận xóa sạch log */}
       <Modal
         open={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}

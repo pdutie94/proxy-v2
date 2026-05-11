@@ -3,20 +3,22 @@
 import { useServers } from '@/hooks/use-servers';
 import { 
   IndexTable, 
-  Card, 
-  Badge, 
-  Text, 
-  Button, 
+  Card,
+  LegacyCard,
+  Badge,
+  Text,
+  Button,
   Box,
   SkeletonBodyText,
   InlineStack,
   Modal,
   Tooltip,
-  BlockStack
+  BlockStack,
+  useBreakpoints
 } from "@shopify/polaris";
-import { DeleteIcon, EditIcon, PlayIcon, RefreshIcon } from "@shopify/polaris-icons";
+import { DeleteIcon, EditIcon, PlayIcon, RefreshIcon, ResetIcon } from "@shopify/polaris-icons";
 import { Server } from '@prisma/client';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { JobProgressModal } from '@/components/jobs/job-progress-modal';
 
 interface ServerListProps {
@@ -25,14 +27,31 @@ interface ServerListProps {
 
 export function ServerList({ onEdit }: ServerListProps) {
   const { servers, isLoading, deleteMutation, setupMutation, resetMutation, syncMutation } = useServers();
+  const { smDown } = useBreakpoints();
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
   const [activeConfirmServer, setActiveConfirmServer] = useState<Server | null>(null);
+  const [page, setPage] = useState(1);
+  const [sortSelected, setSortSelected] = useState(['id desc']);
+  const itemsPerPage = 10;
 
-  const resourceName = {
-    singular: 'máy chủ',
-    plural: 'máy chủ',
-  };
+  const sortedServers = useMemo(() => {
+    let result = [...servers];
+    if (sortSelected.length > 0) {
+      const [key, direction] = sortSelected[0].split(' ');
+      result.sort((a, b) => {
+        const valA = a[key as keyof Server]?.toString().toLowerCase() || '';
+        const valB = b[key as keyof Server]?.toString().toLowerCase() || '';
+        if (valA < valB) return direction === 'asc' ? -1 : 1;
+        if (valA > valB) return direction === 'asc' ? 1 : -1;
+        return 0;
+      });
+    } else {
+      // Default sort by id desc
+      result.sort((a, b) => (b.id > a.id ? 1 : -1));
+    }
+    return result;
+  }, [servers, sortSelected]);
 
   const handleDelete = useCallback(() => {
     if (deleteId) {
@@ -52,7 +71,16 @@ export function ServerList({ onEdit }: ServerListProps) {
     );
   }
 
-  const rowMarkup = servers.map(
+  const resourceName = {
+    singular: 'máy chủ',
+    plural: 'máy chủ',
+  };
+
+  const totalPages = Math.ceil(sortedServers.length / itemsPerPage);
+  const startIndex = (page - 1) * itemsPerPage;
+  const paginatedServers = sortedServers.slice(startIndex, startIndex + itemsPerPage);
+
+  const rowMarkup = paginatedServers.map(
     (server, index) => (
       <IndexTable.Row id={server.id} key={server.id} position={index}>
         <IndexTable.Cell>
@@ -68,10 +96,10 @@ export function ServerList({ onEdit }: ServerListProps) {
             (server.status as any) === 'PENDING' ? 'attention' : 
             'critical'
           }>
-            {(server.status as any) === 'ONLINE' ? 'TRỰC TUYẾN' : 
-             (server.status as any) === 'SETTING_UP' ? 'ĐANG CÀI ĐẶT' : 
-             (server.status as any) === 'PENDING' ? 'ĐANG CHỜ' : 
-             'LỖI'}
+            {(server.status as any) === 'ONLINE' ? 'Trực tuyến' : 
+             (server.status as any) === 'SETTING_UP' ? 'Đang cài đặt' : 
+             (server.status as any) === 'PENDING' ? 'Đang chờ' : 
+             'Lỗi'}
           </Badge>
         </IndexTable.Cell>
         <IndexTable.Cell>{server.maxProxies}</IndexTable.Cell>
@@ -93,7 +121,7 @@ export function ServerList({ onEdit }: ServerListProps) {
             </Tooltip>
             <Tooltip content="Reset Server (Xóa hết Proxy)">
               <Button 
-                icon={RefreshIcon} 
+                icon={ResetIcon} 
                 variant="tertiary" 
                 tone="critical"
                 onClick={() => resetMutation.mutate(server.id, {
@@ -136,23 +164,34 @@ export function ServerList({ onEdit }: ServerListProps) {
 
   return (
     <>
-      <Card padding="0">
+      <LegacyCard>
         <IndexTable
+          condensed={smDown}
           resourceName={resourceName}
-          itemCount={servers.length}
+          itemCount={sortedServers.length}
           headings={[
-            { title: 'Tên Máy chủ' },
-            { title: 'Địa chỉ IP' },
+            { title: 'Tên Máy chủ', id: 'name' },
+            { title: 'Địa chỉ IP', id: 'host' },
             { title: 'Trạng thái' },
             { title: 'Giới hạn Proxy' },
             { title: 'Cổng cuối (SV)' },
             { title: 'Thao tác', alignment: 'end' },
           ]}
           selectable={false}
+          sortable={[true, true, false, false, false, false]}
+          sortSelected={sortSelected}
+          onSort={setSortSelected}
+          pagination={{
+            hasNext: page < totalPages,
+            hasPrevious: page > 1,
+            onNext: () => setPage(page + 1),
+            onPrevious: () => setPage(page - 1),
+            label: "",
+          }}
         >
           {rowMarkup}
         </IndexTable>
-      </Card>
+      </LegacyCard>
 
       {/* Modal xác nhận xóa */}
       <Modal

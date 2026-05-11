@@ -4,10 +4,11 @@ import { useProxies } from '@/hooks/use-proxies';
 import { useServers } from '@/hooks/use-servers';
 import { 
   IndexTable, 
-  Card, 
-  Badge, 
-  Text, 
-  Button, 
+  Card,
+  LegacyCard,
+  Badge,
+  Text,
+  Button,
   Box,
   SkeletonBodyText,
   InlineStack,
@@ -16,11 +17,14 @@ import {
   useSetIndexFiltersMode,
   IndexFilters,
   TabProps,
+  useBreakpoints,
+  ChoiceList,
+  Tooltip,
 } from "@shopify/polaris";
 import { DeleteIcon, EditIcon, RefreshIcon, ClipboardIcon, SearchIcon } from "@shopify/polaris-icons";
 import { format } from "date-fns";
 import { Proxy, Server } from '@prisma/client';
-import { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { JobProgressModal } from '@/components/jobs/job-progress-modal';
 import { toast } from 'sonner';
 import { useSession } from 'next-auth/react';
@@ -34,6 +38,7 @@ interface ProxyListProps {
 }
 
 export function ProxyList({ onEdit }: ProxyListProps) {
+  const { smDown } = useBreakpoints();
   const { proxies, isLoading, deleteMutation, bulkDeleteMutation, rotateProxyMutation, checkGoogleMutation } = useProxies();
   const { data: session } = useSession();
   const userRole = (session?.user as any)?.role || "USER";
@@ -46,15 +51,24 @@ export function ProxyList({ onEdit }: ProxyListProps) {
   const [queryValue, setQueryValue] = useState('');
   const [status, setStatus] = useState<string[]>([]);
   const [selectedServerId, setSelectedServerId] = useState<string[]>([]);
+  const [itemStrings, setItemStrings] = useState(['Tất cả', 'Hoạt động', 'Đang tạo', 'Lỗi']);
   const [selectedTab, setSelectedTab] = useState(0);
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const itemsPerPage = 20;
 
-  const tabs: TabProps[] = useMemo(() => ['Tất cả', 'Hoạt động', 'Đang tạo', 'Lỗi'].map((item, index) => ({
+  const tabs: TabProps[] = useMemo(() => itemStrings.map((item, index) => ({
     content: item,
     index,
     id: `${item}-${index}`,
-    isLocked: index === 0,
-  })), []);
+    isLocked: index <= 3,
+  })), [itemStrings]);
+
+  const onCreateNewView = async (value: string) => {
+    setItemStrings([...itemStrings, value]);
+    setSelectedTab(itemStrings.length);
+    return true;
+  };
 
   const onHandleStatusChange = useCallback((value: string[]) => setStatus(value), []);
   const onHandleServerChange = useCallback((value: string[]) => setSelectedServerId(value), []);
@@ -63,26 +77,82 @@ export function ProxyList({ onEdit }: ProxyListProps) {
     setStatus([]);
     setSelectedServerId([]);
     setQueryValue('');
+    setPage(1);
   }, []);
 
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [selectedTab, queryValue, status, selectedServerId]);
+
+  const [sortSelected, setSortSelected] = useState(['id desc']);
+  const sortOptions: IndexFiltersProps['sortOptions'] = [
+    { label: 'ID', value: 'id asc', directionLabel: 'Cũ nhất' },
+    { label: 'ID', value: 'id desc', directionLabel: 'Mới nhất' },
+    { label: 'Port', value: 'port asc', directionLabel: 'Tăng dần' },
+    { label: 'Port', value: 'port desc', directionLabel: 'Giảm dần' },
+    { label: 'Hết hạn', value: 'expiresAt asc', directionLabel: 'Gần nhất' },
+    { label: 'Hết hạn', value: 'expiresAt desc', directionLabel: 'Xa nhất' },
+  ];
   const filteredProxies = useMemo(() => {
-    return (proxies as ProxyWithServer[]).filter((proxy) => {
-      if (selectedTab === 1 && proxy.status !== 'ACTIVE') return false;
-      if (selectedTab === 2 && proxy.status !== 'CREATING') return false;
-      if (selectedTab === 3 && proxy.status !== 'ERROR') return false;
-      if (queryValue && !proxy.port.toString().includes(queryValue) && !proxy.username.toLowerCase().includes(queryValue.toLowerCase())) return false;
-      if (status.length > 0 && !status.includes(proxy.status)) return false;
-      if (selectedServerId.length > 0 && !selectedServerId.includes(proxy.serverId)) return false;
+    let result = (proxies as ProxyWithServer[]).filter((proxy) => {
+      // Filter by dynamic tabs
+      const currentTabName = itemStrings[selectedTab];
+      if (currentTabName === 'Hoạt động' && proxy.status !== 'ACTIVE') return false;
+      if (currentTabName === 'Đang tạo' && proxy.status !== 'CREATING') return false;
+      if (currentTabName === 'Lỗi' && proxy.status !== 'ERROR') return false;
+
+      const queryLower = queryValue.toLowerCase();
+      if (queryValue && !proxy.port.toString().includes(queryValue) && !proxy.username.toLowerCase().includes(queryLower)) {
+        return false;
+      }
+
+      if (status.length > 0 && !status.includes(proxy.status)) {
+        return false;
+      }
+
+      if (selectedServerId.length > 0 && !selectedServerId.includes(proxy.serverId)) {
+        return false;
+      }
+
       return true;
     });
-  }, [proxies, selectedTab, queryValue, status, selectedServerId]);
+
+    // Handle Sorting
+    if (sortSelected.length > 0) {
+      const [key, direction] = sortSelected[0].split(' ');
+      result.sort((a, b) => {
+        let valA: any = a[key as keyof ProxyWithServer];
+        let valB: any = b[key as keyof ProxyWithServer];
+
+        // Handle numeric port
+        if (key === 'port') {
+          valA = parseInt(a.port.toString());
+          valB = parseInt(b.port.toString());
+        }
+
+        if (valA < valB) return direction === 'asc' ? -1 : 1;
+        if (valA > valB) return direction === 'asc' ? 1 : -1;
+        return 0;
+      });
+    } else {
+      // Default sort by id desc
+      result.sort((a, b) => (b.id > a.id ? 1 : -1));
+    }
+
+    return result;
+  }, [proxies, selectedTab, queryValue, status, selectedServerId, sortSelected, itemStrings]);
+
+  const totalPages = Math.ceil(filteredProxies.length / itemsPerPage);
+  const startIndex = (page - 1) * itemsPerPage;
+  const paginatedProxies = filteredProxies.slice(startIndex, startIndex + itemsPerPage);
 
   // MANUAL SELECTION LOGIC
   const [selectedResources, setSelectedResources] = useState<string[]>([]);
 
   const handleSelectionChange = useCallback((selectionType: any, isSelected: boolean, selection?: string | any) => {
     if (selectionType === 'all' || selectionType === 'page') {
-      setSelectedResources(isSelected ? filteredProxies.map(p => p.id) : []);
+      setSelectedResources(isSelected ? paginatedProxies.map(p => p.id) : []);
     } else if (selectionType === 'single') {
       const id = selection as string;
       setSelectedResources(prev => 
@@ -90,19 +160,23 @@ export function ProxyList({ onEdit }: ProxyListProps) {
       );
     } else if (selectionType === 'multi') {
       const [start, end] = selection as [number, number];
-      const sliceIds = filteredProxies.slice(start, end + 1).map(p => p.id);
+      const sliceIds = paginatedProxies.slice(start, end + 1).map(p => p.id);
       setSelectedResources(prev => {
         const otherIds = prev.filter(id => !sliceIds.includes(id));
         return isSelected ? [...otherIds, ...sliceIds] : otherIds;
       });
     }
-  }, [filteredProxies]);
+  }, [paginatedProxies]);
 
   const allResourcesSelected = useMemo(() => {
-    return filteredProxies.length > 0 && selectedResources.length === filteredProxies.length;
-  }, [selectedResources, filteredProxies]);
+    return paginatedProxies.length > 0 && selectedResources.length === paginatedProxies.length;
+  }, [selectedResources, paginatedProxies]);
 
   const clearSelection = useCallback(() => setSelectedResources([]), []);
+
+  useEffect(() => {
+    clearSelection();
+  }, [page, filteredProxies, clearSelection]);
 
   const [activeDeleteModal, setActiveDeleteModal] = useState(false);
   const [proxyToDelete, setProxyToDelete] = useState<string | null>(null);
@@ -136,8 +210,8 @@ export function ProxyList({ onEdit }: ProxyListProps) {
   };
 
   const indeterminate = useMemo(() => {
-    return selectedResources.length > 0 && selectedResources.length < filteredProxies.length;
-  }, [filteredProxies, selectedResources]);
+    return selectedResources.length > 0 && selectedResources.length < paginatedProxies.length;
+  }, [paginatedProxies, selectedResources]);
 
   const handleCopyProxies = useCallback(() => {
     const selectedProxies = filteredProxies.filter(p => selectedResources.includes(p.id));
@@ -164,6 +238,28 @@ export function ProxyList({ onEdit }: ProxyListProps) {
     setSelectedResources([]);
   }, [selectedResources, checkGoogleMutation]);
 
+  const promotedBulkActions = [
+    {
+      content: `Copy ${selectedResources.length} Proxy`,
+      onAction: handleCopyProxies,
+      icon: ClipboardIcon,
+    },
+    {
+      content: `Check Google`,
+      onAction: handleBulkCheckGoogle,
+      icon: SearchIcon,
+    },
+  ];
+
+  const bulkActions = [
+    {
+      content: 'Xóa đã chọn',
+      onAction: handleBulkDeleteClick,
+      icon: DeleteIcon,
+      destructive: true,
+    },
+  ];
+
 
 
   if (isLoading) {
@@ -176,7 +272,8 @@ export function ProxyList({ onEdit }: ProxyListProps) {
     );
   }
 
-  const rowMarkup = filteredProxies.map(
+
+  const rowMarkup = paginatedProxies.map(
     (proxy, index) => (
       <IndexTable.Row 
         id={proxy.id} 
@@ -194,7 +291,7 @@ export function ProxyList({ onEdit }: ProxyListProps) {
         </IndexTable.Cell>
         <IndexTable.Cell>
           <Badge tone={proxy.status === 'ACTIVE' ? 'success' : proxy.status === 'CREATING' ? 'attention' : 'critical'}>
-            {proxy.status === 'ACTIVE' ? 'Hoạt động' : proxy.status === 'CREATING' ? 'Đang khởi tạo' : 'Lỗi'}
+            {proxy.status === 'ACTIVE' ? 'Hoạt động' : proxy.status === 'CREATING' ? 'Đang tạo' : 'Lỗi'}
           </Badge>
         </IndexTable.Cell>
         <IndexTable.Cell>
@@ -202,69 +299,81 @@ export function ProxyList({ onEdit }: ProxyListProps) {
         </IndexTable.Cell>
         <IndexTable.Cell>
           <InlineStack align="end" gap="200">
-            <Button icon={SearchIcon} variant="tertiary" onClick={() => checkGoogleMutation.mutate(proxy.id, { onSuccess: (job) => setActiveJobId(job.id) })} loading={checkGoogleMutation.isPending && checkGoogleMutation.variables === proxy.id} disabled={proxy.status !== 'ACTIVE'} />
-            <Button icon={RefreshIcon} variant="tertiary" onClick={() => rotateProxyMutation.mutate(proxy.id, { onSuccess: (job) => setActiveJobId(job.id) })} loading={rotateProxyMutation.isPending && rotateProxyMutation.variables === proxy.id} disabled={proxy.status !== 'ACTIVE'} />
-            <Button icon={EditIcon} variant="tertiary" onClick={() => onEdit(proxy)} />
-            {canDelete && <Button icon={DeleteIcon} variant="tertiary" tone="critical" onClick={() => handleDeleteClick(proxy.id)} />}
+            <Tooltip content="Kiểm tra Google">
+              <Button icon={SearchIcon} variant="tertiary" onClick={() => checkGoogleMutation.mutate(proxy.id, { onSuccess: (job) => setActiveJobId(job.id) })} loading={checkGoogleMutation.isPending && checkGoogleMutation.variables === proxy.id} disabled={proxy.status !== 'ACTIVE'} />
+            </Tooltip>
+            <Tooltip content="Đổi IP (Rotate)">
+              <Button icon={RefreshIcon} variant="tertiary" onClick={() => rotateProxyMutation.mutate(proxy.id, { onSuccess: (job) => setActiveJobId(job.id) })} loading={rotateProxyMutation.isPending && rotateProxyMutation.variables === proxy.id} disabled={proxy.status !== 'ACTIVE'} />
+            </Tooltip>
+            <Tooltip content="Chỉnh sửa">
+              <Button icon={EditIcon} variant="tertiary" onClick={() => onEdit(proxy)} />
+            </Tooltip>
+            {canDelete && (
+              <Tooltip content="Xóa Proxy" tone="critical">
+                <Button icon={DeleteIcon} variant="tertiary" tone="critical" onClick={() => handleDeleteClick(proxy.id)} />
+              </Tooltip>
+            )}
           </InlineStack>
         </IndexTable.Cell>
       </IndexTable.Row>
     ),
   );
 
+
+  const appliedFilters: IndexFiltersProps['appliedFilters'] = [];
+  if (status.length > 0) {
+    appliedFilters.push({
+      key: 'status',
+      label: `Trạng thái: ${status.join(', ')}`,
+      onRemove: () => setStatus([]),
+    });
+  }
+  if (selectedServerId.length > 0) {
+    const serverNames = servers
+      .filter(s => selectedServerId.includes(s.id))
+      .map(s => s.name)
+      .join(', ');
+    appliedFilters.push({
+      key: 'serverId',
+      label: `Máy chủ: ${serverNames}`,
+      onRemove: () => setSelectedServerId([]),
+    });
+  }
+
   return (
     <Box paddingBlockEnd="400">
-      <Box paddingBlockEnd="400">
-        <InlineStack align="space-between">
-          <InlineStack gap="200">
-            {selectedResources.length > 0 && (
-              <>
-                <Button 
-                  icon={ClipboardIcon} 
-                  variant="primary" 
-                  tone="success"
-                  onClick={handleCopyProxies}
-                >
-                  Copy {selectedResources.length} Proxy
-                </Button>
-                <Button 
-                  icon={SearchIcon} 
-                  onClick={handleBulkCheckGoogle}
-                >
-                  Check Google {selectedResources.length} Proxy
-                </Button>
-                {canDelete && (
-                  <Button 
-                    icon={DeleteIcon} 
-                    tone="critical"
-                    onClick={handleBulkDeleteClick}
-                  >
-                    Xóa {selectedResources.length} Proxy
-                  </Button>
-                )}
-              </>
-            )}
-          </InlineStack>
-        </InlineStack>
-      </Box>
 
-      <Card padding="0">
+      <LegacyCard>
         <IndexFilters
-          sortOptions={[]}
-          sortSelected={['']}
+          sortOptions={sortOptions}
+          sortSelected={sortSelected}
           queryValue={queryValue}
-          queryPlaceholder="Tìm kiếm theo Port hoặc Username"
+          queryPlaceholder="Searching in all"
           onQueryChange={onHandleQueryValueChange}
           onQueryClear={() => setQueryValue('')}
+          onSort={setSortSelected}
+          primaryAction={{
+            type: 'save-as',
+            onAction: onCreateNewView,
+            disabled: false,
+            loading: false,
+          }}
+          cancelAction={{
+            onAction: () => setQueryValue(''),
+            disabled: false,
+            loading: false,
+          }}
           tabs={tabs}
           selected={selectedTab}
           onSelect={setSelectedTab}
+          canCreateNewView
+          onCreateNewView={onCreateNewView}
           filters={[
             {
               key: 'status',
               label: 'Trạng thái',
               filter: (
-                <Filters.ChoiceList
+                <ChoiceList
                   title="Trạng thái"
                   choices={[
                     { label: 'Hoạt động', value: 'ACTIVE' },
@@ -282,7 +391,7 @@ export function ProxyList({ onEdit }: ProxyListProps) {
               key: 'serverId',
               label: 'Máy chủ',
               filter: (
-                <Filters.ChoiceList
+                <ChoiceList
                   title="Máy chủ"
                   choices={servers.map(s => ({ label: s.name, value: s.id }))}
                   selected={selectedServerId}
@@ -293,14 +402,19 @@ export function ProxyList({ onEdit }: ProxyListProps) {
               shortcut: true,
             },
           ]}
-          appliedFilters={[]}
+          appliedFilters={appliedFilters}
           onClearAll={onHandleFiltersClearAll}
           mode={mode}
           setMode={setMode}
         />
         <IndexTable
-          resourceName={{ singular: 'proxy', plural: 'proxies' }}
-          itemCount={filteredProxies.length}
+          condensed={smDown}
+          resourceName={{
+            singular: 'proxy',
+            plural: 'proxies',
+          }}
+          itemCount={paginatedProxies.length}
+          selectedItemsCount={selectedResources.length}
           headings={[
             { title: 'Port' },
             { title: 'Tài khoản' },
@@ -310,13 +424,20 @@ export function ProxyList({ onEdit }: ProxyListProps) {
             { title: 'Hết hạn' },
             { title: 'Thao tác', alignment: 'end' },
           ]}
-          selectedResources={selectedResources}
-          allResourcesSelected={indeterminate ? 'indeterminate' : allResourcesSelected}
           onSelectionChange={handleSelectionChange}
+          promotedBulkActions={promotedBulkActions}
+          bulkActions={canDelete ? bulkActions : []}
+          pagination={{
+            hasNext: page < totalPages,
+            hasPrevious: page > 1,
+            onNext: () => setPage(page + 1),
+            onPrevious: () => setPage(page - 1),
+            label: "",
+          }}
         >
           {rowMarkup}
         </IndexTable>
-      </Card>
+      </LegacyCard>
 
       <Modal
         open={activeDeleteModal}
