@@ -24,6 +24,10 @@ export async function processResetServer(job: Job) {
       data: { status: 'ACTIVE', startedAt: new Date() }
     });
 
+    if (job.attemptsMade > 0) {
+      await addLog(`[RETRY] Đang thử lại lần thứ ${job.attemptsMade}...`);
+    }
+
     await addLog(`Bắt đầu Reset máy chủ: ${server.host}`);
 
     // 1. Kết nối SSH
@@ -33,7 +37,15 @@ export async function processResetServer(job: Job) {
     // 2. Thực thi Reset
     await addLog('Đang dọn dẹp hệ thống (User, IP, Iptables và Files)...');
     
-    const prefix = server.ipv6 || "2a01:4ff:1f0:513b";
+    const prefix = server.ipv6?.trim();
+    if (!prefix) {
+      throw new Error('IPv6 Prefix không được để trống khi thực hiện Reset. Vui lòng cập nhật thông tin máy chủ.');
+    }
+
+    // 2.1. Phát hiện Interface
+    const findIface = await ssh.execute("ip route | grep default | awk '{print $5}' | head -n1");
+    const iface = findIface.stdout.trim() || "eth0";
+    await addLog(`Phát hiện Interface chính: ${iface}`);
 
     // Lệnh reset dạng single-line để đảm bảo SSH thực thi tốt nhất
     const rawResetCmd = [
@@ -41,7 +53,7 @@ export async function processResetServer(job: Job) {
       `[ -f /root/proxy-ipv6.txt ] && while IFS='|' read -r PORT IP MARK; do userdel -f gost\\$PORT; done < /root/proxy-ipv6.txt`,
       "iptables -t mangle -F OUTPUT",
       "ip6tables -t nat -F POSTROUTING",
-      `ip -6 addr show dev eth0 | grep "${prefix}" | awk '{print $2}' | while read ADDR; do ip -6 addr del "$ADDR" dev eth0; done`,
+      `ip -6 addr show dev ${iface} | grep "${prefix}" | awk '{print $2}' | while read ADDR; do ip -6 addr del "$ADDR" dev ${iface}; done`,
       "rm -f /root/proxies.txt /root/proxy-ipv6.txt",
       "touch /root/proxies.txt /root/proxy-ipv6.txt",
       "ip6tables-save > /etc/iptables/rules.v6"

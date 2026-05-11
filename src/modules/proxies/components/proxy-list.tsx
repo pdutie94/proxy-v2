@@ -21,6 +21,7 @@ import { DeleteIcon, EditIcon, RefreshIcon, ClipboardIcon, SearchIcon } from "@s
 import { format } from "date-fns";
 import { Proxy, Server } from '@prisma/client';
 import { useState, useCallback, useMemo } from 'react';
+import { JobProgressModal } from '@/components/jobs/job-progress-modal';
 import { toast } from 'sonner';
 import { useSession } from 'next-auth/react';
 
@@ -46,6 +47,7 @@ export function ProxyList({ onEdit }: ProxyListProps) {
   const [status, setStatus] = useState<string[]>([]);
   const [selectedServerId, setSelectedServerId] = useState<string[]>([]);
   const [selectedTab, setSelectedTab] = useState(0);
+  const [activeJobId, setActiveJobId] = useState<string | null>(null);
 
   const tabs: TabProps[] = useMemo(() => ['Tất cả', 'Hoạt động', 'Đang tạo', 'Lỗi'].map((item, index) => ({
     content: item,
@@ -200,8 +202,8 @@ export function ProxyList({ onEdit }: ProxyListProps) {
         </IndexTable.Cell>
         <IndexTable.Cell>
           <InlineStack align="end" gap="200">
-            <Button icon={SearchIcon} variant="tertiary" onClick={() => checkGoogleMutation.mutate(proxy.id)} loading={checkGoogleMutation.isPending && checkGoogleMutation.variables === proxy.id} disabled={proxy.status !== 'ACTIVE'} />
-            <Button icon={RefreshIcon} variant="tertiary" onClick={() => rotateProxyMutation.mutate(proxy.id)} loading={rotateProxyMutation.isPending && rotateProxyMutation.variables === proxy.id} disabled={proxy.status !== 'ACTIVE'} />
+            <Button icon={SearchIcon} variant="tertiary" onClick={() => checkGoogleMutation.mutate(proxy.id, { onSuccess: (job) => setActiveJobId(job.id) })} loading={checkGoogleMutation.isPending && checkGoogleMutation.variables === proxy.id} disabled={proxy.status !== 'ACTIVE'} />
+            <Button icon={RefreshIcon} variant="tertiary" onClick={() => rotateProxyMutation.mutate(proxy.id, { onSuccess: (job) => setActiveJobId(job.id) })} loading={rotateProxyMutation.isPending && rotateProxyMutation.variables === proxy.id} disabled={proxy.status !== 'ACTIVE'} />
             <Button icon={EditIcon} variant="tertiary" onClick={() => onEdit(proxy)} />
             {canDelete && <Button icon={DeleteIcon} variant="tertiary" tone="critical" onClick={() => handleDeleteClick(proxy.id)} />}
           </InlineStack>
@@ -336,6 +338,12 @@ export function ProxyList({ onEdit }: ProxyListProps) {
           </Text>
         </Modal.Section>
       </Modal>
+
+      <JobProgressModal 
+        jobId={activeJobId}
+        open={!!activeJobId}
+        onClose={() => setActiveJobId(null)}
+      />
     </Box>
   );
 }

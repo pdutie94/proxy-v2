@@ -66,7 +66,7 @@ export class ProxyService {
       console.error('[ProxyService] Failed to dispatch provision job. Is Redis running?', error);
     }
 
-    return proxy;
+    return { proxy, jobId: job.id };
   }
 
   async deleteProxy(id: string) {
@@ -95,7 +95,8 @@ export class ProxyService {
       console.error('[ProxyService] Failed to dispatch delete job. Is Redis running?', error);
     }
 
-    return proxyRepository.delete(id);
+    await proxyRepository.delete(id);
+    return { jobId: job.id };
   }
 
   async rotateProxy(id: string) {
@@ -121,7 +122,7 @@ export class ProxyService {
       console.error('[ProxyService] Failed to dispatch rotate job.', error);
     }
 
-    return proxy;
+    return { proxy, jobId: job.id };
   }
 
   async bulkCreateProxies(data: BulkProxySchema) {
@@ -195,7 +196,7 @@ export class ProxyService {
       console.error('[ProxyService] Failed to dispatch bulk provision job.', error);
     }
 
-    return proxies;
+    return { proxies, jobId: job.id };
   }
 
   async checkGoogle(id: string) {
@@ -221,7 +222,7 @@ export class ProxyService {
       console.error('[ProxyService] Failed to dispatch check-google job.', error);
     }
 
-    return proxy;
+    return { proxy, jobId: job.id };
   }
 
   async bulkDelete(ids: string[]) {

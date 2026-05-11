@@ -11,11 +11,13 @@ import {
   SkeletonBodyText,
   InlineStack,
   Modal,
-  Tooltip
+  Tooltip,
+  BlockStack
 } from "@shopify/polaris";
 import { DeleteIcon, EditIcon, PlayIcon, RefreshIcon } from "@shopify/polaris-icons";
 import { Server } from '@prisma/client';
 import { useState, useCallback } from 'react';
+import { JobProgressModal } from '@/components/jobs/job-progress-modal';
 
 interface ServerListProps {
   onEdit: (server: Server) => void;
@@ -24,6 +26,8 @@ interface ServerListProps {
 export function ServerList({ onEdit }: ServerListProps) {
   const { servers, isLoading, deleteMutation, setupMutation, resetMutation, syncMutation } = useServers();
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [activeJobId, setActiveJobId] = useState<string | null>(null);
+  const [activeConfirmServer, setActiveConfirmServer] = useState<Server | null>(null);
 
   const resourceName = {
     singular: 'máy chủ',
@@ -78,11 +82,11 @@ export function ServerList({ onEdit }: ServerListProps) {
         </IndexTable.Cell>
         <IndexTable.Cell>
           <InlineStack align="end" gap="200">
-            <Tooltip content="Thiết lập Server">
+            <Tooltip content="Thiết lập Server (Cài đặt Gost/IP)">
               <Button 
                 icon={PlayIcon} 
                 variant="tertiary" 
-                onClick={() => setupMutation.mutate(server.id)}
+                onClick={() => setActiveConfirmServer(server)}
                 loading={setupMutation.isPending && setupMutation.variables === server.id}
                 disabled={(server.status as any) === 'SETTING_UP'}
               />
@@ -92,7 +96,9 @@ export function ServerList({ onEdit }: ServerListProps) {
                 icon={RefreshIcon} 
                 variant="tertiary" 
                 tone="critical"
-                onClick={() => resetMutation.mutate(server.id)}
+                onClick={() => resetMutation.mutate(server.id, {
+                  onSuccess: (job) => setActiveJobId(job.jobId)
+                })}
                 loading={resetMutation.isPending && resetMutation.variables === server.id}
                 disabled={(server.status as any) === 'SETTING_UP'}
               />
@@ -101,7 +107,9 @@ export function ServerList({ onEdit }: ServerListProps) {
               <Button 
                 icon={RefreshIcon} 
                 variant="tertiary" 
-                onClick={() => syncMutation.mutate(server.id)}
+                onClick={() => syncMutation.mutate(server.id, {
+                  onSuccess: (job) => setActiveJobId(job.jobId)
+                })}
                 loading={syncMutation.isPending && syncMutation.variables === server.id}
               />
             </Tooltip>
@@ -170,6 +178,56 @@ export function ServerList({ onEdit }: ServerListProps) {
           </Text>
         </Modal.Section>
       </Modal>
+
+      {/* MODAL XÁC NHẬN SETUP */}
+      <Modal
+        open={!!activeConfirmServer}
+        onClose={() => setActiveConfirmServer(null)}
+        title="Xác nhận thiết lập máy chủ?"
+        primaryAction={{
+          content: 'Bắt đầu thiết lập',
+          onAction: () => {
+            if (activeConfirmServer) {
+              setupMutation.mutate(activeConfirmServer.id, {
+                onSuccess: (job) => {
+                  setActiveJobId(job.jobId);
+                  setActiveConfirmServer(null);
+                }
+              });
+            }
+          },
+          loading: setupMutation.isPending
+        }}
+        secondaryActions={[{
+          content: 'Hủy bỏ',
+          onAction: () => setActiveConfirmServer(null)
+        }]}
+      >
+        <Modal.Section>
+          <BlockStack gap="300">
+            {activeConfirmServer?.status === 'ONLINE' && (
+              <Box padding="300" background="bg-surface-critical-subdued" borderRadius="200">
+                <Text as="p" tone="critical" fontWeight="bold">
+                  ⚠️ CẢNH BÁO: Máy chủ này đang ở trạng thái HOẠT ĐỘNG (ONLINE). 
+                  Việc thiết lập lại sẽ xóa sạch toàn bộ cấu hình Proxy hiện tại và ngắt các kết nối đang chạy!
+                </Text>
+              </Box>
+            )}
+            <Text as="p">
+              Hệ thống sẽ thực hiện dọn dẹp (Deep Clean) và cài đặt lại toàn bộ môi trường Super-V5.0.0 trên máy chủ <b>{activeConfirmServer?.host}</b>.
+            </Text>
+            <Text as="p" variant="bodySm" color="subdued">
+              Quá trình này có thể mất 1-2 phút. Bạn có muốn tiếp tục không?
+            </Text>
+          </BlockStack>
+        </Modal.Section>
+      </Modal>
+
+      <JobProgressModal 
+        jobId={activeJobId}
+        open={!!activeJobId}
+        onClose={() => setActiveJobId(null)}
+      />
     </>
   );
 }

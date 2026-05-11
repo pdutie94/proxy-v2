@@ -12,8 +12,12 @@ export async function POST(
   try {
     const { id } = await params;
     console.log(`[API] Triggering sync for server: ${id}`);
-    await serverService.syncServerPort(id);
-    return NextResponse.json({ success: true, message: 'Đã bắt đầu đồng bộ cổng từ máy chủ' });
+    const job = await serverService.syncServerPort(id);
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Đã bắt đầu đồng bộ cổng từ máy chủ',
+      data: { jobId: job.id }
+    });
   } catch (error: any) {
     console.error(`[API] Sync error: ${error.message}`);
     return NextResponse.json({ success: false, message: error.message }, { status: 400 });

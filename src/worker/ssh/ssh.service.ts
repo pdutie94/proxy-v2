@@ -17,31 +17,63 @@ export class SSHService {
 
   async connect(server: Server): Promise<void> {
     const keyHint = (process.env.ENCRYPTION_KEY || 'default').substring(0, 3);
-    console.log(`[SSH] Đang kết nối tới ${server.host}. KeyHint: ${keyHint}`);
-
     let password = undefined;
+    
     if (server.passwordEncrypted) {
       try {
         password = decrypt(server.passwordEncrypted);
-        console.log(`[SSH] Giải mã mật khẩu thành công. Độ dài: ${password.length}`);
       } catch (err: any) {
-        console.error(`[SSH] LỖI giải mã mật khẩu: ${err.message}`);
         throw new Error('Không thể giải mã mật khẩu server. Kiểm tra ENCRYPTION_KEY.');
       }
     }
 
-    return new Promise((resolve, reject) => {
-      this.client
-        .on('ready', () => resolve())
-        .on('error', (err) => reject(err))
-        .connect({
-          host: server.host,
-          port: server.port,
-          username: server.username,
-          password: password,
-          readyTimeout: 20000,
+    const maxAttempts = 3;
+    let lastError: any;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        if (attempt > 1) {
+          console.log(`[SSH] Thử lại kết nối lần ${attempt}/${maxAttempts} tới ${server.host}...`);
+          await new Promise(resolve => setTimeout(resolve, 2000)); // Chờ 2s trước khi thử lại
+        } else {
+          console.log(`[SSH] Đang kết nối tới ${server.host}. KeyHint: ${keyHint}`);
+        }
+
+        await new Promise<void>((resolve, reject) => {
+          const conn = this.client;
+          const onReady = () => {
+            conn.removeListener('error', onError);
+            resolve();
+          };
+          const onError = (err: any) => {
+            conn.removeListener('ready', onReady);
+            reject(err);
+          };
+
+          conn.once('ready', onReady);
+          conn.once('error', onError);
+
+          conn.connect({
+            host: server.host,
+            port: server.port,
+            username: server.username,
+            password: password,
+            readyTimeout: 30000, // 30s mỗi lần thử
+            keepaliveInterval: 10000,
+            keepaliveCountMax: 3,
+          });
         });
-    });
+        
+        return; // Kết nối thành công
+      } catch (err: any) {
+        lastError = err;
+        this.client.end(); // Đảm bảo đóng socket trước khi thử lại
+        this.client = new Client(); // Tạo client mới cho lần thử sau
+        if (attempt === maxAttempts) break;
+      }
+    }
+
+    throw new Error(`Không thể kết nối SSH sau ${maxAttempts} lần thử: ${lastError?.message}`);
   }
 
   async execute(command: string): Promise<SSHCommandResponse> {

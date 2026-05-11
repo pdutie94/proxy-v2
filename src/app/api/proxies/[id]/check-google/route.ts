@@ -11,8 +11,12 @@ export async function POST(
 
   try {
     const { id } = await params;
-    await proxyService.checkGoogle(id);
-    return NextResponse.json({ success: true, message: 'Đã bắt đầu kiểm tra Google' });
+    const result = await proxyService.checkGoogle(id);
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Đã bắt đầu kiểm tra Google',
+      data: { jobId: result.jobId }
+    });
   } catch (error: any) {
     return NextResponse.json({ success: false, message: error.message }, { status: 400 });
   }

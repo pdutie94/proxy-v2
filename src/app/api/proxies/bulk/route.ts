@@ -13,12 +13,12 @@ export async function POST(req: Request) {
     const body = await req.json();
     const validatedData = bulkProxySchema.parse(body);
     
-    const proxies = await proxyService.bulkCreateProxies(validatedData);
+    const result = await proxyService.bulkCreateProxies(validatedData);
     
     return NextResponse.json({ 
       success: true, 
-      message: `Đã bắt đầu khởi tạo ${proxies.length} proxy hàng loạt.`,
-      data: { count: proxies.length }
+      message: `Đã bắt đầu khởi tạo ${result.proxies.length} proxy hàng loạt.`,
+      data: { jobId: result.jobId, count: result.proxies.length }
     });
   } catch (error: any) {
     console.error('[API Bulk Proxies] Error:', error);

@@ -9,10 +9,11 @@ trigger: always_on
 - Next.js 16
 - React 19
 - TypeScript 5.8+
-- TailwindCSS 4
+- CSS (Vanilla/Polaris Tokens only) - **NO TailwindCSS**
 - Prisma 6
 - MySQL 8
 - Auth.js v5
+- Shopify Polaris (Components & Icons) - **NO Lucide Icons**
 - Zustand
 - Zod
 - React Hook Form

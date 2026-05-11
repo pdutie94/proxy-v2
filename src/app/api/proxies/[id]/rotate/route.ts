@@ -11,8 +11,12 @@ export async function POST(
 
   try {
     const { id } = await params;
-    await proxyService.rotateProxy(id);
-    return NextResponse.json({ success: true, message: 'Đã bắt đầu xoay IPv6' });
+    const result = await proxyService.rotateProxy(id);
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Đã bắt đầu xoay IPv6',
+      data: { jobId: result.jobId }
+    });
   } catch (error: any) {
     return NextResponse.json({ success: false, message: error.message }, { status: 400 });
   }

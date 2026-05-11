@@ -7,10 +7,12 @@ import { ProxyList } from "@/modules/proxies/components/proxy-list";
 import { AddProxyForm, AddProxyFormRef } from "@/modules/proxies/components/add-proxy-form";
 import { useProxies } from "@/hooks/use-proxies";
 import { Proxy } from "@prisma/client";
+import { JobProgressModal } from "@/components/jobs/job-progress-modal";
 
 export default function ProxiesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProxy, setEditingProxy] = useState<Proxy | undefined>(undefined);
+  const [activeJobId, setActiveJobId] = useState<string | null>(null);
   
   const { createMutation, updateMutation, bulkCreateMutation } = useProxies();
   const formRef = useRef<AddProxyFormRef>(null);
@@ -29,6 +31,12 @@ export default function ProxiesPage() {
 
   const handlePrimaryAction = useCallback(() => {
     formRef.current?.submit();
+  }, []);
+
+  const handleJobCreated = useCallback((jobId: string) => {
+    setIsModalOpen(false); // Close the input modal immediately
+    setEditingProxy(undefined);
+    setActiveJobId(jobId); // Open the progress modal
   }, []);
 
   return (
@@ -63,9 +71,16 @@ export default function ProxiesPage() {
         <AddProxyForm 
           ref={formRef} 
           onClose={toggleModal} 
+          onJobCreated={handleJobCreated}
           proxy={editingProxy}
         />
       </Modal>
+
+      <JobProgressModal 
+        jobId={activeJobId}
+        open={!!activeJobId}
+        onClose={() => setActiveJobId(null)}
+      />
     </Page>
   );
 }

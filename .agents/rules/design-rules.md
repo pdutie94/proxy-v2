@@ -11,6 +11,8 @@ trigger: always_on
 - Functional-first, minimal visual noise
 - Consistency > aesthetics
 - Không dùng khoảng trắng lớn kiểu “landing page”
+- **BẮT BUỘC: Sử dụng Shopify Polaris (Components & Icons)**
+- **KHÔNG: Sử dụng TailwindCSS hay Lucide Icons**
 
 ---
 

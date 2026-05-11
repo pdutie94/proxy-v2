@@ -13,9 +13,7 @@ import {
   DatePicker,
   Box,
   Icon,
-  ChoiceList,
   Button,
-  InlineGrid,
   BlockStack,
   Text,
   ButtonGroup,
@@ -31,6 +29,7 @@ import { generateRandomString, generateRandomPassword } from '@/utils/random';
 
 interface AddProxyFormProps {
   onClose: () => void;
+  onJobCreated?: (jobId: string) => void;
   proxy?: Proxy;
 }
 
@@ -39,7 +38,7 @@ export interface AddProxyFormRef {
 }
 
 export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
-  ({ onClose, proxy }, ref) => {
+  ({ onClose, onJobCreated, proxy }, ref) => {
     const { bulkCreateMutation, updateMutation } = useProxies();
     const { servers } = useServers();
     const [popoverActive, setPopoverActive] = useState(false);
@@ -98,10 +97,18 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
         });
       } else {
         bulkCreateMutation.mutate(data, {
-          onSuccess: () => onClose(),
+          onSuccess: (response: any) => {
+            // response.data contains the jobId (updated in previous task)
+            const jobId = response.data?.jobId;
+            if (jobId && onJobCreated) {
+              onJobCreated(jobId);
+            } else {
+              onClose();
+            }
+          },
         });
       }
-    }, [bulkCreateMutation, updateMutation, onClose, proxy]);
+    }, [bulkCreateMutation, updateMutation, onClose, onJobCreated, proxy]);
 
     useImperativeHandle(ref, () => ({
       submit: () => {

@@ -31,6 +31,10 @@ export async function processSetupServer(job: Job) {
       data: { status: 'ACTIVE', startedAt: new Date() }
     });
 
+    if (job.attemptsMade > 0) {
+      await addLog(`[RETRY] Đang thử lại lần thứ ${job.attemptsMade}...`);
+    }
+
     await addLog(`Bắt đầu thiết lập Super-V5.0.0 (Deep Clean Mode): ${server.host}`);
 
     // 1. Kết nối SSH
