@@ -2,7 +2,7 @@
 
 import { 
   Page, 
-  LegacyCard, 
+  Card, 
   IndexTable, 
   Text, 
   Badge, 
@@ -84,11 +84,11 @@ export default function LogsPage() {
   if (isLoading) {
     return (
       <Page title="Nhật ký hệ thống">
-        <LegacyCard>
+        <Card>
           <Box padding="400">
             <SkeletonBodyText lines={10} />
           </Box>
-        </LegacyCard>
+        </Card>
       </Page>
     );
   }
@@ -142,7 +142,7 @@ export default function LogsPage() {
       }}
     >
       <Box paddingInline={{ xs: '400', sm: '0' }}>
-        <LegacyCard>
+        <Card padding="0">
           <IndexFilters
             tabs={tabs}
             selected={selectedTab}
@@ -177,7 +177,7 @@ export default function LogsPage() {
           >
             {rowMarkup}
           </IndexTable>
-        </LegacyCard>
+        </Card>
       </Box>
 
       <Modal

@@ -4,7 +4,6 @@ import { useServers } from '@/hooks/use-servers';
 import { 
   IndexTable, 
   Card,
-  LegacyCard,
   Badge,
   Text,
   Button,
@@ -63,11 +62,11 @@ export function ServerList({ onEdit }: ServerListProps) {
 
   if (isLoading) {
     return (
-      <LegacyCard>
+      <Card>
         <Box padding="400">
           <SkeletonBodyText lines={5} />
         </Box>
-      </LegacyCard>
+      </Card>
     );
   }
 
@@ -222,7 +221,7 @@ export function ServerList({ onEdit }: ServerListProps) {
   return (
     <>
     <Box paddingInline={{ xs: '400', sm: '0' }}>
-      <LegacyCard>
+      <Card padding="0">
         <IndexTable
           resourceName={resourceName}
           itemCount={sortedServers.length}
@@ -248,7 +247,7 @@ export function ServerList({ onEdit }: ServerListProps) {
         >
           {rowMarkup}
         </IndexTable>
-      </LegacyCard>
+      </Card>
     </Box>
 
       {/* Modal xác nhận xóa */}

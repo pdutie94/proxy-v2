@@ -3,7 +3,7 @@
 import { useUsers } from '@/hooks/use-users';
 import { 
   IndexTable, 
-  LegacyCard, 
+  Card, 
   Badge, 
   Text, 
   Button, 
@@ -61,11 +61,11 @@ export function UserList({ onEdit }: UserListProps) {
 
   if (isLoading) {
     return (
-      <LegacyCard>
+      <Card>
         <Box padding="400">
           <SkeletonBodyText lines={5} />
         </Box>
-      </LegacyCard>
+      </Card>
     );
   }
 
@@ -140,7 +140,7 @@ export function UserList({ onEdit }: UserListProps) {
   return (
     <>
     <Box paddingInline={{ xs: '400', sm: '0' }}>
-      <LegacyCard>
+      <Card padding="0">
         <IndexTable
           resourceName={resourceName}
           itemCount={sortedUsers.length}
@@ -163,7 +163,7 @@ export function UserList({ onEdit }: UserListProps) {
         >
           {rowMarkup}
         </IndexTable>
-      </LegacyCard>
+      </Card>
     </Box>
 
       <Modal

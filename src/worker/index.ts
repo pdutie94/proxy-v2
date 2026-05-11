@@ -100,10 +100,28 @@ export async function startWorker() {
     console.error('[Worker] Lỗi hệ thống Worker:', err);
   });
 
+  // Start heartbeat
+  const heartbeatInterval = setInterval(async () => {
+    try {
+      await redis.set('worker:heartbeat', Date.now().toString());
+    } catch (err) {
+      console.error('[Worker] Lỗi cập nhật heartbeat:', err);
+    }
+  }, 60000);
+
+  // Clean up on exit
+  const cleanup = () => {
+    clearInterval(heartbeatInterval);
+    worker.close();
+  };
+
+  process.on('SIGINT', cleanup);
+  process.on('SIGTERM', cleanup);
+
   return worker;
 }
 
-if (require.main === module || process.argv[1]?.endsWith('index.ts')) {
+if (require.main === module || process.argv[1]?.endsWith('index.ts') || process.argv[1]?.endsWith('worker\\index.ts')) {
   startWorker().catch(err => {
     console.error('[Worker] Lỗi khởi động:', err);
     process.exit(1);

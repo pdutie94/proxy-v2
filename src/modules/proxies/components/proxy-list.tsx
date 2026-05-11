@@ -5,7 +5,6 @@ import { useServers } from '@/hooks/use-servers';
 import { 
   IndexTable, 
   Card,
-  LegacyCard,
   Badge,
   Text,
   Button,
@@ -377,7 +376,7 @@ export function ProxyList({ onEdit }: ProxyListProps) {
 
   return (
     <Box paddingInline={{ xs: '400', sm: '0' }} paddingBlockEnd="400">
-      <LegacyCard>
+      <Card padding="0">
         <IndexFilters
           sortOptions={sortOptions}
           sortSelected={sortSelected}
@@ -462,7 +461,7 @@ export function ProxyList({ onEdit }: ProxyListProps) {
         >
           {rowMarkup}
         </IndexTable>
-      </LegacyCard>
+      </Card>
 
       <Modal
         open={activeDeleteModal}
