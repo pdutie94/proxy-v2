@@ -18,7 +18,7 @@ import {
 } from "@shopify/polaris";
 import { DeleteIcon, EditIcon, PlayIcon, RefreshIcon, ResetIcon } from "@shopify/polaris-icons";
 import { Server } from '@prisma/client';
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { JobProgressModal } from '@/components/jobs/job-progress-modal';
 
 interface ServerListProps {
@@ -63,11 +63,11 @@ export function ServerList({ onEdit }: ServerListProps) {
 
   if (isLoading) {
     return (
-      <Card>
+      <LegacyCard>
         <Box padding="400">
           <SkeletonBodyText lines={5} />
         </Box>
-      </Card>
+      </LegacyCard>
     );
   }
 
@@ -109,54 +109,111 @@ export function ServerList({ onEdit }: ServerListProps) {
           </Text>
         </IndexTable.Cell>
         <IndexTable.Cell>
-          <InlineStack align="end" gap="200">
-            <Tooltip content="Thiết lập Server (Cài đặt Gost/IP)">
-              <Button 
-                icon={PlayIcon} 
-                variant="tertiary" 
-                onClick={() => setActiveConfirmServer(server)}
-                loading={setupMutation.isPending && setupMutation.variables === server.id}
-                disabled={(server.status as any) === 'SETTING_UP'}
-              />
-            </Tooltip>
-            <Tooltip content="Reset Server (Xóa hết Proxy)">
-              <Button 
-                icon={ResetIcon} 
-                variant="tertiary" 
-                tone="critical"
-                onClick={() => resetMutation.mutate(server.id, {
-                  onSuccess: (job) => setActiveJobId(job.jobId)
-                })}
-                loading={resetMutation.isPending && resetMutation.variables === server.id}
-                disabled={(server.status as any) === 'SETTING_UP'}
-              />
-            </Tooltip>
-            <Tooltip content="Đồng bộ cổng từ Server">
-              <Button 
-                icon={RefreshIcon} 
-                variant="tertiary" 
-                onClick={() => syncMutation.mutate(server.id, {
-                  onSuccess: (job) => setActiveJobId(job.jobId)
-                })}
-                loading={syncMutation.isPending && syncMutation.variables === server.id}
-              />
-            </Tooltip>
-            <Tooltip content="Chỉnh sửa">
-              <Button 
-                icon={EditIcon} 
-                variant="tertiary" 
-                onClick={() => onEdit(server)}
-              />
-            </Tooltip>
-            <Tooltip content="Xóa Server">
-              <Button 
-                icon={DeleteIcon} 
-                variant="tertiary" 
-                tone="critical"
-                onClick={() => setDeleteId(server.id)}
-              />
-            </Tooltip>
-          </InlineStack>
+          <div style={{ minWidth: smDown ? '180px' : 'auto' }}>
+            <InlineStack align="end" gap="200" wrap={false}>
+              {smDown ? (
+                <Button 
+                  icon={PlayIcon} 
+                  variant="tertiary" 
+                  onClick={() => setActiveConfirmServer(server)}
+                  loading={setupMutation.isPending && setupMutation.variables === server.id}
+                  disabled={(server.status as any) === 'SETTING_UP'}
+                />
+              ) : (
+                <Tooltip content="Thiết lập Server (Cài đặt Gost/IP)">
+                  <Button 
+                    icon={PlayIcon} 
+                    variant="tertiary" 
+                    onClick={() => setActiveConfirmServer(server)}
+                    loading={setupMutation.isPending && setupMutation.variables === server.id}
+                    disabled={(server.status as any) === 'SETTING_UP'}
+                  />
+                </Tooltip>
+              )}
+
+              {smDown ? (
+                <Button 
+                  icon={ResetIcon} 
+                  variant="tertiary" 
+                  tone="critical"
+                  onClick={() => resetMutation.mutate(server.id, {
+                    onSuccess: (job) => setActiveJobId(job.jobId)
+                  })}
+                  loading={resetMutation.isPending && resetMutation.variables === server.id}
+                  disabled={(server.status as any) === 'SETTING_UP'}
+                />
+              ) : (
+                <Tooltip content="Reset Server (Xóa hết Proxy)">
+                  <Button 
+                    icon={ResetIcon} 
+                    variant="tertiary" 
+                    tone="critical"
+                    onClick={() => resetMutation.mutate(server.id, {
+                      onSuccess: (job) => setActiveJobId(job.jobId)
+                    })}
+                    loading={resetMutation.isPending && resetMutation.variables === server.id}
+                    disabled={(server.status as any) === 'SETTING_UP'}
+                  />
+                </Tooltip>
+              )}
+
+              {smDown ? (
+                <Button 
+                  icon={RefreshIcon} 
+                  variant="tertiary" 
+                  onClick={() => syncMutation.mutate(server.id, {
+                    onSuccess: (job) => setActiveJobId(job.jobId)
+                  })}
+                  loading={syncMutation.isPending && syncMutation.variables === server.id}
+                />
+              ) : (
+                <Tooltip content="Đồng bộ cổng từ Server">
+                  <Button 
+                    icon={RefreshIcon} 
+                    variant="tertiary" 
+                    onClick={() => syncMutation.mutate(server.id, {
+                      onSuccess: (job) => setActiveJobId(job.jobId)
+                    })}
+                    loading={syncMutation.isPending && syncMutation.variables === server.id}
+                  />
+                </Tooltip>
+              )}
+
+              {smDown ? (
+                <Button 
+                  icon={EditIcon} 
+                  variant="tertiary" 
+                  onClick={() => onEdit(server)}
+                />
+              ) : (
+                <Tooltip content="Chỉnh sửa">
+                  <Button 
+                    icon={EditIcon} 
+                    variant="tertiary" 
+                    onClick={() => onEdit(server)}
+                  />
+                </Tooltip>
+              )}
+
+              {smDown ? (
+                <Button 
+                  icon={DeleteIcon} 
+                  variant="tertiary" 
+                  tone="critical"
+                  onClick={() => setDeleteId(server.id)}
+                />
+              ) : (
+                <Tooltip content="Xóa Server">
+                  <Button 
+                    icon={DeleteIcon} 
+                    variant="tertiary" 
+                    tone="critical"
+                    onClick={() => setDeleteId(server.id)}
+                  />
+                </Tooltip>
+              )}
+            </InlineStack>
+          </div>
         </IndexTable.Cell>
       </IndexTable.Row>
     ),
@@ -164,9 +221,9 @@ export function ServerList({ onEdit }: ServerListProps) {
 
   return (
     <>
+    <Box paddingInline={{ xs: '400', sm: '0' }}>
       <LegacyCard>
         <IndexTable
-          condensed={smDown}
           resourceName={resourceName}
           itemCount={sortedServers.length}
           headings={[
@@ -192,6 +249,7 @@ export function ServerList({ onEdit }: ServerListProps) {
           {rowMarkup}
         </IndexTable>
       </LegacyCard>
+    </Box>
 
       {/* Modal xác nhận xóa */}
       <Modal

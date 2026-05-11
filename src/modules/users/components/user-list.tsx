@@ -17,7 +17,7 @@ import {
 import { DeleteIcon, EditIcon } from "@shopify/polaris-icons";
 import { format } from "date-fns";
 import { User } from '@prisma/client';
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 
 interface UserListProps {
   onEdit: (user: User) => void;
@@ -97,22 +97,40 @@ export function UserList({ onEdit }: UserListProps) {
           {format(new Date(user.createdAt), 'dd/MM/yyyy')}
         </IndexTable.Cell>
         <IndexTable.Cell>
-          <InlineStack align="end" gap="200">
-            <Tooltip content="Chỉnh sửa">
+          <InlineStack align="end" gap="200" wrap={false}>
+            {smDown ? (
               <Button 
                 icon={EditIcon} 
                 variant="tertiary" 
                 onClick={() => onEdit(user)}
               />
-            </Tooltip>
-            <Tooltip content="Xóa người dùng" tone="critical">
+            ) : (
+              <Tooltip content="Chỉnh sửa">
+                <Button 
+                  icon={EditIcon} 
+                  variant="tertiary" 
+                  onClick={() => onEdit(user)}
+                />
+              </Tooltip>
+            )}
+
+            {smDown ? (
               <Button 
                 icon={DeleteIcon} 
                 variant="tertiary" 
                 tone="critical"
                 onClick={() => setDeleteId(user.id)}
               />
-            </Tooltip>
+            ) : (
+              <Tooltip content="Xóa người dùng" tone="critical">
+                <Button 
+                  icon={DeleteIcon} 
+                  variant="tertiary" 
+                  tone="critical"
+                  onClick={() => setDeleteId(user.id)}
+                />
+              </Tooltip>
+            )}
           </InlineStack>
         </IndexTable.Cell>
       </IndexTable.Row>
@@ -121,9 +139,9 @@ export function UserList({ onEdit }: UserListProps) {
 
   return (
     <>
+    <Box paddingInline={{ xs: '400', sm: '0' }}>
       <LegacyCard>
         <IndexTable
-          condensed={smDown}
           resourceName={resourceName}
           itemCount={sortedUsers.length}
           headings={[
@@ -146,6 +164,7 @@ export function UserList({ onEdit }: UserListProps) {
           {rowMarkup}
         </IndexTable>
       </LegacyCard>
+    </Box>
 
       <Modal
         open={!!deleteId}

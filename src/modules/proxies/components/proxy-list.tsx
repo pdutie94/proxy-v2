@@ -38,7 +38,7 @@ interface ProxyListProps {
 }
 
 export function ProxyList({ onEdit }: ProxyListProps) {
-  const { smDown } = useBreakpoints();
+  const { smDown, mdDown } = useBreakpoints();
   const { proxies, isLoading, deleteMutation, bulkDeleteMutation, rotateProxyMutation, checkGoogleMutation } = useProxies();
   const { data: session } = useSession();
   const userRole = (session?.user as any)?.role || "USER";
@@ -175,7 +175,9 @@ export function ProxyList({ onEdit }: ProxyListProps) {
   const clearSelection = useCallback(() => setSelectedResources([]), []);
 
   useEffect(() => {
-    clearSelection();
+    if (selectedResources.length > 0) {
+      clearSelection();
+    }
   }, [page, filteredProxies, clearSelection]);
 
   const [activeDeleteModal, setActiveDeleteModal] = useState(false);
@@ -286,9 +288,11 @@ export function ProxyList({ onEdit }: ProxyListProps) {
         </IndexTable.Cell>
         <IndexTable.Cell>{proxy.username}</IndexTable.Cell>
         <IndexTable.Cell>{proxy.server?.name || '-'}</IndexTable.Cell>
-        <IndexTable.Cell>
-          <Text as="span" variant="bodyXs" color="subdued" breakWord>{proxy.ipv6 || '-'}</Text>
-        </IndexTable.Cell>
+        {!mdDown && (
+          <IndexTable.Cell>
+            <Text as="span" variant="bodyXs" color="subdued" breakWord>{proxy.ipv6 || '-'}</Text>
+          </IndexTable.Cell>
+        )}
         <IndexTable.Cell>
           <Badge tone={proxy.status === 'ACTIVE' ? 'success' : proxy.status === 'CREATING' ? 'attention' : 'critical'}>
             {proxy.status === 'ACTIVE' ? 'Hoạt động' : proxy.status === 'CREATING' ? 'Đang tạo' : 'Lỗi'}
@@ -298,26 +302,57 @@ export function ProxyList({ onEdit }: ProxyListProps) {
           {proxy.expiresAt ? format(new Date(proxy.expiresAt), 'dd/MM/yyyy') : 'Vĩnh viễn'}
         </IndexTable.Cell>
         <IndexTable.Cell>
-          <InlineStack align="end" gap="200">
-            <Tooltip content="Kiểm tra Google">
-              <Button icon={SearchIcon} variant="tertiary" onClick={() => checkGoogleMutation.mutate(proxy.id, { onSuccess: (job) => setActiveJobId(job.id) })} loading={checkGoogleMutation.isPending && checkGoogleMutation.variables === proxy.id} disabled={proxy.status !== 'ACTIVE'} />
-            </Tooltip>
-            <Tooltip content="Đổi IP (Rotate)">
-              <Button icon={RefreshIcon} variant="tertiary" onClick={() => rotateProxyMutation.mutate(proxy.id, { onSuccess: (job) => setActiveJobId(job.id) })} loading={rotateProxyMutation.isPending && rotateProxyMutation.variables === proxy.id} disabled={proxy.status !== 'ACTIVE'} />
-            </Tooltip>
-            <Tooltip content="Chỉnh sửa">
-              <Button icon={EditIcon} variant="tertiary" onClick={() => onEdit(proxy)} />
-            </Tooltip>
-            {canDelete && (
-              <Tooltip content="Xóa Proxy" tone="critical">
-                <Button icon={DeleteIcon} variant="tertiary" tone="critical" onClick={() => handleDeleteClick(proxy.id)} />
-              </Tooltip>
-            )}
-          </InlineStack>
+          <div style={{ minWidth: smDown ? '120px' : 'auto' }}>
+            <InlineStack align="end" gap="200" wrap={false}>
+              {smDown ? (
+                <Button icon={SearchIcon} variant="tertiary" onClick={() => checkGoogleMutation.mutate(proxy.id, { onSuccess: (job) => setActiveJobId(job.id) })} loading={checkGoogleMutation.isPending && checkGoogleMutation.variables === proxy.id} disabled={proxy.status !== 'ACTIVE'} />
+              ) : (
+                <Tooltip content="Kiểm tra Google">
+                  <Button icon={SearchIcon} variant="tertiary" onClick={() => checkGoogleMutation.mutate(proxy.id, { onSuccess: (job) => setActiveJobId(job.id) })} loading={checkGoogleMutation.isPending && checkGoogleMutation.variables === proxy.id} disabled={proxy.status !== 'ACTIVE'} />
+                </Tooltip>
+              )}
+              
+              {smDown ? (
+                <Button icon={RefreshIcon} variant="tertiary" onClick={() => rotateProxyMutation.mutate(proxy.id, { onSuccess: (job) => setActiveJobId(job.id) })} loading={rotateProxyMutation.isPending && rotateProxyMutation.variables === proxy.id} disabled={proxy.status !== 'ACTIVE'} />
+              ) : (
+                <Tooltip content="Đổi IP (Rotate)">
+                  <Button icon={RefreshIcon} variant="tertiary" onClick={() => rotateProxyMutation.mutate(proxy.id, { onSuccess: (job) => setActiveJobId(job.id) })} loading={rotateProxyMutation.isPending && rotateProxyMutation.variables === proxy.id} disabled={proxy.status !== 'ACTIVE'} />
+                </Tooltip>
+              )}
+
+              {smDown ? (
+                <Button icon={EditIcon} variant="tertiary" onClick={() => onEdit(proxy)} />
+              ) : (
+                <Tooltip content="Chỉnh sửa">
+                  <Button icon={EditIcon} variant="tertiary" onClick={() => onEdit(proxy)} />
+                </Tooltip>
+              )}
+
+              {canDelete && (
+                smDown ? (
+                  <Button icon={DeleteIcon} variant="tertiary" tone="critical" onClick={() => handleDeleteClick(proxy.id)} />
+                ) : (
+                  <Tooltip content="Xóa Proxy" tone="critical">
+                    <Button icon={DeleteIcon} variant="tertiary" tone="critical" onClick={() => handleDeleteClick(proxy.id)} />
+                  </Tooltip>
+                )
+              )}
+            </InlineStack>
+          </div>
         </IndexTable.Cell>
       </IndexTable.Row>
     ),
   );
+
+  const headings = [
+    { title: 'Port' },
+    { title: 'Tài khoản' },
+    { title: 'Máy chủ' },
+    ...(mdDown ? [] : [{ title: 'IPv6 (Exit IP)' }]),
+    { title: 'Trạng thái' },
+    { title: 'Hết hạn' },
+    { title: 'Thao tác', alignment: 'end' },
+  ] as any;
 
 
   const appliedFilters: IndexFiltersProps['appliedFilters'] = [];
@@ -341,8 +376,7 @@ export function ProxyList({ onEdit }: ProxyListProps) {
   }
 
   return (
-    <Box paddingBlockEnd="400">
-
+    <Box paddingInline={{ xs: '400', sm: '0' }} paddingBlockEnd="400">
       <LegacyCard>
         <IndexFilters
           sortOptions={sortOptions}
@@ -408,22 +442,13 @@ export function ProxyList({ onEdit }: ProxyListProps) {
           setMode={setMode}
         />
         <IndexTable
-          condensed={smDown}
           resourceName={{
             singular: 'proxy',
             plural: 'proxies',
           }}
           itemCount={paginatedProxies.length}
           selectedItemsCount={selectedResources.length}
-          headings={[
-            { title: 'Port' },
-            { title: 'Tài khoản' },
-            { title: 'Máy chủ' },
-            { title: 'IPv6 (Exit IP)' },
-            { title: 'Trạng thái' },
-            { title: 'Hết hạn' },
-            { title: 'Thao tác', alignment: 'end' },
-          ]}
+          headings={headings}
           onSelectionChange={handleSelectionChange}
           promotedBulkActions={promotedBulkActions}
           bulkActions={canDelete ? bulkActions : []}

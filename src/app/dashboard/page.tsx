@@ -75,10 +75,10 @@ export default function DashboardPage() {
 
   const getJobBadge = (status: string) => {
     switch (status) {
-      case 'COMPLETED': return <Badge tone="success">THÀNH CÔNG</Badge>;
-      case 'FAILED': return <Badge tone="critical">THẤT BẠI</Badge>;
-      case 'ACTIVE': return <Badge tone="attention">ĐANG CHẠY</Badge>;
-      default: return <Badge tone="info">ĐANG CHỜ</Badge>;
+      case 'COMPLETED': return <Badge tone="success">Thành công</Badge>;
+      case 'FAILED': return <Badge tone="critical">Thất bại</Badge>;
+      case 'ACTIVE': return <Badge tone="attention">Đang chạy</Badge>;
+      default: return <Badge tone="info">Đang chờ</Badge>;
     }
   };
 
@@ -164,15 +164,15 @@ export default function DashboardPage() {
                   <BlockStack gap="200">
                     <InlineStack align="space-between">
                       <Text as="p">Cơ sở dữ liệu</Text>
-                      <Badge tone="success">ỔN ĐỊNH</Badge>
+                      <Badge tone="success">Ổn định</Badge>
                     </InlineStack>
                     <InlineStack align="space-between">
                       <Text as="p">Redis Queue</Text>
-                      <Badge tone="success">ĐANG CHẠY</Badge>
+                      <Badge tone="success">Đang chạy</Badge>
                     </InlineStack>
                     <InlineStack align="space-between">
                       <Text as="p">SSH Worker</Text>
-                      <Badge tone="success">ĐANG CHỜ VIỆC</Badge>
+                      <Badge tone="success">Đang chờ việc</Badge>
                     </InlineStack>
                   </BlockStack>
                 </BlockStack>

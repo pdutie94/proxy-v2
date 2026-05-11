@@ -21,7 +21,7 @@ import {
 import { ViewIcon, DeleteIcon } from "@shopify/polaris-icons";
 import { format } from "date-fns";
 import { useLogs } from "@/hooks/use-logs";
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 
 export default function LogsPage() {
   const { logs, isLoading, clearLogs, isClearing } = useLogs(500); 
@@ -108,14 +108,22 @@ export default function LogsPage() {
         {getStatusBadge(log.status)}
       </IndexTable.Cell>
       <IndexTable.Cell>
-        <InlineStack align="end">
-          <Tooltip content="Xem chi tiết">
+        <InlineStack align="end" wrap={false}>
+          {smDown ? (
             <Button 
               icon={ViewIcon} 
               variant="tertiary" 
               onClick={() => setSelectedLog(log)}
             />
-          </Tooltip>
+          ) : (
+            <Tooltip content="Xem chi tiết">
+              <Button 
+                icon={ViewIcon} 
+                variant="tertiary" 
+                onClick={() => setSelectedLog(log)}
+              />
+            </Tooltip>
+          )}
         </InlineStack>
       </IndexTable.Cell>
     </IndexTable.Row>
@@ -133,42 +141,44 @@ export default function LogsPage() {
         disabled: logs.length === 0
       }}
     >
-      <LegacyCard>
-        <IndexFilters
-          tabs={tabs}
-          selected={selectedTab}
-          onSelect={(index) => {
-            setSelectedTab(index);
-            setPage(1);
-          }}
-          mode={IndexFiltersMode.Filtering}
-          setMode={() => {}}
-          filters={[]}
-          onClearAll={() => {}}
-          hideFilters
-          hideQueryField
-        />
-        <IndexTable
-          resourceName={{ singular: 'nhật ký', plural: 'nhật ký' }}
-          itemCount={filteredLogs.length}
-          headings={[
-            { title: 'Thời gian' },
-            { title: 'Loại công việc' },
-            { title: 'Máy chủ' },
-            { title: 'Trạng thái' },
-            { title: 'Thao tác', alignment: 'end' },
-          ]}
-          selectable={false}
-          pagination={{
-            hasNext: page < totalPages,
-            hasPrevious: page > 1,
-            onNext: () => setPage(page + 1),
-            onPrevious: () => setPage(page - 1),
-          }}
-        >
-          {rowMarkup}
-        </IndexTable>
-      </LegacyCard>
+      <Box paddingInline={{ xs: '400', sm: '0' }}>
+        <LegacyCard>
+          <IndexFilters
+            tabs={tabs}
+            selected={selectedTab}
+            onSelect={(index) => {
+              setSelectedTab(index);
+              setPage(1);
+            }}
+            mode={IndexFiltersMode.Filtering}
+            setMode={() => {}}
+            filters={[]}
+            onClearAll={() => {}}
+            hideFilters
+            hideQueryField
+          />
+          <IndexTable
+            resourceName={{ singular: 'nhật ký', plural: 'nhật ký' }}
+            itemCount={filteredLogs.length}
+            headings={[
+              { title: 'Thời gian' },
+              { title: 'Loại công việc' },
+              { title: 'Máy chủ' },
+              { title: 'Trạng thái' },
+              { title: 'Thao tác', alignment: 'end' },
+            ]}
+            selectable={false}
+            pagination={{
+              hasNext: page < totalPages,
+              hasPrevious: page > 1,
+              onNext: () => setPage(page + 1),
+              onPrevious: () => setPage(page - 1),
+            }}
+          >
+            {rowMarkup}
+          </IndexTable>
+        </LegacyCard>
+      </Box>
 
       <Modal
         open={!!selectedLog}
