@@ -93,7 +93,7 @@ EOF`,
 
     // 5. Triển khai các Scripts (UID Routing - V2 Logic)
     
-    // Script: proxy-create <port> <user> <pass>
+    // Script: proxy-create <port> <user> <pass> [type: ipv4|ipv6]
     const proxyCreateScript = `cat > /usr/local/bin/proxy-create << 'EOF'
 #!/bin/bash
 PREFIX="${prefix}"
@@ -101,20 +101,30 @@ SERVER_IP="${server.host}"
 PORT=\$1
 USER=\$2
 PASS=\$3
+TYPE=\${4:-ipv6}
 MARK=\$((PORT + 1000))
-IPV6="\${PREFIX}:\$(printf '%x:%x:%x:%x' \$RANDOM \$RANDOM \$RANDOM \$RANDOM)"
+
 # Lấy UID thay vì dùng Username trong iptables (V2 Logic)
 LINUX_USER="gost\$PORT"
 id "\$LINUX_USER" &>/dev/null || useradd -r -M -s /bin/false "\$LINUX_USER"
 LINUX_UID=\$(id -u "\$LINUX_USER")
 
-ip -6 addr add \$IPV6/64 dev eth0 nodad
-ip6tables -t mangle -A OUTPUT -m owner --uid-owner "\$LINUX_UID" -j MARK --set-mark "\$MARK"
-ip6tables -t nat -A POSTROUTING -m mark --mark "\$MARK" -j SNAT --to-source "\$IPV6"
-
 pkill -f "gost.*:\$PORT"
-runuser -u "\$LINUX_USER" -- gost -L "socks5://\$USER:\$PASS@:\$PORT" -F "direct://?prefer=ipv6" >> /var/log/gost.log 2>&1 &
-echo "\$PORT|\$IPV6|\$MARK" >> /root/proxy-ipv6.txt
+
+if [ "\$TYPE" == "ipv4" ]; then
+    # Chế độ IPv4: Không thêm IPv6, không dùng ip6tables
+    runuser -u "\$LINUX_USER" -- gost -L "socks5://\$USER:\$PASS@:\$PORT" -F "direct://?prefer=ipv4" >> /var/log/gost.log 2>&1 &
+    echo "\$PORT|ipv4|\$MARK" >> /root/proxy-ipv6.txt
+else
+    # Chế độ IPv6: Mặc định
+    IPV6="\${PREFIX}:\$(printf '%x:%x:%x:%x' \$RANDOM \$RANDOM \$RANDOM \$RANDOM)"
+    ip -6 addr add \$IPV6/64 dev eth0 nodad
+    ip6tables -t mangle -A OUTPUT -m owner --uid-owner "\$LINUX_UID" -j MARK --set-mark "\$MARK"
+    ip6tables -t nat -A POSTROUTING -m mark --mark "\$MARK" -j SNAT --to-source "\$IPV6"
+    runuser -u "\$LINUX_USER" -- gost -L "socks5://\$USER:\$PASS@:\$PORT" -F "direct://?prefer=ipv6" >> /var/log/gost.log 2>&1 &
+    echo "\$PORT|\$IPV6|\$MARK" >> /root/proxy-ipv6.txt
+fi
+
 echo "\$SERVER_IP:\$PORT:\$USER:\$PASS" >> /root/proxies.txt
 ip6tables-save > /etc/iptables/rules.v6
 EOF`;
