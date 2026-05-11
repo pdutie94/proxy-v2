@@ -22,7 +22,7 @@ interface ServerListProps {
 }
 
 export function ServerList({ onEdit }: ServerListProps) {
-  const { servers, isLoading, deleteMutation, setupMutation, resetMutation } = useServers();
+  const { servers, isLoading, deleteMutation, setupMutation, resetMutation, syncMutation } = useServers();
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const resourceName = {
@@ -72,6 +72,11 @@ export function ServerList({ onEdit }: ServerListProps) {
         </IndexTable.Cell>
         <IndexTable.Cell>{server.maxProxies}</IndexTable.Cell>
         <IndexTable.Cell>
+          <Text as="span" variant="bodyMd" fontWeight="medium">
+            {server.lastPort || '---'}
+          </Text>
+        </IndexTable.Cell>
+        <IndexTable.Cell>
           <InlineStack align="end" gap="200">
             <Tooltip content="Thiết lập Server">
               <Button 
@@ -90,6 +95,14 @@ export function ServerList({ onEdit }: ServerListProps) {
                 onClick={() => resetMutation.mutate(server.id)}
                 loading={resetMutation.isPending && resetMutation.variables === server.id}
                 disabled={(server.status as any) === 'SETTING_UP'}
+              />
+            </Tooltip>
+            <Tooltip content="Đồng bộ cổng từ Server">
+              <Button 
+                icon={RefreshIcon} 
+                variant="tertiary" 
+                onClick={() => syncMutation.mutate(server.id)}
+                loading={syncMutation.isPending && syncMutation.variables === server.id}
               />
             </Tooltip>
             <Tooltip content="Chỉnh sửa">
@@ -124,6 +137,7 @@ export function ServerList({ onEdit }: ServerListProps) {
             { title: 'Địa chỉ IP' },
             { title: 'Trạng thái' },
             { title: 'Giới hạn Proxy' },
+            { title: 'Cổng cuối (SV)' },
             { title: 'Thao tác', alignment: 'end' },
           ]}
           selectable={false}

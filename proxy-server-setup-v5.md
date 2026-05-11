@@ -70,31 +70,42 @@ touch /root/proxy-ipv6.txt /root/proxies.txt
 ## 3. Bộ Scripts Điều Khiển (UID Routing Core)
 
 ### 3.1. Tạo Proxy (`proxy-create`)
-Sử dụng UID của User Linux để đánh dấu gói tin IPv6.
+Hỗ trợ cả IPv4 (Main IP) và IPv6 (Randomized).
 
 ```bash
 cat > /usr/local/bin/proxy-create << 'EOF'
 #!/bin/bash
-PREFIX="2a01:4ff:1f0:513b" # Thay bằng Prefix của bạn
-SERVER_IP=$(curl -s -4 icanhazip.com)
+# Usage: proxy-create <port> <user> <pass> <type: ipv4|ipv6>
 PORT=$1
 USER=$2
 PASS=$3
+TYPE=${4:-ipv6} # Mặc định là ipv6 nếu không truyền
+PREFIX="2a01:4ff:1f0:513b" # Thay bằng Prefix của bạn
+SERVER_IP=$(curl -s -4 icanhazip.com)
 MARK=$((PORT + 1000))
-IPV6="${PREFIX}:$(printf '%x:%x:%x:%x' $RANDOM $RANDOM $RANDOM $RANDOM)"
 
 LINUX_USER="gost$PORT"
 id "$LINUX_USER" &>/dev/null || useradd -r -M -s /bin/false "$LINUX_USER"
 LINUX_UID=$(id -u "$LINUX_USER")
 
-ip -6 addr add $IPV6/64 dev eth0 nodad
-ip6tables -t mangle -A OUTPUT -m owner --uid-owner "$LINUX_UID" -j MARK --set-mark "$MARK"
-ip6tables -t nat -A POSTROUTING -m mark --mark "$MARK" -j SNAT --to-source "$IPV6"
-
+# Dọn dẹp cũ nếu có
 pkill -f "gost.*:$PORT"
-runuser -u "$LINUX_USER" -- gost -L "socks5://$USER:$PASS@:$PORT" -F "direct://?prefer=ipv6" >> /var/log/gost.log 2>&1 &
 
-echo "$PORT|$IPV6|$MARK" >> /root/proxy-ipv6.txt
+if [ "$TYPE" == "ipv4" ]; then
+    # IPv4 Outbound: Không cần gán IPv6, chạy thẳng gost
+    runuser -u "$LINUX_USER" -- gost -L "socks5://$USER:$PASS@:$PORT" -F "direct://?prefer=ipv4" >> /var/log/gost.log 2>&1 &
+    echo "$PORT|IPv4|0" >> /root/proxy-ipv6.txt
+else
+    # IPv6 Outbound: Logic xoay IP ngẫu nhiên
+    IPV6="${PREFIX}:$(printf '%x:%x:%x:%x' $RANDOM $RANDOM $RANDOM $RANDOM)"
+    ip -6 addr add $IPV6/64 dev eth0 nodad
+    ip6tables -t mangle -A OUTPUT -m owner --uid-owner "$LINUX_UID" -j MARK --set-mark "$MARK"
+    ip6tables -t nat -A POSTROUTING -m mark --mark "$MARK" -j SNAT --to-source "$IPV6"
+    
+    runuser -u "$LINUX_USER" -- gost -L "socks5://$USER:$PASS@:$PORT" -F "direct://?prefer=ipv6" >> /var/log/gost.log 2>&1 &
+    echo "$PORT|$IPV6|$MARK" >> /root/proxy-ipv6.txt
+fi
+
 echo "$SERVER_IP:$PORT:$USER:$PASS" >> /root/proxies.txt
 ip6tables-save > /etc/iptables/rules.v6
 EOF

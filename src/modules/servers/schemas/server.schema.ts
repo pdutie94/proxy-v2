@@ -8,6 +8,9 @@ export const serverSchema = z.object({
   password: z.string().optional(),
   ipv6: z.string().optional(),
   maxProxies: z.number().default(100),
+  startPort: z.number().default(10000),
+  autoRotate: z.boolean().default(false),
+  rotationInterval: z.number().default(0),
   provider: z.string().optional(),
   notes: z.string().optional(),
 });

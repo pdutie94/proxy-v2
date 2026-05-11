@@ -1,6 +1,7 @@
 "use client";
 
 import { useProxies } from '@/hooks/use-proxies';
+import { useServers } from '@/hooks/use-servers';
 import { 
   IndexTable, 
   Card, 
@@ -10,25 +11,119 @@ import {
   Box,
   SkeletonBodyText,
   InlineStack,
-  Modal
+  Modal,
+  Filters,
+  useSetIndexFiltersMode,
+  IndexFilters,
+  TabProps,
 } from "@shopify/polaris";
-import { DeleteIcon, EditIcon } from "@shopify/polaris-icons";
+import { DeleteIcon, EditIcon, RefreshIcon, ClipboardIcon, SearchIcon } from "@shopify/polaris-icons";
 import { format } from "date-fns";
-import { Proxy } from '@prisma/client';
-import { useState, useCallback } from 'react';
+import { Proxy, Server } from '@prisma/client';
+import { useState, useCallback, useMemo } from 'react';
+import { toast } from 'sonner';
+
+interface ProxyWithServer extends Proxy {
+  server: Server;
+}
 
 interface ProxyListProps {
   onEdit: (proxy: Proxy) => void;
 }
 
 export function ProxyList({ onEdit }: ProxyListProps) {
-  const { proxies, isLoading, deleteMutation } = useProxies();
+  const { proxies, isLoading, deleteMutation, rotateProxyMutation, checkGoogleMutation } = useProxies();
+  const { servers } = useServers();
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const resourceName = {
-    singular: 'proxy',
-    plural: 'proxies',
-  };
+  // Filters State
+  const { mode, setMode } = useSetIndexFiltersMode();
+  const [queryValue, setQueryValue] = useState('');
+  const [status, setStatus] = useState<string[]>([]);
+  const [selectedServerId, setSelectedServerId] = useState<string[]>([]);
+  const [selectedTab, setSelectedTab] = useState(0);
+
+  const tabs: TabProps[] = useMemo(() => ['Tất cả', 'Hoạt động', 'Đang tạo', 'Lỗi'].map((item, index) => ({
+    content: item,
+    index,
+    id: `${item}-${index}`,
+    isLocked: index === 0,
+  })), []);
+
+  const onHandleStatusChange = useCallback((value: string[]) => setStatus(value), []);
+  const onHandleServerChange = useCallback((value: string[]) => setSelectedServerId(value), []);
+  const onHandleQueryValueChange = useCallback((value: string) => setQueryValue(value), []);
+  const onHandleFiltersClearAll = useCallback(() => {
+    setStatus([]);
+    setSelectedServerId([]);
+    setQueryValue('');
+  }, []);
+
+  const filteredProxies = useMemo(() => {
+    return (proxies as ProxyWithServer[]).filter((proxy) => {
+      if (selectedTab === 1 && proxy.status !== 'ACTIVE') return false;
+      if (selectedTab === 2 && proxy.status !== 'CREATING') return false;
+      if (selectedTab === 3 && proxy.status !== 'ERROR') return false;
+      if (queryValue && !proxy.port.toString().includes(queryValue) && !proxy.username.toLowerCase().includes(queryValue.toLowerCase())) return false;
+      if (status.length > 0 && !status.includes(proxy.status)) return false;
+      if (selectedServerId.length > 0 && !selectedServerId.includes(proxy.serverId)) return false;
+      return true;
+    });
+  }, [proxies, selectedTab, queryValue, status, selectedServerId]);
+
+  // MANUAL SELECTION LOGIC
+  const [selectedResources, setSelectedResources] = useState<string[]>([]);
+
+  const handleSelectionChange = useCallback((selectionType: any, isSelected: boolean, selection?: string | any) => {
+    if (selectionType === 'all' || selectionType === 'page') {
+      setSelectedResources(isSelected ? filteredProxies.map(p => p.id) : []);
+    } else if (selectionType === 'single') {
+      const id = selection as string;
+      setSelectedResources(prev => 
+        isSelected ? [...prev, id] : prev.filter(item => item !== id)
+      );
+    } else if (selectionType === 'multi') {
+      const [start, end] = selection as [number, number];
+      const sliceIds = filteredProxies.slice(start, end + 1).map(p => p.id);
+      setSelectedResources(prev => {
+        const otherIds = prev.filter(id => !sliceIds.includes(id));
+        return isSelected ? [...otherIds, ...sliceIds] : otherIds;
+      });
+    }
+  }, [filteredProxies]);
+
+  const allResourcesSelected = useMemo(() => {
+    return filteredProxies.length > 0 && selectedResources.length === filteredProxies.length;
+  }, [filteredProxies, selectedResources]);
+
+  const indeterminate = useMemo(() => {
+    return selectedResources.length > 0 && selectedResources.length < filteredProxies.length;
+  }, [filteredProxies, selectedResources]);
+
+  const handleCopyProxies = useCallback(() => {
+    const selectedProxies = filteredProxies.filter(p => selectedResources.includes(p.id));
+    if (selectedProxies.length === 0) return;
+    
+    const text = selectedProxies.map(p => {
+      const host = p.server?.host || '0.0.0.0';
+      return `${host}:${p.port}:${p.username}:${p.password}`;
+    }).join('\n');
+
+    navigator.clipboard.writeText(text).then(() => {
+      toast.success(`Đã copy ${selectedProxies.length} proxy vào bộ nhớ tạm`);
+      setSelectedResources([]);
+    });
+  }, [selectedResources, filteredProxies]);
+
+  const handleBulkCheckGoogle = useCallback(() => {
+    if (selectedResources.length === 0) return;
+    
+    selectedResources.forEach(id => {
+      checkGoogleMutation.mutate(id);
+    });
+    
+    setSelectedResources([]);
+  }, [selectedResources, checkGoogleMutation]);
 
   const handleDelete = useCallback(() => {
     if (deleteId) {
@@ -48,16 +143,22 @@ export function ProxyList({ onEdit }: ProxyListProps) {
     );
   }
 
-  const rowMarkup = proxies.map(
+  const rowMarkup = filteredProxies.map(
     (proxy, index) => (
-      <IndexTable.Row id={proxy.id} key={proxy.id} position={index}>
+      <IndexTable.Row 
+        id={proxy.id} 
+        key={proxy.id} 
+        position={index}
+        selected={selectedResources.includes(proxy.id)}
+      >
         <IndexTable.Cell>
-          <Text as="span" fontWeight="bold">
-            {proxy.port}
-          </Text>
+          <Text as="span" fontWeight="bold">{proxy.port}</Text>
         </IndexTable.Cell>
         <IndexTable.Cell>{proxy.username}</IndexTable.Cell>
-        <IndexTable.Cell>{proxy.ipv6 || '-'}</IndexTable.Cell>
+        <IndexTable.Cell>{proxy.server?.name || '-'}</IndexTable.Cell>
+        <IndexTable.Cell>
+          <Text as="span" variant="bodyXs" color="subdued" breakWord>{proxy.ipv6 || '-'}</Text>
+        </IndexTable.Cell>
         <IndexTable.Cell>
           <Badge tone={proxy.status === 'ACTIVE' ? 'success' : proxy.status === 'CREATING' ? 'attention' : 'critical'}>
             {proxy.status === 'ACTIVE' ? 'HOẠT ĐỘNG' : proxy.status === 'CREATING' ? 'ĐANG KHỞI TẠO' : 'LỖI'}
@@ -68,17 +169,10 @@ export function ProxyList({ onEdit }: ProxyListProps) {
         </IndexTable.Cell>
         <IndexTable.Cell>
           <InlineStack align="end" gap="200">
-            <Button 
-              icon={EditIcon} 
-              variant="tertiary" 
-              onClick={() => onEdit(proxy)}
-            />
-            <Button 
-              icon={DeleteIcon} 
-              variant="tertiary" 
-              tone="critical"
-              onClick={() => setDeleteId(proxy.id)}
-            />
+            <Button icon={SearchIcon} variant="tertiary" onClick={() => checkGoogleMutation.mutate(proxy.id)} loading={checkGoogleMutation.isPending && checkGoogleMutation.variables === proxy.id} disabled={proxy.status !== 'ACTIVE'} />
+            <Button icon={RefreshIcon} variant="tertiary" onClick={() => rotateProxyMutation.mutate(proxy.id)} loading={rotateProxyMutation.isPending && rotateProxyMutation.variables === proxy.id} disabled={proxy.status !== 'ACTIVE'} />
+            <Button icon={EditIcon} variant="tertiary" onClick={() => onEdit(proxy)} />
+            <Button icon={DeleteIcon} variant="tertiary" tone="critical" onClick={() => setDeleteId(proxy.id)} />
           </InlineStack>
         </IndexTable.Cell>
       </IndexTable.Row>
@@ -87,19 +181,96 @@ export function ProxyList({ onEdit }: ProxyListProps) {
 
   return (
     <>
+      <Box paddingBlockEnd="400">
+        <InlineStack align="space-between">
+          <InlineStack gap="200">
+            {selectedResources.length > 0 && (
+              <>
+                <Button 
+                  icon={ClipboardIcon} 
+                  variant="primary" 
+                  tone="success"
+                  onClick={handleCopyProxies}
+                >
+                  Copy {selectedResources.length} Proxy
+                </Button>
+                <Button 
+                  icon={SearchIcon} 
+                  onClick={handleBulkCheckGoogle}
+                >
+                  Check Google {selectedResources.length} Proxy
+                </Button>
+              </>
+            )}
+          </InlineStack>
+        </InlineStack>
+      </Box>
+
       <Card padding="0">
+        <IndexFilters
+          sortOptions={[]}
+          sortSelected={['']}
+          queryValue={queryValue}
+          queryPlaceholder="Tìm kiếm theo Port hoặc Username"
+          onQueryChange={onHandleQueryValueChange}
+          onQueryClear={() => setQueryValue('')}
+          tabs={tabs}
+          selected={selectedTab}
+          onSelect={setSelectedTab}
+          filters={[
+            {
+              key: 'status',
+              label: 'Trạng thái',
+              filter: (
+                <Filters.ChoiceList
+                  title="Trạng thái"
+                  choices={[
+                    { label: 'Hoạt động', value: 'ACTIVE' },
+                    { label: 'Đang tạo', value: 'CREATING' },
+                    { label: 'Lỗi', value: 'ERROR' },
+                  ]}
+                  selected={status}
+                  onChange={onHandleStatusChange}
+                  allowMultiple
+                />
+              ),
+              shortcut: true,
+            },
+            {
+              key: 'serverId',
+              label: 'Máy chủ',
+              filter: (
+                <Filters.ChoiceList
+                  title="Máy chủ"
+                  choices={servers.map(s => ({ label: s.name, value: s.id }))}
+                  selected={selectedServerId}
+                  onChange={onHandleServerChange}
+                  allowMultiple
+                />
+              ),
+              shortcut: true,
+            },
+          ]}
+          appliedFilters={[]}
+          onClearAll={onHandleFiltersClearAll}
+          mode={mode}
+          setMode={setMode}
+        />
         <IndexTable
-          resourceName={resourceName}
-          itemCount={proxies.length}
+          resourceName={{ singular: 'proxy', plural: 'proxies' }}
+          itemCount={filteredProxies.length}
           headings={[
-            { title: 'Cổng (Port)' },
+            { title: 'Port' },
             { title: 'Tài khoản' },
-            { title: 'IPv6' },
+            { title: 'Máy chủ' },
+            { title: 'IPv6 (Exit IP)' },
             { title: 'Trạng thái' },
             { title: 'Hết hạn' },
             { title: 'Thao tác', alignment: 'end' },
           ]}
-          selectable={false}
+          selectedResources={selectedResources}
+          allResourcesSelected={indeterminate ? 'indeterminate' : allResourcesSelected}
+          onSelectionChange={handleSelectionChange}
         >
           {rowMarkup}
         </IndexTable>
@@ -115,17 +286,10 @@ export function ProxyList({ onEdit }: ProxyListProps) {
           destructive: true,
           loading: deleteMutation.isPending,
         }}
-        secondaryActions={[
-          {
-            content: 'Hủy bỏ',
-            onAction: () => setDeleteId(null),
-          },
-        ]}
+        secondaryActions={[{ content: 'Hủy bỏ', onAction: () => setDeleteId(null) }]}
       >
         <Modal.Section>
-          <Text as="p">
-            Bạn có chắc chắn muốn xóa Proxy này? Cấu hình sẽ bị gỡ bỏ khỏi máy chủ và không thể khôi phục.
-          </Text>
+          <Text as="p">Bạn có chắc chắn muốn xóa Proxy này? Cấu hình sẽ bị gỡ bỏ khỏi máy chủ và không thể khôi phục.</Text>
         </Modal.Section>
       </Modal>
     </>

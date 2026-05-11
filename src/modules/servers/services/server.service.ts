@@ -1,7 +1,7 @@
 import { serverRepository } from '../repositories/server.repository';
 import { ServerSchema } from '../schemas/server.schema';
 import { encrypt } from '@/utils/crypto';
-import { ServerAuthType } from '@prisma/client';
+import { ServerAuthType, JobType } from '@prisma/client';
 import prisma from '@/lib/prisma';
 
 export class ServerService {
@@ -37,6 +37,28 @@ export class ServerService {
     }
     
     return serverRepository.update(id, updateData);
+  }
+  
+  async syncServerPort(id: string) {
+    const server = await prisma.server.findUnique({ where: { id } });
+    if (!server) throw new Error('Máy chủ không tồn tại');
+
+    const job = await prisma.serverJob.create({
+      data: {
+        type: 'SYNC_SERVER_PORT' as any,
+        serverId: id,
+        status: 'WAITING',
+      },
+    });
+
+    // Sử dụng dynamic import để tránh lỗi bundle BullMQ
+    const { addJob } = await import('@/worker/queue/job.queue');
+    await addJob('SYNC_SERVER_PORT' as any, {
+      serverId: id,
+      jobId: job.id,
+    });
+
+    return job;
   }
 }
 

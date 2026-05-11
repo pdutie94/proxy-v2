@@ -11,8 +11,13 @@ export function useProxies() {
       const res = await fetch('/api/proxies');
       const data = await res.json();
       if (!data.success) throw new Error(data.message);
-      return data.data as Proxy[];
+      return data.data as (Proxy & { server: any })[];
     },
+    refetchInterval: (query) => {
+      const proxies = query.state.data as any[];
+      const hasProcessing = proxies?.some(p => p.status === 'CREATING');
+      return hasProcessing ? 3000 : false;
+    }
   });
 
   const createMutation = useMutation({
@@ -29,6 +34,26 @@ export function useProxies() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['proxies'] });
       toast.success('Đã tạo Proxy thành công');
+    },
+    onError: (error: any) => {
+      toast.error(error.message);
+    },
+  });
+
+  const bulkCreateMutation = useMutation({
+    mutationFn: async (bulkData: any) => {
+      const res = await fetch('/api/proxies/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(bulkData),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message);
+      return data.data;
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ['proxies'] });
+      toast.success('Đã bắt đầu tạo hàng loạt Proxy');
     },
     onError: (error: any) => {
       toast.error(error.message);
@@ -72,11 +97,49 @@ export function useProxies() {
     },
   });
 
+  const rotateProxyMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/proxies/${id}/rotate`, {
+        method: 'POST',
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message);
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['proxies'] });
+      toast.success('Đã bắt đầu xoay IPv6');
+    },
+    onError: (error: any) => {
+      toast.error(error.message);
+    },
+  });
+
+  const checkGoogleMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/proxies/${id}/check-google`, {
+        method: 'POST',
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message);
+      return data.data;
+    },
+    onSuccess: () => {
+      toast.success('Đã bắt đầu kiểm tra Google (Xem kết quả trong Logs)');
+    },
+    onError: (error: any) => {
+      toast.error(error.message);
+    },
+  });
+
   return {
     proxies: proxiesQuery.data || [],
     isLoading: proxiesQuery.isLoading,
     createMutation,
+    bulkCreateMutation,
     updateMutation,
     deleteMutation,
+    rotateProxyMutation,
+    checkGoogleMutation,
   };
 }

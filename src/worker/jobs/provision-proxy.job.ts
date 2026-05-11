@@ -35,17 +35,25 @@ export async function processProvisionProxy(job: Job) {
     await ssh.connect(proxy.server);
 
     // 2. Chạy lệnh tạo proxy trên server
-    // proxy-create <port> <user> <pass>
-    const cmd = `/usr/local/bin/proxy-create ${proxy.port} ${proxy.username} ${proxy.password}`;
+    // proxy-create <port> <user> <pass> <type>
+    const ipType = proxy.ipType.toLowerCase();
+    const cmd = `/usr/local/bin/proxy-create ${proxy.port} ${proxy.username} ${proxy.password} ${ipType}`;
     await addLog(`Thực thi: ${cmd}`);
     await ssh.execute(cmd);
 
-    // 3. Lấy thông tin IPv6 đã gán
-    const checkIp = await ssh.execute(`grep "^${proxy.port}|" /root/proxy-ipv6.txt | cut -d'|' -f2`);
-    const ipv6 = checkIp.stdout.trim();
-    
-    if (!ipv6) throw new Error('Không lấy được IPv6 từ server sau khi tạo');
-    await addLog(`IPv6 đã gán: ${ipv6}`);
+    // 3. Lấy thông tin IP đã gán (Nếu là IPv6)
+    let ipv6 = null;
+    if (proxy.ipType === 'IPv6') {
+      const checkIp = await ssh.execute(`grep "^${proxy.port}|" /root/proxy-ipv6.txt | cut -d'|' -f2`);
+      ipv6 = checkIp.stdout.trim();
+      if (!ipv6) throw new Error('Không lấy được IPv6 từ server sau khi tạo');
+      await addLog(`IPv6 đã gán: ${ipv6}`);
+    } else {
+      await addLog(`Proxy sử dụng IPv4 của server.`);
+    }
+
+    // Lưu lastPort vào file trên server
+    await ssh.execute(`echo ${proxy.port} > /etc/gost/last_port`);
 
     // 4. KIỂM TRA KẾT NỐI (DIAGNOSTIC)
     await addLog('Đang kiểm tra Outbound qua Proxy...');

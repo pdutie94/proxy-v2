@@ -57,16 +57,23 @@ export async function processResetServer(job: Job) {
 
     await addLog('Đã dọn dẹp sạch sẽ cấu hình trên Server.');
 
+    // Xóa file lastPort trên server
+    await ssh.execute("rm -f /etc/gost/last_port");
+    await addLog('Đã xóa file ghi nhớ cổng cuối trên Server.');
+
     // 3. Xóa proxies trong DB
     await prisma.proxy.deleteMany({
       where: { serverId }
     });
     await addLog('Đã xóa toàn bộ bản ghi Proxy trong Database.');
 
-    // Cập nhật lại trạng thái server về PENDING
+    // Cập nhật lại trạng thái server về PENDING và reset lastPort
     await prisma.server.update({
       where: { id: serverId },
-      data: { status: 'PENDING' }
+      data: { 
+        status: 'PENDING',
+        lastPort: null
+      }
     });
 
     await prisma.serverJob.update({

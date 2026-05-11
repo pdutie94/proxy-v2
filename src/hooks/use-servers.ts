@@ -15,8 +15,9 @@ export function useServers() {
     },
     refetchInterval: (query) => {
       const servers = query.state.data as Server[];
-      if (servers?.some(s => s.status === 'SETTING_UP')) {
-        return 3000; // Poll every 3 seconds if setting up
+      // Poll nếu có bất kỳ server nào đang cài đặt hoặc vừa mới reset (PENDING)
+      if (servers?.some(s => s.status === 'SETTING_UP' || s.status === 'PENDING')) {
+        return 3000; 
       }
       return false;
     }
@@ -116,6 +117,24 @@ export function useServers() {
     },
   });
 
+  const syncMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/servers/${id}/sync`, {
+        method: 'POST',
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message);
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['servers'] });
+      toast.success('Đã bắt đầu đồng bộ cổng');
+    },
+    onError: (error: any) => {
+      toast.error(error.message);
+    },
+  });
+
   return {
     servers: serversQuery.data || [],
     isLoading: serversQuery.isLoading,
@@ -124,5 +143,6 @@ export function useServers() {
     deleteMutation,
     setupMutation,
     resetMutation,
+    syncMutation,
   };
 }

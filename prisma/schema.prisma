@@ -39,14 +39,24 @@ enum ProxyStatus {
   ERROR
 }
 
+// Proxy IP types
+enum ProxyIPType {
+  IPv4
+  IPv6
+}
+
 // Job types
 enum JobType {
   SETUP_SERVER
   PROVISION_PROXY
+  BULK_PROVISION_PROXY
   ROTATE_PROXY
   DELETE_PROXY
   EXPIRE_PROXY
   RESET_SERVER
+  AUTOMATION
+  SYNC_SERVER_PORT
+  CHECK_GOOGLE
 }
 
 // Job statuses
@@ -79,6 +89,10 @@ model Server {
   ipv6              String?
   status            ServerStatus   @default(PENDING)
   maxProxies        Int            @default(100)
+  startPort         Int            @default(10000)
+  lastPort          Int?
+  autoRotate        Boolean        @default(false)
+  rotationInterval  Int            @default(0) // Minutes, 0 = disabled
   notes             String?        @db.Text
   jobs              ServerJob[]
   proxies           Proxy[]
@@ -95,6 +109,7 @@ model Proxy {
   port          Int
   username      String
   password      String
+  ipType        ProxyIPType @default(IPv6)
   ipv6          String?
   status        ProxyStatus @default(CREATING)
   isEnabled     Boolean     @default(true)

@@ -1,6 +1,6 @@
 import { proxyRepository } from '../repositories/proxy.repository';
 import { ProxySchema } from '../schemas/proxy.schema';
-import { addJob } from '@/worker/queue/job.queue';
+import { BulkProxySchema } from '../schemas/bulk-proxy.schema';
 import { JobType } from '@prisma/client';
 import prisma from '@/lib/prisma';
 
@@ -21,10 +21,27 @@ export class ProxyService {
       throw new Error('Server max proxy capacity reached');
     }
 
+    // Check if port already exists on this server
+    const existing = await prisma.proxy.findUnique({
+      where: {
+        serverId_port: { serverId, port: data.port }
+      }
+    });
+
+    if (existing) {
+      throw new Error(`Cổng ${data.port} đã tồn tại trên máy chủ này.`);
+    }
+
     const proxy = await proxyRepository.create({
       ...rest,
       server: { connect: { id: serverId } },
       status: 'CREATING',
+    });
+
+    // Update server lastPort
+    await prisma.server.update({
+      where: { id: serverId },
+      data: { lastPort: data.port }
     });
 
     // Create a job record
@@ -37,8 +54,9 @@ export class ProxyService {
       },
     });
 
-    // Dispatch job
+    // Dispatch job (Dynamic Import)
     try {
+      const { addJob } = await import('@/worker/queue/job.queue');
       await addJob(JobType.PROVISION_PROXY, {
         proxyId: proxy.id,
         jobId: job.id,
@@ -65,8 +83,9 @@ export class ProxyService {
       },
     });
 
-    // Dispatch job
+    // Dispatch job (Dynamic Import)
     try {
+      const { addJob } = await import('@/worker/queue/job.queue');
       await addJob(JobType.DELETE_PROXY, {
         port: proxy.port,
         serverId: proxy.serverId,
@@ -93,12 +112,113 @@ export class ProxyService {
     });
 
     try {
+      const { addJob } = await import('@/worker/queue/job.queue');
       await addJob(JobType.ROTATE_PROXY, {
         proxyId: proxy.id,
         jobId: job.id,
       });
     } catch (error) {
       console.error('[ProxyService] Failed to dispatch rotate job.', error);
+    }
+
+    return proxy;
+  }
+
+  async bulkCreateProxies(data: BulkProxySchema) {
+    const { serverId, startPort, count, username, password, expiresAt } = data;
+
+    const server = await prisma.server.findUnique({ where: { id: serverId } });
+    if (!server) throw new Error('Máy chủ không tồn tại');
+
+    const currentProxies = await prisma.proxy.count({ where: { serverId } });
+    if (currentProxies + count > server.maxProxies) {
+      throw new Error(`Vượt quá giới hạn máy chủ. Tối đa: ${server.maxProxies}, Hiện tại: ${currentProxies}`);
+    }
+
+    // Check for port conflicts in the whole range
+    const requestedPorts = Array.from({ length: count }).map((_, i) => startPort + i);
+    const conflictingProxies = await prisma.proxy.findMany({
+      where: {
+        serverId,
+        port: { in: requestedPorts }
+      },
+      select: { port: true }
+    });
+
+    if (conflictingProxies.length > 0) {
+      const ports = conflictingProxies.map(p => p.port).join(', ');
+      throw new Error(`Các cổng sau đã tồn tại trên máy chủ: ${ports}`);
+    }
+
+    // Create proxies in a batch to get IDs
+    const proxies = await prisma.$transaction(
+      Array.from({ length: count }).map((_, i) => {
+        const port = startPort + i;
+        return prisma.proxy.create({
+          data: {
+            port,
+            username,
+            password,
+            serverId,
+            status: 'CREATING',
+            expiresAt: expiresAt ? new Date(expiresAt) : null,
+          }
+        });
+      })
+    );
+
+    // Update server lastPort
+    await prisma.server.update({
+      where: { id: serverId },
+      data: { lastPort: startPort + count - 1 }
+    });
+
+    // Create ONE job record for the whole batch
+    const job = await prisma.serverJob.create({
+      data: {
+        type: JobType.BULK_PROVISION_PROXY,
+        serverId: serverId,
+        status: 'WAITING',
+        logs: `Bắt đầu khởi tạo hàng loạt ${count} proxy.`,
+      },
+    });
+
+    // Dispatch job with list of proxy IDs (Dynamic Import)
+    try {
+      const { addJob } = await import('@/worker/queue/job.queue');
+      await addJob(JobType.BULK_PROVISION_PROXY, {
+        proxyIds: proxies.map(p => p.id),
+        jobId: job.id,
+        serverId: serverId,
+      });
+    } catch (error) {
+      console.error('[ProxyService] Failed to dispatch bulk provision job.', error);
+    }
+
+    return proxies;
+  }
+
+  async checkGoogle(id: string) {
+    const proxy = await proxyRepository.findById(id);
+    if (!proxy) throw new Error('Proxy not found');
+
+    const job = await prisma.serverJob.create({
+      data: {
+        type: JobType.CHECK_GOOGLE,
+        serverId: proxy.serverId,
+        proxyId: proxy.id,
+        status: 'WAITING',
+      },
+    });
+
+    try {
+      const { addJob } = await import('@/worker/queue/job.queue');
+      await addJob(JobType.CHECK_GOOGLE, {
+        proxyId: proxy.id,
+        jobId: job.id,
+      });
+    } catch (error) {
+      console.error('[ProxyService] Failed to dispatch check-google job.', error);
     }
 
     return proxy;

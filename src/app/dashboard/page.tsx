@@ -10,21 +10,31 @@ import {
   Badge,
   IndexTable,
   Divider,
-  InlineStack
+  InlineStack,
+  Button,
+  Modal,
+  Scrollable
 } from "@shopify/polaris";
 import { 
   OrderIcon, 
   ShieldCheckMarkIcon, 
-  PersonIcon
+  PersonIcon,
+  ViewIcon
 } from "@shopify/polaris-icons";
 import { useServers } from "@/hooks/use-servers";
 import { useProxies } from "@/hooks/use-proxies";
 import { useUsers } from "@/hooks/use-users";
+import { useLogs } from "@/hooks/use-logs";
+import { formatDistanceToNow } from "date-fns";
+import { vi } from "date-fns/locale";
+import { useState } from "react";
 
 export default function DashboardPage() {
   const { servers } = useServers();
   const { proxies } = useProxies();
   const { users } = useUsers();
+  const { logs } = useLogs(10);
+  const [selectedLog, setSelectedLog] = useState<any>(null);
 
   const stats = [
     {
@@ -32,14 +42,14 @@ export default function DashboardPage() {
       value: servers.length.toString(),
       icon: OrderIcon,
       tone: "info" as const,
-      subtitle: "Máy chủ đang quản lý"
+      subtitle: `${servers.filter(s => s.status === 'ONLINE').length} Đang trực tuyến`
     },
     {
       title: "Tổng Proxy",
       value: proxies.length.toString(),
       icon: ShieldCheckMarkIcon,
       tone: "success" as const,
-      subtitle: "Proxy đang hoạt động"
+      subtitle: `${proxies.filter(p => p.status === 'ACTIVE').length} Đang hoạt động`
     },
     {
       title: "Người dùng",
@@ -49,6 +59,28 @@ export default function DashboardPage() {
       subtitle: "Tài khoản hệ thống"
     }
   ];
+
+  const getJobTitle = (job: any) => {
+    switch (job.type) {
+      case 'SETUP_SERVER': return `Thiết lập server ${job.server?.name}`;
+      case 'PROVISION_PROXY': return `Tạo Proxy cổng ${job.proxy?.port}`;
+      case 'BULK_PROVISION_PROXY': return `Tạo hàng loạt Proxy (${job.server?.name})`;
+      case 'ROTATE_PROXY': return `Xoay IP cổng ${job.proxy?.port}`;
+      case 'DELETE_PROXY': return `Xóa Proxy cổng ${job.proxy?.port}`;
+      case 'RESET_SERVER': return `Reset server ${job.server?.name}`;
+      case 'AUTOMATION': return 'Chạy chu kỳ tự động hóa';
+      default: return job.type;
+    }
+  };
+
+  const getJobBadge = (status: string) => {
+    switch (status) {
+      case 'COMPLETED': return <Badge tone="success">THÀNH CÔNG</Badge>;
+      case 'FAILED': return <Badge tone="critical">THẤT BẠI</Badge>;
+      case 'ACTIVE': return <Badge tone="attention">ĐANG CHẠY</Badge>;
+      default: return <Badge tone="info">ĐANG CHỜ</Badge>;
+    }
+  };
 
   return (
     <Page title="Bảng điều khiển">
@@ -89,27 +121,38 @@ export default function DashboardPage() {
               <Divider />
               <IndexTable
                 resourceName={{ singular: 'hoạt động', plural: 'hoạt động' }}
-                itemCount={0}
+                itemCount={logs.length}
                 headings={[
                   { title: 'Thời gian' },
                   { title: 'Sự kiện' },
                   { title: 'Trạng thái' },
+                  { title: 'Chi tiết', alignment: 'end' },
                 ]}
                 selectable={false}
               >
-                <IndexTable.Row id="1" position={0}>
-                  <IndexTable.Cell>Vừa xong</IndexTable.Cell>
-                  <IndexTable.Cell>Hệ thống đã sẵn sàng</IndexTable.Cell>
-                  <IndexTable.Cell>
-                    <Badge tone="success">HOÀN THÀNH</Badge>
-                  </IndexTable.Cell>
-                </IndexTable.Row>
+                {logs.map((job: any, index: number) => (
+                  <IndexTable.Row id={job.id} key={job.id} position={index}>
+                    <IndexTable.Cell>
+                      {formatDistanceToNow(new Date(job.createdAt), { addSuffix: true, locale: vi })}
+                    </IndexTable.Cell>
+                    <IndexTable.Cell>
+                      <Text as="span" fontWeight="medium">{getJobTitle(job)}</Text>
+                    </IndexTable.Cell>
+                    <IndexTable.Cell>
+                      {getJobBadge(job.status)}
+                    </IndexTable.Cell>
+                    <IndexTable.Cell>
+                      <InlineStack align="end">
+                        <Button 
+                          icon={ViewIcon} 
+                          variant="tertiary" 
+                          onClick={() => setSelectedLog(job)}
+                        />
+                      </InlineStack>
+                    </IndexTable.Cell>
+                  </IndexTable.Row>
+                ))}
               </IndexTable>
-              <Box padding="400">
-                <InlineStack align="center">
-                  <Text as="p" tone="subdued">Xem tất cả nhật ký</Text>
-                </InlineStack>
-              </Box>
             </Card>
           </Grid.Cell>
 
@@ -124,12 +167,12 @@ export default function DashboardPage() {
                       <Badge tone="success">ỔN ĐỊNH</Badge>
                     </InlineStack>
                     <InlineStack align="space-between">
-                      <Text as="p">Hàng đợi (Redis)</Text>
-                      <Badge tone="attention">GIAI ĐOẠN 2</Badge>
+                      <Text as="p">Redis Queue</Text>
+                      <Badge tone="success">ĐANG CHẠY</Badge>
                     </InlineStack>
                     <InlineStack align="space-between">
                       <Text as="p">SSH Worker</Text>
-                      <Badge tone="attention">GIAI ĐOẠN 3</Badge>
+                      <Badge tone="success">ĐANG CHỜ VIỆC</Badge>
                     </InlineStack>
                   </BlockStack>
                 </BlockStack>
@@ -138,6 +181,29 @@ export default function DashboardPage() {
           </Grid.Cell>
         </Grid>
       </BlockStack>
+
+      <Modal
+        open={!!selectedLog}
+        onClose={() => setSelectedLog(null)}
+        title={`Chi tiết: ${selectedLog ? getJobTitle(selectedLog) : ''}`}
+        large
+      >
+        <Modal.Section>
+          <Box background="bg-surface-secondary" padding="400" borderRadius="200">
+            <Scrollable style={{ maxHeight: '400px' }}>
+              <pre style={{ 
+                margin: 0, 
+                whiteSpace: 'pre-wrap', 
+                wordBreak: 'break-all',
+                fontFamily: 'monospace',
+                fontSize: '12px'
+              }}>
+                {selectedLog?.logs || 'Không có nhật ký chi tiết.'}
+              </pre>
+            </Scrollable>
+          </Box>
+        </Modal.Section>
+      </Modal>
     </Page>
   );
 }

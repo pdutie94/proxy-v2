@@ -2,23 +2,25 @@
 
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { proxySchema, ProxySchema } from '../schemas/proxy.schema';
+import { bulkProxySchema, BulkProxySchema } from '../schemas/bulk-proxy.schema';
 import { useProxies } from '@/hooks/use-proxies';
 import { useServers } from '@/hooks/use-servers';
 import { 
-  Form, 
   FormLayout, 
   TextField, 
   Select, 
   Popover,
   DatePicker,
   Box,
-  Icon
+  Icon,
+  ChoiceList,
+  Button
 } from "@shopify/polaris";
-import { CalendarIcon } from "@shopify/polaris-icons";
+import { CalendarIcon, RefreshIcon } from "@shopify/polaris-icons";
 import { useCallback, useState, useMemo, forwardRef, useImperativeHandle, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Proxy } from '@prisma/client';
+import { generateRandomString, generateRandomPassword } from '@/utils/random';
 
 interface AddProxyFormProps {
   onClose: () => void;
@@ -31,65 +33,72 @@ export interface AddProxyFormRef {
 
 export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
   ({ onClose, proxy }, ref) => {
-    const { createMutation, updateMutation } = useProxies();
+    const { bulkCreateMutation, updateMutation } = useProxies();
     const { servers } = useServers();
     const [popoverActive, setPopoverActive] = useState(false);
     
-    const { control, handleSubmit, formState: { errors }, setValue, watch, reset } = useForm<ProxySchema>({
-      resolver: zodResolver(proxySchema),
+    const form = useForm<BulkProxySchema>({
+      resolver: zodResolver(bulkProxySchema),
       defaultValues: {
-        port: 1080,
-        username: '',
-        password: '',
-        ipv6: '',
         serverId: '',
+        startPort: 10000,
+        count: 10,
+        username: generateRandomString(6),
+        password: generateRandomPassword(6),
+        ipType: 'IPv6',
         expiresAt: '',
       }
     });
 
+    const selectedServerId = form.watch('serverId');
+
+    useEffect(() => {
+      if (selectedServerId && !proxy) {
+        const server = servers.find(s => s.id === selectedServerId);
+        if (server) {
+          const nextPort = server.lastPort ? server.lastPort + 1 : server.startPort;
+          form.setValue('startPort', nextPort);
+        }
+      }
+    }, [selectedServerId, servers, form, proxy]);
+
     useEffect(() => {
       if (proxy) {
-        reset({
+        form.reset({
           serverId: proxy.serverId,
-          port: proxy.port,
+          startPort: proxy.port,
+          count: 1,
           username: proxy.username,
           password: proxy.password,
-          ipv6: proxy.ipv6 || '',
+          ipType: proxy.ipType as any,
           expiresAt: proxy.expiresAt ? format(new Date(proxy.expiresAt), 'yyyy-MM-dd') : '',
         });
       }
-    }, [proxy, reset]);
+    }, [proxy, form]);
 
-    const expiresAtValue = watch('expiresAt');
-    const [{ month, year }, setDate] = useState({ 
-      month: new Date().getMonth(), 
-      year: new Date().getFullYear() 
-    });
-
-    const selectedDate = useMemo(() => {
-      return expiresAtValue ? new Date(expiresAtValue) : new Date();
-    }, [expiresAtValue]);
-
-    const handleMonthChange = useCallback(
-      (month: number, year: number) => setDate({ month, year }),
-      [],
-    );
-
-    const onSubmit = useCallback((data: ProxySchema) => {
+    const onSubmit = useCallback((data: BulkProxySchema) => {
       if (proxy) {
-        updateMutation.mutate({ id: proxy.id, data }, {
+        const updateData = {
+          serverId: data.serverId,
+          port: data.startPort,
+          username: data.username,
+          password: data.password,
+          ipType: data.ipType,
+          expiresAt: data.expiresAt
+        };
+        updateMutation.mutate({ id: proxy.id, data: updateData as any }, {
           onSuccess: () => onClose(),
         });
       } else {
-        createMutation.mutate(data, {
+        bulkCreateMutation.mutate(data, {
           onSuccess: () => onClose(),
         });
       }
-    }, [createMutation, updateMutation, onClose, proxy]);
+    }, [bulkCreateMutation, updateMutation, onClose, proxy]);
 
     useImperativeHandle(ref, () => ({
       submit: () => {
-        handleSubmit(onSubmit)();
+        form.handleSubmit(onSubmit)();
       }
     }));
 
@@ -106,121 +115,150 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
       [],
     );
 
+    const refreshRandom = () => {
+      form.setValue('username', generateRandomString(6));
+      form.setValue('password', generateRandomPassword(6));
+    };
+
     return (
-      <Form id="add-proxy-form" onSubmit={handleSubmit(onSubmit)}>
-        <Box padding="400">
-          <FormLayout>
-            <FormLayout.Group>
-              <Controller
-                name="serverId"
-                control={control}
-                render={({ field }) => (
-                  <Select
-                    label="Máy chủ đích"
-                    options={serverOptions}
-                    onChange={field.onChange}
-                    value={field.value}
-                    error={errors.serverId?.message}
-                    disabled={!!proxy} // Không cho đổi server khi edit
-                  />
-                )}
-              />
-              <Controller
-                name="port"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    label="Cổng Proxy (Port)"
-                    type="number"
-                    autoComplete="off"
-                    placeholder="1080"
-                    value={field.value?.toString()}
-                    onChange={(val) => field.onChange(parseInt(val))}
-                    error={errors.port?.message}
-                  />
-                )}
-              />
-            </FormLayout.Group>
+      <Box padding="400">
+        <FormLayout>
+          <FormLayout.Group>
+            <Controller
+              name="serverId"
+              control={form.control}
+              render={({ field }) => (
+                <Select
+                  label="Máy chủ đích"
+                  options={serverOptions}
+                  onChange={field.onChange}
+                  value={field.value}
+                  error={form.formState.errors.serverId?.message}
+                  disabled={!!proxy}
+                />
+              )}
+            />
+            <Controller
+              name="count"
+              control={form.control}
+              render={({ field }) => (
+                <TextField
+                  label="Số lượng Proxy"
+                  type="number"
+                  autoComplete="off"
+                  placeholder="10"
+                  value={field.value?.toString()}
+                  onChange={(val) => field.onChange(parseInt(val))}
+                  error={form.formState.errors.count?.message}
+                  disabled={!!proxy}
+                  helpText={!proxy ? "Tối đa 1000 proxy một lần tạo" : "Đang ở chế độ chỉnh sửa"}
+                />
+              )}
+            />
+          </FormLayout.Group>
 
-            <FormLayout.Group>
-              <Controller
-                name="username"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    label="Tài khoản Proxy"
-                    autoComplete="username"
-                    placeholder="Ví dụ: user01"
-                    value={field.value}
-                    onChange={field.onChange}
-                    error={errors.username?.message}
-                  />
-                )}
-              />
-              <Controller
-                name="password"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    label="Mật khẩu Proxy"
-                    type="password"
-                    autoComplete="new-password"
-                    placeholder="Mật khẩu"
-                    value={field.value}
-                    onChange={field.onChange}
-                    error={errors.password?.message}
-                  />
-                )}
-              />
-            </FormLayout.Group>
-
-            <FormLayout.Group>
-              <Controller
-                name="ipv6"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    label="Địa chỉ IPv6 (Tùy chọn)"
-                    autoComplete="off"
-                    placeholder="2001:db8::1"
-                    value={field.value}
-                    onChange={field.onChange}
-                  />
-                )}
-              />
-              <Box>
-                <Popover
-                  active={popoverActive}
-                  activator={
-                    <TextField
-                      label="Ngày hết hạn (Tùy chọn)"
-                      autoComplete="off"
-                      prefix={<Icon source={CalendarIcon} />}
-                      value={expiresAtValue ? format(new Date(expiresAtValue), 'dd/MM/yyyy') : ''}
-                      onFocus={togglePopoverActive}
-                      placeholder="Chọn ngày hết hạn"
-                    />
+          <FormLayout.Group>
+            <Controller
+              name="startPort"
+              control={form.control}
+              render={({ field }) => (
+                <TextField
+                  label={proxy ? "Cổng (Port)" : "Cổng bắt đầu"}
+                  type="number"
+                  autoComplete="off"
+                  placeholder="10000"
+                  value={field.value?.toString()}
+                  onChange={(val) => field.onChange(parseInt(val))}
+                  error={form.formState.errors.startPort?.message}
+                  helpText={!proxy ? "Các port sẽ được tăng dần từ cổng này" : ""}
+                />
+              )}
+            />
+            <Controller
+              name="username"
+              control={form.control}
+              render={({ field }) => (
+                <TextField
+                  label="Tài khoản"
+                  autoComplete="off"
+                  placeholder="Ví dụ: user"
+                  value={field.value}
+                  onChange={field.onChange}
+                  error={form.formState.errors.username?.message}
+                  suffix={
+                    <Button icon={RefreshIcon} variant="tertiary" onClick={refreshRandom} />
                   }
-                  onClose={togglePopoverActive}
-                >
-                  <Box padding="400">
-                    <DatePicker
-                      month={month}
-                      year={year}
-                      onChange={(date) => {
-                        setValue('expiresAt', format(date.start, 'yyyy-MM-dd'));
-                        togglePopoverActive();
-                      }}
-                      onMonthChange={handleMonthChange}
-                      selected={selectedDate}
-                    />
-                  </Box>
-                </Popover>
-              </Box>
-            </FormLayout.Group>
-          </FormLayout>
-        </Box>
-      </Form>
+                />
+              )}
+            />
+          </FormLayout.Group>
+
+          <FormLayout.Group>
+            <Controller
+              name="password"
+              control={form.control}
+              render={({ field }) => (
+                <TextField
+                  label="Mật khẩu"
+                  type="text"
+                  autoComplete="off"
+                  placeholder="Mật khẩu"
+                  value={field.value}
+                  onChange={field.onChange}
+                  error={form.formState.errors.password?.message}
+                />
+              )}
+            />
+            <Controller
+              name="ipType"
+              control={form.control}
+              render={({ field }) => (
+                <ChoiceList
+                  title="Loại IP Outbound"
+                  choices={[
+                    { label: 'IPv4 (Dùng IP Server)', value: 'IPv4' },
+                    { label: 'IPv6 (Xoay IP ngẫu nhiên)', value: 'IPv6' },
+                  ]}
+                  selected={[field.value]}
+                  onChange={(val) => field.onChange(val[0])}
+                />
+              )}
+            />
+          </FormLayout.Group>
+
+          <FormLayout.Group>
+            <Box>
+              <Popover
+                active={popoverActive}
+                activator={
+                  <TextField
+                    label="Ngày hết hạn (Tùy chọn)"
+                    autoComplete="off"
+                    prefix={<Icon source={CalendarIcon} />}
+                    value={form.watch('expiresAt') ? format(new Date(form.watch('expiresAt') as any), 'dd/MM/yyyy') : ''}
+                    onFocus={togglePopoverActive}
+                    placeholder="Chọn ngày hết hạn"
+                  />
+                }
+                onClose={togglePopoverActive}
+              >
+                <Box padding="400">
+                  <DatePicker
+                    month={new Date(form.watch('expiresAt') || new Date()).getMonth()}
+                    year={new Date(form.watch('expiresAt') || new Date()).getFullYear()}
+                    onChange={(date) => {
+                      form.setValue('expiresAt', format(date.start, 'yyyy-MM-dd'));
+                      togglePopoverActive();
+                    }}
+                    selected={form.watch('expiresAt') ? new Date(form.watch('expiresAt') as any) : new Date()}
+                  />
+                </Box>
+              </Popover>
+            </Box>
+            <Box />
+          </FormLayout.Group>
+        </FormLayout>
+      </Box>
     );
   }
 );

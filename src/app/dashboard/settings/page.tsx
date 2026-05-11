@@ -18,10 +18,10 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 export default function SettingsPage() {
-  const [siteName, setSiteName] = useState("Proxy Manager");
+  const [siteName, setSiteName] = useState("Proxy Manager v2");
 
   const handleSave = () => {
-    toast.success("Đã lưu cài đặt hệ thống");
+    toast.success("Đã lưu cài đặt hệ thống thành công");
   };
 
   return (
@@ -30,7 +30,7 @@ export default function SettingsPage() {
         <Layout.AnnotatedSection
           id="generalSettings"
           title="Thông tin chung"
-          description="Cấu hình tên hiển thị và các thông tin cơ bản của hệ thống."
+          description="Cấu hình tên hiển thị và các thông tin cơ bản của hệ thống điều khiển."
         >
           <Card>
             <Box padding="400">
@@ -50,24 +50,29 @@ export default function SettingsPage() {
         <Layout.AnnotatedSection
           id="systemStatus"
           title="Trạng thái hạ tầng"
-          description="Kiểm tra kết nối tới các thành phần cốt lõi của hệ thống."
+          description="Kiểm tra kết nối tới các dịch vụ cốt lõi đang vận hành."
         >
           <Card>
             <Box padding="400">
               <BlockStack gap="400">
                 <InlineGrid columns="1fr auto">
-                  <Text as="p" fontWeight="medium">Cơ sở dữ liệu (MySQL)</Text>
-                  <Badge tone="success">Đang kết nối</Badge>
+                  <Text as="p" fontWeight="medium">Cơ sở dữ liệu (MySQL 8)</Text>
+                  <Badge tone="success">Đang hoạt động</Badge>
                 </InlineGrid>
                 <Divider />
                 <InlineGrid columns="1fr auto">
-                  <Text as="p" fontWeight="medium">Hàng đợi (Redis)</Text>
-                  <Badge tone="attention">Chưa kết nối (Phase 2)</Badge>
+                  <Text as="p" fontWeight="medium">Hàng đợi (BullMQ / Redis)</Text>
+                  <Badge tone="success">Đang hoạt động</Badge>
                 </InlineGrid>
                 <Divider />
                 <InlineGrid columns="1fr auto">
-                  <Text as="p" fontWeight="medium">SSH Service</Text>
-                  <Badge tone="attention">Chờ khởi tạo (Phase 3)</Badge>
+                  <Text as="p" fontWeight="medium">Dịch vụ SSH Worker</Text>
+                  <Badge tone="success">Sẵn sàng</Badge>
+                </InlineGrid>
+                <Divider />
+                <InlineGrid columns="1fr auto">
+                  <Text as="p" fontWeight="medium">Hệ thống Tự động hóa</Text>
+                  <Badge tone="success">Đang chạy (5p/lần)</Badge>
                 </InlineGrid>
               </BlockStack>
             </Box>
@@ -76,23 +81,23 @@ export default function SettingsPage() {
 
         <Layout.AnnotatedSection
           id="apiSettings"
-          title="Cấu hình API & Bảo mật"
-          description="Quản lý các tham số bảo mật và kết nối API."
+          title="Cấu hình Bảo mật"
+          description="Quản lý các thông số bảo mật và môi trường."
         >
           <Card>
             <Box padding="400">
               <FormLayout>
                 <TextField
-                  label="JWT Secret"
+                  label="JWT / Auth Secret"
                   type="password"
                   value="************************"
                   disabled
                   autoComplete="off"
-                  helpText="Được cấu hình trong tệp .env"
+                  helpText="Đã cấu hình an toàn trong tệp .env"
                 />
                 <TextField
-                  label="Auth URL"
-                  value="http://localhost:3000"
+                  label="Node Environment"
+                  value={process.env.NODE_ENV || 'development'}
                   disabled
                   autoComplete="off"
                 />

@@ -1,16 +1,20 @@
 import { Worker } from 'bullmq';
 import { JobType } from '@prisma/client';
-import { JOB_QUEUE_NAME } from './queue/job.queue';
+import { JOB_QUEUE_NAME, jobQueue } from './queue/job.queue';
 import { redis } from '../lib/redis';
 import { processSetupServer } from './jobs/setup-server.job';
 import { processProvisionProxy } from './jobs/provision-proxy.job';
+import { processBulkProvisionProxy } from './jobs/bulk-provision-proxy.job';
 import { processRotateProxy } from './jobs/rotate-proxy.job';
 import { processDeleteProxy } from './jobs/delete-proxy.job';
 import { processResetServer } from './jobs/reset-server.job';
+import { processAutomation } from './jobs/automation.job';
+import { processSyncServerPort } from './jobs/sync-server-port.job';
+import { processCheckGoogle } from './jobs/check-google.job';
 
 const QUEUE_NAME = JOB_QUEUE_NAME;
 
-export function startWorker() {
+export async function startWorker() {
   if (!redis) {
     console.error('[Worker] LỖI: Không thể kết nối tới Redis. Vui lòng kiểm tra cấu hình.');
     process.exit(1);
@@ -20,6 +24,21 @@ export function startWorker() {
   const redisOptions = (redis as any).options;
   console.log(`[Worker] Đang kết nối tới Redis: ${redisOptions?.host || 'localhost'}:${redisOptions?.port || '6379'}`);
   console.log(`[Worker] Khởi tạo worker lắng nghe hàng đợi: ${QUEUE_NAME}`);
+
+  // Schedule automation job every 5 minutes
+  await jobQueue.add(
+    JobType.AUTOMATION,
+    { type: JobType.AUTOMATION },
+    {
+      repeat: {
+        every: 5 * 60 * 1000, // 5 minutes
+      },
+      jobId: 'automation-cycle', // Prevent duplicates
+    }
+  );
+  
+  // Run once on startup
+  await jobQueue.add(JobType.AUTOMATION, { type: JobType.AUTOMATION });
 
   const worker = new Worker(
     QUEUE_NAME,
@@ -34,14 +53,26 @@ export function startWorker() {
           case JobType.PROVISION_PROXY:
             await processProvisionProxy(job);
             break;
+          case JobType.BULK_PROVISION_PROXY:
+            await processBulkProvisionProxy(job);
+            break;
           case JobType.ROTATE_PROXY:
             await processRotateProxy(job);
             break;
           case JobType.DELETE_PROXY:
             await processDeleteProxy(job);
             break;
-          case (JobType as any).RESET_SERVER:
+          case JobType.RESET_SERVER:
             await processResetServer(job);
+            break;
+          case JobType.AUTOMATION:
+            await processAutomation(job);
+            break;
+          case 'SYNC_SERVER_PORT':
+            await processSyncServerPort(job);
+            break;
+          case JobType.CHECK_GOOGLE:
+            await processCheckGoogle(job);
             break;
           default:
             console.warn(`[Worker] Không tìm thấy trình xử lý cho loại job: ${job.name}`);
@@ -73,5 +104,8 @@ export function startWorker() {
 }
 
 if (require.main === module || process.argv[1]?.endsWith('index.ts')) {
-  startWorker();
+  startWorker().catch(err => {
+    console.error('[Worker] Lỗi khởi động:', err);
+    process.exit(1);
+  });
 }

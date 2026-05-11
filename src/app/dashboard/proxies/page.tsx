@@ -12,7 +12,7 @@ export default function ProxiesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProxy, setEditingProxy] = useState<Proxy | undefined>(undefined);
   
-  const { createMutation, updateMutation } = useProxies();
+  const { createMutation, updateMutation, bulkCreateMutation } = useProxies();
   const formRef = useRef<AddProxyFormRef>(null);
 
   const toggleModal = useCallback(() => {
@@ -51,7 +51,7 @@ export default function ProxiesPage() {
         primaryAction={{
           content: editingProxy ? 'Cập nhật' : 'Tạo ngay',
           onAction: handlePrimaryAction,
-          loading: createMutation.isPending || updateMutation.isPending,
+          loading: createMutation.isPending || updateMutation.isPending || bulkCreateMutation.isPending,
         }}
         secondaryActions={[
           {

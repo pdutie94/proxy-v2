@@ -5,6 +5,7 @@ export const proxySchema = z.object({
   port: z.number().int().min(1024).max(65535),
   username: z.string().min(1, 'Username is required'),
   password: z.string().min(1, 'Password is required'),
+  ipType: z.enum(['IPv4', 'IPv6']).default('IPv6'),
   ipv6: z.string().optional(),
   expiresAt: z.string().optional().transform((val) => val ? new Date(val) : null),
 });

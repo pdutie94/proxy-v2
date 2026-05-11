@@ -8,14 +8,17 @@ import {
   Form, 
   FormLayout, 
   TextField, 
-  Box
+  Box,
+  Checkbox,
+  Text,
+  Divider
 } from "@shopify/polaris";
 import { useCallback, forwardRef, useImperativeHandle, useEffect } from 'react';
 import { Server } from '@prisma/client';
 
 interface AddServerFormProps {
   onClose: () => void;
-  server?: Server; // Dữ liệu server để chỉnh sửa (tùy chọn)
+  server?: Server;
 }
 
 export interface AddServerFormRef {
@@ -26,7 +29,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
   ({ onClose, server }, ref) => {
     const { createMutation, updateMutation } = useServers();
     
-    const { control, handleSubmit, formState: { errors }, reset } = useForm<ServerSchema>({
+    const { control, handleSubmit, formState: { errors }, reset, watch } = useForm<ServerSchema>({
       resolver: zodResolver(serverSchema),
       defaultValues: {
         name: '',
@@ -36,10 +39,14 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
         password: '',
         ipv6: '',
         maxProxies: 100,
+        startPort: 10000,
+        autoRotate: false,
+        rotationInterval: 0,
       }
     });
 
-    // Cập nhật dữ liệu form khi có server được truyền vào (chế độ chỉnh sửa)
+    const isAutoRotate = watch('autoRotate');
+
     useEffect(() => {
       if (server) {
         reset({
@@ -49,26 +56,26 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
           username: server.username,
           ipv6: server.ipv6 || '',
           maxProxies: server.maxProxies,
-          password: '', // Không reset password vì nó được mã hóa trong DB
+          startPort: server.startPort,
+          autoRotate: server.autoRotate,
+          rotationInterval: server.rotationInterval,
+          password: '',
         });
       }
     }, [server, reset]);
 
     const onSubmit = useCallback((data: ServerSchema) => {
       if (server) {
-        // Chế độ chỉnh sửa
         updateMutation.mutate({ id: server.id, data }, {
           onSuccess: () => onClose(),
         });
       } else {
-        // Chế độ thêm mới
         createMutation.mutate(data, {
           onSuccess: () => onClose(),
         });
       }
     }, [createMutation, updateMutation, onClose, server]);
 
-    // Expose the submit method to the parent component
     useImperativeHandle(ref, () => ({
       submit: () => {
         handleSubmit(onSubmit)();
@@ -163,9 +170,9 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                 control={control}
                 render={({ field }) => (
                   <TextField
-                    label="IPv6 (Tùy chọn)"
+                    label="IPv6 Prefix (Tự động cập nhật khi Setup)"
                     autoComplete="off"
-                    placeholder="2001:db8::1"
+                    placeholder="Ví dụ: 2a01:4ff:1f0:513b"
                     value={field.value}
                     onChange={field.onChange}
                   />
@@ -189,7 +196,59 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                   />
                 )}
               />
-              <Box />
+              <Controller
+                name="startPort"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    label="Cổng bắt đầu"
+                    type="number"
+                    autoComplete="off"
+                    placeholder="10000"
+                    value={field.value?.toString()}
+                    onChange={(val) => field.onChange(parseInt(val))}
+                    error={errors.startPort?.message}
+                    helpText="Cổng mặc định khi tạo Proxy hàng loạt"
+                  />
+                )}
+              />
+            </FormLayout.Group>
+
+            <Box paddingBlock="200">
+              <Divider />
+            </Box>
+            
+            <Text as="h3" variant="headingSm">Tự động hóa</Text>
+            
+            <FormLayout.Group>
+              <Controller
+                name="autoRotate"
+                control={control}
+                render={({ field }) => (
+                  <Checkbox
+                    label="Tự động xoay IPv6"
+                    checked={field.value}
+                    onChange={field.onChange}
+                  />
+                )}
+              />
+              {isAutoRotate && (
+                <Controller
+                  name="rotationInterval"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      label="Chu kỳ xoay (Phút)"
+                      type="number"
+                      autoComplete="off"
+                      placeholder="60"
+                      value={field.value?.toString()}
+                      onChange={(val) => field.onChange(parseInt(val))}
+                      helpText="Xoay toàn bộ Proxy sau mỗi X phút"
+                    />
+                  )}
+                />
+              )}
             </FormLayout.Group>
           </FormLayout>
         </Box>
