@@ -11,8 +11,12 @@ import {
   Box,
   Checkbox,
   Text,
-  Divider
+  Divider,
+  Tooltip,
+  Icon,
+  InlineStack
 } from "@shopify/polaris";
+import { InfoIcon } from "@shopify/polaris-icons";
 import { useCallback, forwardRef, useImperativeHandle, useEffect } from 'react';
 import { Server } from '@prisma/client';
 
@@ -170,11 +174,19 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                 control={control}
                 render={({ field }) => (
                   <TextField
-                    label="IPv6 Prefix (Tự động cập nhật khi Setup)"
+                    label={
+                      <InlineStack gap="100">
+                        <Text as="span">IPv6 Prefix</Text>
+                        <Tooltip content="Nhập 4 cụm đầu của dải IPv6 được cấp (Ví dụ: 2001:19f0:4401:903)">
+                          <Icon source={InfoIcon} color="subdued" />
+                        </Tooltip>
+                      </InlineStack>
+                    }
                     autoComplete="off"
-                    placeholder="Ví dụ: 2a01:4ff:1f0:513b"
+                    placeholder="Ví dụ: 2001:19f0:4401:903"
                     value={field.value}
                     onChange={field.onChange}
+                    error={errors.ipv6?.message}
                   />
                 )}
               />
@@ -201,50 +213,56 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                 control={control}
                 render={({ field }) => (
                   <TextField
-                    label="Cổng bắt đầu"
+                    label={
+                      <InlineStack gap="100">
+                        <Text as="span">Cổng bắt đầu</Text>
+                        <Tooltip content="Cổng mặc định khi tạo Proxy hàng loạt (Ví dụ: 10000)">
+                          <Icon source={InfoIcon} color="subdued" />
+                        </Tooltip>
+                      </InlineStack>
+                    }
                     type="number"
                     autoComplete="off"
                     placeholder="10000"
                     value={field.value?.toString()}
                     onChange={(val) => field.onChange(parseInt(val))}
                     error={errors.startPort?.message}
-                    helpText="Cổng mặc định khi tạo Proxy hàng loạt"
                   />
                 )}
               />
             </FormLayout.Group>
 
-            <Box paddingBlock="200">
-              <Divider />
-            </Box>
-            
-            <Text as="h3" variant="headingSm">Tự động hóa</Text>
-            
             <FormLayout.Group>
-              <Controller
-                name="autoRotate"
-                control={control}
-                render={({ field }) => (
-                  <Checkbox
-                    label="Tự động xoay IPv6"
-                    checked={field.value}
-                    onChange={field.onChange}
-                  />
-                )}
-              />
+                <Controller
+                  name="autoRotate"
+                  control={control}
+                  render={({ field }) => (
+                    <Checkbox
+                      label="Tự động xoay IPv6"
+                      checked={field.value}
+                      onChange={field.onChange}
+                    />
+                  )}
+                />
               {isAutoRotate && (
                 <Controller
                   name="rotationInterval"
                   control={control}
                   render={({ field }) => (
                     <TextField
-                      label="Chu kỳ xoay (Phút)"
+                      label={
+                        <InlineStack gap="100">
+                          <Text as="span">Chu kỳ xoay (Phút)</Text>
+                          <Tooltip content="Hệ thống sẽ tự động đổi toàn bộ IP Proxy sau mỗi X phút">
+                            <Icon source={InfoIcon} color="subdued" />
+                          </Tooltip>
+                        </InlineStack>
+                      }
                       type="number"
                       autoComplete="off"
                       placeholder="60"
                       value={field.value?.toString()}
                       onChange={(val) => field.onChange(parseInt(val))}
-                      helpText="Xoay toàn bộ Proxy sau mỗi X phút"
                     />
                   )}
                 />

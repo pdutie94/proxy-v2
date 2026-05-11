@@ -1,21 +1,45 @@
-# Proxy Server Setup Guide V5.0 (UID Routing & High-Scale Automation)
+# Proxy Server Setup Guide V6.0 (Production Hardened & Vultr Optimized)
 
-Bản hướng dẫn này tối ưu cho **Ubuntu 24.04** và các dòng server như **Hetzner CPX11**, đảm bảo outbound ra IPv6 ngẫu nhiên cho từng port bằng cơ chế **UID Marking**.
+Bản hướng dẫn này là tiêu chuẩn cao nhất cho hệ thống Proxy IPv6, được tối ưu đặc biệt cho **Vultr, Hetzner** và các nhà cung cấp có cấu hình mạng khắt khe. Hệ thống sử dụng cơ chế **Manual Prefix** và **Local Route Anchoring** để đảm bảo độ ổn định 100%.
 
 ---
 
-## 1. Cấu hình Hệ thống & Chặn IPv6 Rác (SLAAC)
-
-Mục đích: Ngăn server tự sinh các địa chỉ IPv6 không mong muốn và tối ưu giới hạn kết nối.
+## 0. Giai đoạn: Dọn dẹp hệ thống (Deep Clean)
+Nếu bạn cài đặt lại trên server cũ, hãy chạy bộ lệnh này để xóa sạch mọi xung đột:
 
 ```bash
-# 1.1 Chặn SLAAC qua systemd-networkd
+pkill -9 gost || true
+ip6tables -t nat -F || true
+ip6tables -t mangle -F || true
+ip6tables -F || true
+cut -d: -f1 /etc/passwd | grep '^gost' | xargs -r -n1 userdel -r || true
+rm -rf /root/proxy-state /root/proxy-ipv6.txt /root/proxies.txt || true
+```
+
+---
+
+## 1. Cấu hình Mạng & Hardening (Vultr Fixed)
+
+Mục đích: Cố định thông số mạng, chặn SLAAC rác và kích hoạt định tuyến cho dải IP ngẫu nhiên.
+
+```bash
+# 1.1 Khai báo thông số (Thay thế bằng thông tin thực tế của bạn)
+IFACE=$(ip route | grep default | awk '{print $5}' | head -n1)
+PREFIX="2001:19f0:4401:903" # Thay bằng 4 cụm đầu IPv6 của bạn
+PRIMARY_IP="2001:19f0:4401:903:5400:6ff:fe26:c1f1/64" # IP gốc của server
+GATEWAY="fe80::fc00:6ff:fe26:c1f1" # Gateway IPv6 (thường là link-local)
+
+# 1.2 Cấu hình Mạng Tĩnh (Smart-Static)
 mkdir -p /etc/systemd/network
-cat > /etc/systemd/network/10-eth0.network << 'EOF'
+cat > /etc/systemd/network/10-${IFACE}.network << EOF
 [Match]
-Name=eth0
+Name=${IFACE}
 [Network]
 DHCP=ipv4
+Address=${PRIMARY_IP}
+Gateway=${GATEWAY}
+DNS=8.8.8.8
+DNS=1.1.1.1
 IPv6AcceptRA=yes
 IPv6PrivacyExtensions=no
 [IPv6AcceptRA]
@@ -24,29 +48,29 @@ UseOnLinkPrefix=yes
 EOF
 systemctl restart systemd-networkd
 
-# 1.2 Cài đặt Dependencies
-apt update && apt install -y iptables-persistent curl xxd dos2unix lsof wget iproute2
+# 1.3 Bản vá "Local Route" (QUAN TRỌNG NHẤT CHO VULTR)
+# Lệnh này giúp kernel nhận diện toàn bộ dải IP ngẫu nhiên là local
+ip -6 route add local ${PREFIX}::/64 dev lo 2>/dev/null || true
+ip -6 route add default via ${GATEWAY} dev ${IFACE} 2>/dev/null || true
 
-# 1.3 Tối ưu Kernel (sysctl)
-cat >> /etc/sysctl.conf << 'EOF'
+# 1.4 Tối ưu Kernel & Chặn Autoconf
+cat >> /etc/sysctl.conf << EOF
+net.ipv6.conf.all.forwarding=1
+net.ipv6.conf.all.proxy_ndp=1
 net.ipv6.conf.all.autoconf=0
 net.ipv6.conf.default.autoconf=0
-net.ipv6.conf.eth0.autoconf=0
+net.ipv6.conf.${IFACE}.autoconf=0
 net.ipv6.conf.all.use_tempaddr=0
 net.ipv6.conf.default.use_tempaddr=0
-net.ipv6.conf.eth0.use_tempaddr=0
 fs.file-max=1000000
 net.core.somaxconn=1024
 EOF
 sysctl -p
 
-# 1.4 Tăng giới hạn File Descriptor (ulimit)
-cat >> /etc/security/limits.conf << 'EOF'
-* soft nofile 1000000
-* hard nofile 1000000
-root soft nofile 1000000
-root hard nofile 1000000
-EOF
+# 1.5 Cài đặt Dependencies (Bypass Y/N)
+export DEBIAN_FRONTEND=noninteractive
+apt-get update
+apt-get install -y iptables-persistent curl xxd dos2unix lsof wget iproute2
 ```
 
 ---
@@ -54,140 +78,72 @@ EOF
 ## 2. Cài đặt Gost v3.2.6
 
 ```bash
-cd /tmp
-wget https://github.com/go-gost/gost/releases/download/v3.2.6/gost_3.2.6_linux_amd64.tar.gz
-tar xzf gost_3.2.6_linux_amd64.tar.gz
-mv gost /usr/bin/gost
-chmod +x /usr/bin/gost
-
-# Khởi tạo thư mục state
+wget -q https://github.com/go-gost/gost/releases/download/v3.2.6/gost_3.2.6_linux_amd64.tar.gz -O /tmp/gost.tar.gz
+tar xzf /tmp/gost.tar.gz -C /usr/bin/ gost && chmod +x /usr/bin/gost
 mkdir -p /root/proxy-state
 touch /root/proxy-ipv6.txt /root/proxies.txt
 ```
 
 ---
 
-## 3. Bộ Scripts Điều Khiển (UID Routing Core)
+## 3. Bộ Scripts Điều Khiển (Manual Prefix Edition)
 
 ### 3.1. Tạo Proxy (`proxy-create`)
-Hỗ trợ cả IPv4 (Main IP) và IPv6 (Randomized).
-
 ```bash
 cat > /usr/local/bin/proxy-create << 'EOF'
 #!/bin/bash
-# Usage: proxy-create <port> <user> <pass> <type: ipv4|ipv6>
+IFACE=$(ip route | grep default | awk '{print $5}' | head -n1)
+PREFIX="2001:19f0:4401:903" # HARDCODE PREFIX TẠI ĐÂY
 PORT=$1
 USER=$2
 PASS=$3
-TYPE=${4:-ipv6} # Mặc định là ipv6 nếu không truyền
-PREFIX="2a01:4ff:1f0:513b" # Thay bằng Prefix của bạn
-SERVER_IP=$(curl -s -4 icanhazip.com)
 MARK=$((PORT + 1000))
-
 LINUX_USER="gost$PORT"
 id "$LINUX_USER" &>/dev/null || useradd -r -M -s /bin/false "$LINUX_USER"
 LINUX_UID=$(id -u "$LINUX_USER")
 
-# Dọn dẹp cũ nếu có
 pkill -f "gost.*:$PORT"
-
-if [ "$TYPE" == "ipv4" ]; then
-    # IPv4 Outbound: Không cần gán IPv6, chạy thẳng gost
-    runuser -u "$LINUX_USER" -- gost -L "socks5://$USER:$PASS@:$PORT" -F "direct://?prefer=ipv4" >> /var/log/gost.log 2>&1 &
-    echo "$PORT|IPv4|0" >> /root/proxy-ipv6.txt
-else
-    # IPv6 Outbound: Logic xoay IP ngẫu nhiên
-    IPV6="${PREFIX}:$(printf '%x:%x:%x:%x' $RANDOM $RANDOM $RANDOM $RANDOM)"
-    ip -6 addr add $IPV6/64 dev eth0 nodad
-    ip6tables -t mangle -A OUTPUT -m owner --uid-owner "$LINUX_UID" -j MARK --set-mark "$MARK"
-    ip6tables -t nat -A POSTROUTING -m mark --mark "$MARK" -j SNAT --to-source "$IPV6"
-    
-    runuser -u "$LINUX_USER" -- gost -L "socks5://$USER:$PASS@:$PORT" -F "direct://?prefer=ipv6" >> /var/log/gost.log 2>&1 &
-    echo "$PORT|$IPV6|$MARK" >> /root/proxy-ipv6.txt
-fi
-
-echo "$SERVER_IP:$PORT:$USER:$PASS" >> /root/proxies.txt
+IPV6="${PREFIX}:$(printf '%x:%x:%x:%x' $RANDOM $RANDOM $RANDOM $RANDOM)"
+ip -6 addr add $IPV6/64 dev $IFACE nodad
+ip6tables -t mangle -A OUTPUT -m owner --uid-owner "$LINUX_UID" -j MARK --set-mark "$MARK"
+ip6tables -t nat -A POSTROUTING -m mark --mark "$MARK" -j SNAT --to-source "$IPV6"
+runuser -u "$LINUX_USER" -- gost -L "socks5://$USER:$PASS@:$PORT?udp=true" -F "direct://?prefer=ipv6&strategy=ipv6_first" >> /var/log/gost.log 2>&1 &
+echo "$PORT|$IPV6|$MARK" >> /root/proxy-ipv6.txt
 ip6tables-save > /etc/iptables/rules.v6
 EOF
 chmod +x /usr/local/bin/proxy-create
 ```
 
-### 3.2. Xoay IP 1 Port (`proxy-rotate-one`)
-Đổi IPv6 cho một port cụ thể mà không làm rớt kết nối proxy.
-
-```bash
-cat > /usr/local/bin/proxy-rotate-one << 'EOF'
-#!/bin/bash
-PREFIX="2a01:4ff:1f0:513b"
-PORT=$1
-MARK=$((PORT + 1000))
-OLD_DATA=$(grep "^$PORT|" /root/proxy-ipv6.txt)
-OLD_IP=$(echo $OLD_DATA | cut -d'|' -f2)
-NEW_IP="${PREFIX}:$(printf '%x:%x:%x:%x' $RANDOM $RANDOM $RANDOM $RANDOM)"
-
-ip -6 addr add $NEW_IP/64 dev eth0 nodad
-ip6tables -t nat -D POSTROUTING -m mark --mark $MARK -j SNAT --to-source $OLD_IP 2>/dev/null
-ip6tables -t nat -A POSTROUTING -m mark --mark $MARK -j SNAT --to-source $NEW_IP
-ip -6 addr del $OLD_IP/64 dev eth0 2>/dev/null
-
-sed -i "s|^$PORT|$OLD_IP|$MARK|$PORT|$NEW_IP|$MARK|" /root/proxy-ipv6.txt
-ip6tables-save > /etc/iptables/rules.v6
-EOF
-chmod +x /usr/local/bin/proxy-rotate-one
-```
-
-### 3.3. Xóa Sạch Proxy (`proxy-reset`)
-Dọn dẹp hoàn toàn server để làm lại từ đầu.
-
-```bash
-cat > /usr/local/bin/proxy-reset << 'EOF'
-#!/bin/bash
-PREFIX="2a01:4ff:1f0:513b"
-pkill -9 gost 2>/dev/null
-[ -f /root/proxy-ipv6.txt ] && while IFS='|' read -r PORT IP MARK; do
-  userdel -r gost$PORT 2>/dev/null
-done < /root/proxy-ipv6.txt
-ip6tables -t mangle -F OUTPUT
-ip6tables -t nat -F POSTROUTING
-ip -6 addr show dev eth0 | grep "${PREFIX}" | awk '{print $2}' | while read ADDR; do
-  ip -6 addr del "$ADDR" dev eth0 2>/dev/null
-done
-> /root/proxies.txt
-> /root/proxy-ipv6.txt
-ip6tables-save > /etc/iptables/rules.v6
-EOF
-chmod +x /usr/local/bin/proxy-reset
-```
-
 ---
 
-## 4. Tự Phục Hồi Khi Reboot (Persistence)
+## 4. Tự Phục Hồi (Persistence)
 
 ```bash
-# Script Restore
 cat > /usr/local/bin/proxy-restore << 'EOF'
 #!/bin/bash
 sleep 5
-ip -6 route add default via fe80::1 dev eth0 2>/dev/null
+PREFIX="2001:19f0:4401:903"
+IFACE=$(ip route | grep default | awk '{print $5}' | head -n1)
+GW=$(ip -6 route show default | sed -n 's/.*via \([^ ]*\).*/\1/p' | head -n1)
+[ -z "$GW" ] && GW=$(ip -6 neighbor show | grep router | awk '{print $1}' | head -n1)
+
+ip -6 route add default via $GW dev $IFACE 2>/dev/null
+ip -6 route add local ${PREFIX}::/64 dev lo 2>/dev/null
+
 while IFS='|' read -r PORT IP MARK; do
-  ip -6 addr add $IP/64 dev eth0 nodad 2>/dev/null
+  ip -6 addr add $IP/64 dev $IFACE nodad 2>/dev/null
   LINUX_USER="gost$PORT"
   LINUX_UID=$(id -u "$LINUX_USER")
   ip6tables -t mangle -A OUTPUT -m owner --uid-owner "$LINUX_UID" -j MARK --set-mark "$MARK" 2>/dev/null
   ip6tables -t nat -A POSTROUTING -m mark --mark "$MARK" -j SNAT --to-source "$IP" 2>/dev/null
-  
-  if ! pgrep -f "gost.*:$PORT" >/dev/null; then
-    CRE=$(grep ":$PORT:" /root/proxies.txt | head -n1)
-    U=$(echo $CRE | cut -d: -f3)
-    P=$(echo $CRE | cut -d: -f4)
-    [ -z "$U" ] && continue
-    runuser -u "$LINUX_USER" -- gost -L "socks5://$U:$P@:$PORT" -F "direct://?prefer=ipv6" >> /var/log/gost.log 2>&1 &
-  fi
+  CRE=$(grep ":$PORT:" /root/proxies.txt | head -n1)
+  U=$(echo $CRE | cut -d: -f3); P=$(echo $CRE | cut -d: -f4)
+  runuser -u "$LINUX_USER" -- gost -L "socks5://$U:$P@:$PORT?udp=true" -F "direct://?prefer=ipv6&strategy=ipv6_first" >> /var/log/gost.log 2>&1 &
 done < /root/proxy-ipv6.txt
 EOF
 chmod +x /usr/local/bin/proxy-restore
 
-# Service Systemd
+# Systemd
 cat > /etc/systemd/system/proxy.service << 'EOF'
 [Unit]
 Description=Gost IPv6 Proxy Manager
@@ -199,12 +155,11 @@ RemainAfterExit=yes
 [Install]
 WantedBy=multi-user.target
 EOF
-systemctl daemon-reload && systemctl enable proxy.service
+systemctl enable proxy.service
 ```
 
 ---
 
-## 5. Lưu ý quan trọng
-- Luôn đảm bảo **Gateway IPv6** (`fe80::1`) thông suốt.
-- Kiểm tra outbound bằng lệnh: `curl -x socks5h://user:pass@127.0.0.1:port https://api64.ipify.org`
-- Mọi thay đổi về cấu hình Firewall cần được lưu bằng `ip6tables-save`.
+## 5. Kiểm tra kết quả
+- Ping từ IP proxy: `ping6 -c 3 -I <IP_PROXY> google.com`
+- Test SOCKS5: `curl -6 -s --socks5 user:pass@127.0.0.1:port http://api64.ipify.org`
