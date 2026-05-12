@@ -370,22 +370,22 @@ export function ProxyList({ onEdit }: ProxyListProps) {
         <div style={{ minWidth: '240px' }}>
           <BlockStack gap="050">
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
-              <Text as="span" variant="bodySm" tone="subdued" style={{ whiteSpace: 'nowrap' }}>Proxy IP:PORT</Text>
+              <Text as="span" variant="bodySm" tone="subdued">Proxy IP:PORT</Text>
               <div style={{ flexGrow: 1, borderBottom: '1px dotted #E2E8F0' }}></div>
               <Text as="span" variant="bodySm" fontWeight="bold">{proxy.server?.host}:{proxy.port}</Text>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
-              <Text as="span" variant="bodySm" tone="subdued" style={{ whiteSpace: 'nowrap' }}>Login</Text>
+              <Text as="span" variant="bodySm" tone="subdued">Login</Text>
               <div style={{ flexGrow: 1, borderBottom: '1px dotted #E2E8F0' }}></div>
               <Text as="span" variant="bodySm" fontWeight="medium">{proxy.username}</Text>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
-              <Text as="span" variant="bodySm" tone="subdued" style={{ whiteSpace: 'nowrap' }}>Pass</Text>
+              <Text as="span" variant="bodySm" tone="subdued">Pass</Text>
               <div style={{ flexGrow: 1, borderBottom: '1px dotted #E2E8F0' }}></div>
               <Text as="span" variant="bodySm" fontWeight="medium">{proxy.password}</Text>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
-              <Text as="span" variant="bodySm" tone="subdued" style={{ whiteSpace: 'nowrap' }}>Type</Text>
+              <Text as="span" variant="bodySm" tone="subdued">Type</Text>
               <div style={{ flexGrow: 1, borderBottom: '1px dotted #E2E8F0' }}></div>
               <Badge size="small">HTTPS / SOCKS5</Badge>
             </div>

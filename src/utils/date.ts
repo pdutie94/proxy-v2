@@ -17,12 +17,12 @@ export function getCountdown(date: Date | string | null): string {
   return `${minutes}m`;
 }
 
-export function getStatusTone(date: Date | string | null): 'success' | 'attention' | 'critical' | 'subdued' {
+export function getStatusTone(date: Date | string | null): 'success' | 'caution' | 'critical' | 'subdued' {
   if (!date) return 'subdued';
   const target = new Date(date);
   if (isPast(target)) return 'critical';
   
   const totalSeconds = differenceInSeconds(target, new Date());
-  if (totalSeconds < 3600 * 24) return 'attention'; // Less than 24h
+  if (totalSeconds < 3600 * 24) return 'caution'; // Less than 24h
   return 'success';
 }
