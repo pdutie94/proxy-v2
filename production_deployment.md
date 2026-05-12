@@ -157,25 +157,15 @@ pm2 logs proxy-web
 ---
 
 ## 9. Hướng dẫn Cập nhật (Update Code)
-Mỗi khi bạn có thay đổi mới từ Git và muốn cập nhật lên Server, hãy thực hiện theo các bước sau:
+Mỗi khi bạn có thay đổi mới từ Git và muốn cập nhật lên Server, bạn chỉ cần chạy một lệnh duy nhất:
 
-### Bước 1: Kéo code mới
 ```bash
-cd /var/www/proxy-v2
-git pull
-```
-
-### Bước 2: Chạy Script cập nhật tự động
-```bash
-# Cấp quyền thực thi (chỉ cần chạy lần đầu)
-chmod +x update.sh
-
-# Chạy script cập nhật
-./update.sh
+# Chạy script cập nhật tự động
+/var/www/proxy-v2/update.sh
 ```
 
 > [!NOTE]
-> Script này sẽ tự động: `npm install` -> `prisma generate` -> `prisma db push` -> `npm build` -> `pm2 restart`.
+> Script này sẽ tự động thực hiện: `git pull` -> `npm install` -> `prisma generate` -> `prisma db push` -> `npm build` -> `pm2 restart`.
 
 > [!TIP]
 > Nếu bạn thay đổi cấu trúc file trạng thái trên các Proxy Node (như file `/root/proxy-ipv6.txt`), hãy nhớ cập nhật lại các Script điều khiển trên các Node đó theo hướng dẫn trong `proxy-server-setup-v5.md`.

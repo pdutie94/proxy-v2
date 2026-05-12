@@ -35,8 +35,8 @@ export async function processRotateProxy(job: Job) {
     await ssh.connect(proxy.server);
 
     // 2. Thực thi rotate
-    const protocol = proxy.proxyType.toLowerCase();
-    const rotateCmd = `/usr/local/bin/proxy-rotate-one ${proxy.port} ${protocol}`.trim();
+    const prefix = proxy.server.ipv6 || "";
+    const rotateCmd = `/usr/local/bin/proxy-rotate-one ${proxy.port} "${prefix}"`.trim();
     await addLog(`Thực thi: ${rotateCmd}`);
     const rotateResult = await ssh.execute(rotateCmd);
     

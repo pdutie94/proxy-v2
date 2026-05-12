@@ -8,21 +8,25 @@ NC='\033[0m' # No Color
 
 echo -e "${BLUE}>>> Bắt đầu quá trình cập nhật hệ thống...${NC}"
 
+# 0. Kéo code mới
+echo -e "${YELLOW}0/5: Đang kéo code mới từ Git...${NC}"
+git pull
+
 # 1. Cài đặt thư viện
-echo -e "${YELLOW}1/4: Đang cài đặt thư viện mới...${NC}"
+echo -e "${YELLOW}1/5: Đang cài đặt thư viện mới...${NC}"
 npm install --legacy-peer-deps
 
 # 2. Cập nhật Prisma
-echo -e "${YELLOW}2/4: Đang cập nhật Prisma Client & Database...${NC}"
+echo -e "${YELLOW}2/5: Đang cập nhật Prisma Client & Database...${NC}"
 npx prisma generate
 npx prisma db push
 
 # 3. Build ứng dụng
-echo -e "${YELLOW}3/4: Đang build lại ứng dụng...${NC}"
+echo -e "${YELLOW}3/5: Đang build lại ứng dụng...${NC}"
 npm run build
 
 # 4. Restart PM2
-echo -e "${YELLOW}4/4: Đang khởi động lại dịch vụ...${NC}"
+echo -e "${YELLOW}4/5: Đang khởi động lại dịch vụ...${NC}"
 pm2 restart all
 
 echo -e "${GREEN}========================================${NC}"

@@ -37,7 +37,8 @@ export async function processProvisionProxy(job: Job) {
     // 2. Chạy lệnh tạo proxy trên server
     const ipType = proxy.ipType.toLowerCase();
     const protocol = proxy.proxyType.toLowerCase();
-    const cmd = `/usr/local/bin/proxy-create ${proxy.port} ${proxy.username} ${proxy.password} ${ipType} ${protocol}`.trim();
+    const prefix = proxy.server.ipv6 || "";
+    const cmd = `/usr/local/bin/proxy-create ${proxy.port} ${proxy.username} ${proxy.password} "${prefix}" ${ipType} ${protocol}`.trim();
     await addLog(`Thực thi: ${cmd}`);
     await ssh.execute(cmd);
 

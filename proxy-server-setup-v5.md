@@ -92,47 +92,45 @@ touch /root/proxy-ipv6.txt /root/proxies.txt
 ```bash
 cat > /usr/local/bin/proxy-create << 'EOF'
 #!/bin/bash
-IFACE=$(ip route | grep default | awk '{print $5}' | head -n1)
 PORT=$1
 USER=$2
 PASS=$3
-IP_TYPE=$4       # ipv4 / ipv6
-PROTO=$5         # http / socks5 / http+socks5
-SUBNET_ARG=$6    # --subnet (optional)
+PREFIX=$4
+IP_TYPE=$5
+PROTOCOL=$6
 
-# Mặc định nếu không truyền
-[ -z "$PROTO" ] && PROTO="http+socks5"
-
-# Xác định PREFIX
-PREFIX="2001:19f0:5c00:4108" # Thay bằng PREFIX mặc định của server này
-
+IFACE=$(ip route | grep default | awk '{print $5}' | head -n1)
 MARK=$((PORT + 1000))
 LINUX_USER="gost$PORT"
+
+# Đảm bảo User tồn tại
 id "$LINUX_USER" &>/dev/null || useradd -r -M -s /bin/false "$LINUX_USER"
 LINUX_UID=$(id -u "$LINUX_USER")
 
-# Dọn dẹp cũ nếu có
-pkill -f "gost.*:$PORT"
-ip -6 addr del $(ip -6 addr show dev $IFACE | grep "inet6" | grep "scope global" | awk '{print $2}' | grep -v "fe80" | head -n 1) dev $IFACE 2>/dev/null
-ip6tables -t mangle -D OUTPUT -m owner --uid-owner "$LINUX_UID" -j MARK --set-mark "$MARK" 2>/dev/null
-ip6tables -t nat -D POSTROUTING -m mark --mark "$MARK" -j SNAT 2>/dev/null
+# Dọn rác cũ triệt để
+pkill -u $LINUX_UID gost 2>/dev/null
+while ip6tables -t nat -D POSTROUTING -m mark --mark "$MARK" -j SNAT 2>/dev/null; do :; done
+while ip6tables -t mangle -D OUTPUT -m owner --uid-owner "$LINUX_UID" -j MARK --set-mark "$MARK" 2>/dev/null; do :; done
+# Xóa IP cũ nếu có trong file state
+OLD_IP=$(grep "^$PORT|" /root/proxy-ipv6.txt | cut -d'|' -f2)
+[ ! -z "$OLD_IP" ] && ip -6 addr del $OLD_IP/64 dev $IFACE 2>/dev/null
 sed -i "/^$PORT|/d" /root/proxy-ipv6.txt
 
+OUTBOUND="direct://?prefer=ipv6&strategy=ipv6_first"
+
 if [ "$IP_TYPE" == "ipv6" ]; then
-  IPV6="${PREFIX}:$(printf '%x:%x:%x:%x' $RANDOM $RANDOM $RANDOM $RANDOM)"
-  ip -6 addr add $IPV6/64 dev $IFACE nodad
-  ip6tables -t mangle -A OUTPUT -m owner --uid-owner "$LINUX_UID" -j MARK --set-mark "$MARK"
-  ip6tables -t nat -A POSTROUTING -m mark --mark "$MARK" -j SNAT --to-source "$IPV6"
-  OUTBOUND="direct://?prefer=ipv6&strategy=ipv6_first"
-else
-  IPV6="server-ip"
-  OUTBOUND="direct://"
+    IPV6="${PREFIX}:$(printf '%x:%x:%x:%x' $RANDOM $RANDOM $RANDOM $RANDOM)"
+    ip -6 addr add $IPV6/64 dev $IFACE nodad
+    ip6tables -t mangle -A OUTPUT -m owner --uid-owner "$LINUX_UID" -j MARK --set-mark "$MARK"
+    # Dùng -I để đưa lên đầu bảng NAT
+    ip6tables -t nat -I POSTROUTING 1 -m mark --mark "$MARK" -j SNAT --to-source "$IPV6"
+    
+    # Lưu trạng thái
+    echo "$PORT|$IPV6|$MARK|$PROTOCOL" >> /root/proxy-ipv6.txt
 fi
 
-runuser -u "$LINUX_USER" -- gost -L "${PROTO}://$USER:$PASS@:$PORT?udp=true" -F "$OUTBOUND" >> /var/log/gost.log 2>&1 &
-
-echo "$PORT|$IPV6|$MARK|$PROTO" >> /root/proxy-ipv6.txt
-ip6tables-save > /etc/iptables/rules.v6
+# Chạy Gost
+runuser -u $LINUX_USER -- gost -L ${PROTOCOL}://${USER}:${PASS}@:${PORT}?udp=true -F $OUTBOUND >> /var/log/gost.log 2>&1 &
 EOF
 chmod +x /usr/local/bin/proxy-create
 ```
@@ -142,46 +140,48 @@ chmod +x /usr/local/bin/proxy-create
 cat > /usr/local/bin/proxy-rotate-one << 'EOF'
 #!/bin/bash
 PORT=$1
-PROTO=$2        # Nhận giao thức để restart
-SUBNET_ARG=$3
-SUBNET_VAL=$4
-IFACE=$(ip route | grep default | awk '{print $5}' | head -n1)
+PREFIX=$2
 
-# Lấy thông tin cũ
+if [ -z "$PORT" ] || [ -z "$PREFIX" ]; then
+    echo "Usage: proxy-rotate-one <port> <prefix>"
+    exit 1
+fi
+
+IFACE=$(ip route | grep default | awk '{print $5}' | head -n1)
+MARK=$((PORT + 1000))
+LINUX_USER="gost$PORT"
+LINUX_UID=$(id -u "$LINUX_USER")
+
+# 1. Lấy thông tin cũ
 OLD_LINE=$(grep "^$PORT|" /root/proxy-ipv6.txt | tail -n 1)
 OLD_IP=$(echo $OLD_LINE | cut -d'|' -f2)
-MARK=$(echo $OLD_LINE | cut -d'|' -f3)
-[ -z "$PROTO" ] && PROTO=$(echo $OLD_LINE | cut -d'|' -f4)
-[ -z "$PROTO" ] && PROTO="http+socks5"
+PROTO=$(echo $OLD_LINE | cut -d'|' -f4)
+[ -z "$PROTO" ] && PROTO="socks5"
 
-PREFIX=$(echo $OLD_IP | cut -d: -f1-4)
+# 2. Xóa IP cũ và dọn dẹp iptables triệt để
+[ ! -z "$OLD_IP" ] && ip -6 addr del $OLD_IP/64 dev $IFACE 2>/dev/null
+while ip6tables -t nat -D POSTROUTING -m mark --mark "$MARK" -j SNAT 2>/dev/null; do :; done
+while ip6tables -t mangle -D OUTPUT -m owner --uid-owner "$LINUX_UID" -j MARK --set-mark "$MARK" 2>/dev/null; do :; done
 
-# Tạo IP mới
+# 3. Tạo IP mới
 NEW_IP="${PREFIX}:$(printf '%x:%x:%x:%x' $RANDOM $RANDOM $RANDOM $RANDOM)"
 
-# Xóa IP cũ khỏi interface
-[ -n "$OLD_IP" ] && ip -6 addr del $OLD_IP/64 dev $IFACE 2>/dev/null
-
-# Quan trọng: Xóa quy tắc iptables cũ cho MARK này trước khi thêm mới
-# Tránh việc bị lặp quy tắc khiến IP không đổi
-ip6tables -t nat -D POSTROUTING -m mark --mark "$MARK" -j SNAT 2>/dev/null
-
-# Thêm IP mới vào interface và iptables
+# 4. Gán IP mới và quy tắc mới (Đưa lên đầu bảng NAT)
 ip -6 addr add $NEW_IP/64 dev $IFACE nodad
-ip6tables -t nat -A POSTROUTING -m mark --mark "$MARK" -j SNAT --to-source "$NEW_IP"
+ip6tables -t mangle -A OUTPUT -m owner --uid-owner "$LINUX_UID" -j MARK --set-mark "$MARK"
+ip6tables -t nat -I POSTROUTING 1 -m mark --mark "$MARK" -j SNAT --to-source "$NEW_IP"
 
-# Cập nhật file state (Xóa tất cả dòng cũ của port này và ghi lại)
+# 5. Cập nhật file trạng thái
 sed -i "/^$PORT|/d" /root/proxy-ipv6.txt
 echo "$PORT|$NEW_IP|$MARK|$PROTO" >> /root/proxy-ipv6.txt
 
-# Khởi động lại Gost
-pkill -f "gost.*:$PORT"
+# 6. Restart Gost để đảm bảo kết nối mới nhận IP mới
+pkill -u $LINUX_USER gost 2>/dev/null
 CRE=$(grep ":$PORT:" /root/proxies.txt | head -n1)
 U=$(echo $CRE | cut -d: -f3); P=$(echo $CRE | cut -d: -f4)
-LINUX_USER="gost$PORT"
 runuser -u "$LINUX_USER" -- gost -L "${PROTO}://$U:$P@:$PORT?udp=true" -F "direct://?prefer=ipv6&strategy=ipv6_first" >> /var/log/gost.log 2>&1 &
 
-ip6tables-save > /etc/iptables/rules.v6
+echo "Rotated Port $PORT to $NEW_IP"
 EOF
 chmod +x /usr/local/bin/proxy-rotate-one
 ```
@@ -192,26 +192,24 @@ cat > /usr/local/bin/proxy-delete << 'EOF'
 #!/bin/bash
 PORT=$1
 IFACE=$(ip route | grep default | awk '{print $5}' | head -n1)
-
-# Lấy thông tin
-LINE=$(grep "^$PORT|" /root/proxy-ipv6.txt | tail -n 1)
-OLD_IP=$(echo $LINE | cut -d'|' -f2)
-MARK=$(echo $LINE | cut -d'|' -f3)
+MARK=$((PORT + 1000))
 LINUX_USER="gost$PORT"
 LINUX_UID=$(id -u "$LINUX_USER" 2>/dev/null)
 
-# Dừng tiến trình
-pkill -f "gost.*:$PORT"
+# 1. Dừng tiến trình
+pkill -u $LINUX_USER gost 2>/dev/null
 
-# Xóa IP và quy tắc iptables
-ip -6 addr del $OLD_IP/64 dev $IFACE 2>/dev/null
-ip6tables -t mangle -D OUTPUT -m owner --uid-owner "$LINUX_UID" -j MARK --set-mark "$MARK" 2>/dev/null
-ip6tables -t nat -D POSTROUTING -m mark --mark "$MARK" -j SNAT 2>/dev/null
+# 2. Lấy IP để xóa
+OLD_IP=$(grep "^$PORT|" /root/proxy-ipv6.txt | cut -d'|' -f2)
+[ ! -z "$OLD_IP" ] && ip -6 addr del $OLD_IP/64 dev $IFACE 2>/dev/null
 
-# Xóa khỏi file state
+# 3. Dọn sạch iptables
+while ip6tables -t nat -D POSTROUTING -m mark --mark "$MARK" -j SNAT 2>/dev/null; do :; done
+while ip6tables -t mangle -D OUTPUT -m owner --uid-owner "$LINUX_UID" -j MARK --set-mark "$MARK" 2>/dev/null; do :; done
+
+# 4. Xóa khỏi file state
 sed -i "/^$PORT|/d" /root/proxy-ipv6.txt
 
-ip6tables-save > /etc/iptables/rules.v6
 echo "Đã xóa Proxy cổng $PORT."
 EOF
 chmod +x /usr/local/bin/proxy-delete
@@ -225,14 +223,21 @@ chmod +x /usr/local/bin/proxy-delete
 cat > /usr/local/bin/proxy-restore << 'EOF'
 #!/bin/bash
 sleep 5
-PREFIX="2001:19f0:4401:903"
+# Tự động tìm Prefix nếu có IP trong file state
 IFACE=$(ip route | grep default | awk '{print $5}' | head -n1)
-GW=$(ip -6 route show default | sed -n 's/.*via \([^ ]*\).*/\1/p' | head -n1)
-[ -z "$GW" ] && GW=$(ip -6 neighbor show | grep router | awk '{print $1}' | head -n1)
+FIRST_IP=$(head -n1 /root/proxy-ipv6.txt | cut -d'|' -f2)
+PREFIX=$(echo $FIRST_IP | cut -d: -f1-4)
 
-ip -6 route add default via $GW dev $IFACE 2>/dev/null
-ip -6 route add local ${PREFIX}::/64 dev lo 2>/dev/null
+# 1. Làm sạch bảng trước khi phục hồi
+ip6tables -t nat -F POSTROUTING
+ip6tables -t mangle -F OUTPUT
 
+# 2. Phục hồi định tuyến local (Vultr)
+if [ ! -z "$PREFIX" ]; then
+    ip -6 route add local ${PREFIX}::/64 dev lo 2>/dev/null
+fi
+
+# 3. Duyệt file state để dựng lại
 while IFS='|' read -r PORT IP MARK PROTO; do
   [ -z "$PROTO" ] && PROTO="http+socks5"
   ip -6 addr add $IP/64 dev $IFACE nodad 2>/dev/null
