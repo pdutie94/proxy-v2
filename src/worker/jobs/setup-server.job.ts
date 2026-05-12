@@ -244,9 +244,12 @@ OLD_IP=\$(grep "^\$PORT|" /root/proxy-ipv6.txt | cut -d'|' -f2)
 while ip6tables -t nat -D POSTROUTING -m mark --mark "\$MARK" -j SNAT 2>/dev/null; do :; done
 while ip6tables -t mangle -D OUTPUT -m owner --uid-owner "\$LINUX_USER" -j MARK --set-mark "\$MARK" 2>/dev/null; do :; done
 
-# 4. Xóa khỏi file state
-sed -i "/^\$PORT|/d" /root/proxy-ipv6.txt
-sed -i "/:\$PORT:/d" /root/proxies.txt
+# 4. Xóa khỏi file state (Sử dụng grep -v để an toàn hơn)
+grep -v "^\$PORT|" /root/proxy-ipv6.txt > /root/proxy-ipv6.tmp && mv /root/proxy-ipv6.tmp /root/proxy-ipv6.txt
+grep -v ":\$PORT:" /root/proxies.txt > /root/proxies.tmp && mv /root/proxies.tmp /root/proxies.txt
+
+# Đảm bảo dữ liệu được ghi xuống đĩa
+sync
 EOF`;
 
     const proxyResetScript = `cat > /usr/local/bin/proxy-reset << 'EOF'

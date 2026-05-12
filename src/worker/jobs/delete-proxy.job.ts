@@ -13,6 +13,7 @@ export async function processDeleteProxy(job: Job) {
       where: { id: jobId },
       data: { logs }
     });
+    console.log(`[DeleteJob:${jobId}] ${message}`);
   };
 
   try {
