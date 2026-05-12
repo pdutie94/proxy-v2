@@ -19,7 +19,8 @@ import {
   ButtonGroup,
   Label,
   Tooltip,
-  InlineStack
+  InlineStack,
+  Checkbox
 } from "@shopify/polaris";
 import { CalendarIcon, RefreshIcon, InfoIcon } from "@shopify/polaris-icons";
 import { useCallback, useState, useMemo, forwardRef, useImperativeHandle, useEffect } from 'react';
@@ -68,6 +69,9 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
         password: generateRandomPassword(6),
         ipType: 'IPv6' as const,
         expiresAt: undefined,
+        autoRenew: false,
+        renewalDuration: '1m',
+        comment: '',
       }
     });
 
@@ -92,8 +96,12 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
           username: proxy.username,
           password: proxy.password,
           ipType: proxy.ipType as any,
-          expiresAt: proxy.expiresAt ? format(new Date(proxy.expiresAt), 'yyyy-MM-dd') : '',
+          expiresAt: proxy.expiresAt ? format(new Date(proxy.expiresAt), 'yyyy-MM-dd HH:mm') : '',
+          autoRenew: proxy.autoRenew || false,
+          renewalDuration: proxy.renewalDuration || '1m',
+          comment: proxy.comment || '',
         });
+        setExpirationOption(proxy.expiresAt ? 'custom' : 'permanent');
       }
     }, [proxy, form]);
 
@@ -105,7 +113,10 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
           username: data.username,
           password: data.password,
           ipType: data.ipType,
-          expiresAt: data.expiresAt
+          expiresAt: data.expiresAt,
+          autoRenew: data.autoRenew,
+          renewalDuration: data.renewalDuration,
+          comment: data.comment,
         };
         updateMutation.mutate({ id: proxy.id, data: updateData as any }, {
           onSuccess: () => onClose(),
@@ -143,6 +154,8 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
       () => setPopoverActive((active) => !active),
       [],
     );
+
+    const RENEWAL_OPTIONS = EXPIRATION_OPTIONS.filter(o => o.value !== 'permanent' && o.value !== 'custom');
 
     const refreshRandom = () => {
       form.setValue('username', generateRandomString(6));
@@ -369,6 +382,53 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
             )}
             {(expirationOption === 'permanent') && <Box />}
           </FormLayout.Group>
+
+          <FormLayout.Group>
+            <Controller
+              name="autoRenew"
+              control={form.control}
+              render={({ field }) => (
+                <div style={{ paddingTop: '10px' }}>
+                  <Checkbox
+                    label="Tự động gia hạn"
+                    helpText="Tự động kéo dài thời gian khi sắp hết hạn (dưới 24h)"
+                    checked={field.value}
+                    onChange={field.onChange}
+                  />
+                </div>
+              )}
+            />
+            {form.watch('autoRenew') && (
+              <Controller
+                name="renewalDuration"
+                control={form.control}
+                render={({ field }) => (
+                  <Select
+                    label="Thời hạn gia hạn tự động"
+                    options={RENEWAL_OPTIONS}
+                    onChange={field.onChange}
+                    value={field.value}
+                  />
+                )}
+              />
+            )}
+            {!form.watch('autoRenew') && <Box />}
+          </FormLayout.Group>
+
+          <Controller
+            name="comment"
+            control={form.control}
+            render={({ field }) => (
+              <TextField
+                label="Ghi chú (Comment)"
+                autoComplete="off"
+                placeholder="Ví dụ: Nuôi nick Facebook, chạy tool..."
+                value={field.value || ''}
+                onChange={field.onChange}
+                multiline={2}
+              />
+            )}
+          />
         </FormLayout>
       </Box>
     );

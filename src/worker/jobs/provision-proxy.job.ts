@@ -44,7 +44,7 @@ export async function processProvisionProxy(job: Job) {
     // 3. Lấy thông tin IP đã gán (Nếu là IPv6)
     let ipv6 = null;
     if (proxy.ipType === 'IPv6') {
-      const checkIp = await ssh.execute(`grep "^${proxy.port}|" /root/proxy-ipv6.txt | cut -d'|' -f2`);
+      const checkIp = await ssh.execute(`grep "^${proxy.port}|" /root/proxy-ipv6.txt | tail -n 1 | cut -d'|' -f2`);
       ipv6 = checkIp.stdout.trim();
       if (!ipv6) throw new Error('Không lấy được IPv6 từ server sau khi tạo');
       await addLog(`IPv6 đã gán: ${ipv6}`);

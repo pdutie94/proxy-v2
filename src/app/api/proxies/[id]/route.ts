@@ -34,12 +34,19 @@ export async function PATCH(
     const { id } = await params;
     const body = await req.json();
     
-    if (typeof body.isEnabled === 'boolean') {
+    if (typeof body.isEnabled === 'boolean' && Object.keys(body).length === 1) {
       const proxy = await proxyService.toggleProxy(id, body.isEnabled);
       return NextResponse.json({ success: true, data: proxy });
     }
-    
-    return NextResponse.json({ success: false, message: 'Invalid data' }, { status: 400 });
+
+    // Handle full update
+    const { proxyRepository } = await import('@/modules/proxies/repositories/proxy.repository');
+    const updated = await proxyRepository.update(id, {
+      ...body,
+      expiresAt: body.expiresAt ? new Date(body.expiresAt) : null,
+    });
+
+    return NextResponse.json({ success: true, data: updated });
   } catch (error: any) {
     return NextResponse.json({ success: false, message: error.message }, { status: 400 });
   }

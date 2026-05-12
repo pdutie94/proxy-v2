@@ -2,6 +2,7 @@ import { Job } from 'bullmq';
 import prisma from '../../lib/prisma';
 import { addJob } from '../queue/job.queue';
 import { JobType } from '@prisma/client';
+import { addHours, addDays, addWeeks, addMonths, addYears } from 'date-fns';
 
 export async function processAutomation(job: Job) {
   console.log('[Automation] Bắt đầu chạy chu kỳ tự động hóa...');
@@ -14,9 +15,10 @@ export async function processAutomation(job: Job) {
       },
       status: {
         not: 'EXPIRED'
-      }
+      },
+      autoRenew: false // Chỉ xử lý hết hạn nếu KHÔNG bật tự động gia hạn
     },
-    take: 100, // Batch xử lý
+    take: 100,
   });
 
   if (expiredProxies.length > 0) {
@@ -25,7 +27,10 @@ export async function processAutomation(job: Job) {
       // Đánh dấu hết hạn trong DB trước
       await prisma.proxy.update({
         where: { id: proxy.id },
-        data: { status: 'EXPIRED' }
+        data: { 
+          status: 'EXPIRED',
+          isEnabled: false
+        }
       });
 
       // Tạo job xóa trên server
@@ -43,6 +48,67 @@ export async function processAutomation(job: Job) {
         serverId: proxy.serverId,
         jobId: serverJob.id,
       });
+    }
+  }
+
+  // 1.5. Xử lý Tự động gia hạn (Auto-Renew)
+  const tomorrow = addHours(new Date(), 24);
+  const proxiesToAutoRenew = await prisma.proxy.findMany({
+    where: {
+      autoRenew: true,
+      expiresAt: {
+        lte: tomorrow,
+      },
+      status: {
+        not: 'ERROR'
+      }
+    }
+  });
+
+  if (proxiesToAutoRenew.length > 0) {
+    console.log(`[Automation] Tìm thấy ${proxiesToAutoRenew.length} proxy cần tự động gia hạn.`);
+    for (const proxy of proxiesToAutoRenew) {
+      const currentExpiry = proxy.expiresAt && proxy.expiresAt > new Date() 
+        ? proxy.expiresAt 
+        : new Date();
+      
+      let newExpiry: Date;
+      const duration = proxy.renewalDuration || '1m';
+      switch (duration) {
+        case '1d': newExpiry = addDays(currentExpiry, 1); break;
+        case '3d': newExpiry = addDays(currentExpiry, 3); break;
+        case '1w': newExpiry = addWeeks(currentExpiry, 1); break;
+        case '1m': newExpiry = addMonths(currentExpiry, 1); break;
+        case '3m': newExpiry = addMonths(currentExpiry, 3); break;
+        case '6m': newExpiry = addMonths(currentExpiry, 6); break;
+        case '1y': newExpiry = addYears(currentExpiry, 1); break;
+        default: newExpiry = addMonths(currentExpiry, 1);
+      }
+
+      await prisma.proxy.update({
+        where: { id: proxy.id },
+        data: { 
+          expiresAt: newExpiry,
+          status: 'ACTIVE',
+          isEnabled: true
+        }
+      });
+
+      // Kích hoạt lại trên server sau khi tự động gia hạn
+      const serverJob = await prisma.serverJob.create({
+        data: {
+          type: JobType.PROVISION_PROXY,
+          serverId: proxy.serverId,
+          proxyId: proxy.id,
+          status: 'WAITING',
+        }
+      });
+
+      await addJob(JobType.PROVISION_PROXY, {
+        proxyId: proxy.id,
+        jobId: serverJob.id,
+      });
+      console.log(`[Automation] Đã tự động gia hạn proxy ${proxy.port} đến ${newExpiry.toISOString()}`);
     }
   }
 

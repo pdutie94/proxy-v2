@@ -7,7 +7,10 @@ export const proxySchema = z.object({
   password: z.string().min(1, 'Password is required'),
   ipType: z.enum(['IPv4', 'IPv6']).default('IPv6'),
   ipv6: z.string().optional(),
-  expiresAt: z.string().optional().transform((val) => val ? new Date(val) : null),
+  expiresAt: z.string().optional().nullable().transform((val) => val ? new Date(val) : null),
+  autoRenew: z.boolean().default(false),
+  renewalDuration: z.string().default('1m'),
+  comment: z.string().optional().nullable(),
 });
 
 export type ProxySchema = z.infer<typeof proxySchema>;

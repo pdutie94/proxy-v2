@@ -49,3 +49,8 @@ body {
 	align-items: center !important;
 }
 
+
+/* Fix IndexTable cell vertical alignment to top */
+.Polaris-IndexTable__TableCell {
+	vertical-align: top !important;
+}

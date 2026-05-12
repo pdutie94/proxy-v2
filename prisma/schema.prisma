@@ -114,6 +114,9 @@ model Proxy {
   ipv6          String?
   status        ProxyStatus @default(CREATING)
   isEnabled     Boolean     @default(true)
+  autoRenew     Boolean     @default(false)
+  renewalDuration String    @default("1m")
+  comment       String?     @db.Text
   expiresAt     DateTime?
   lastRotatedAt DateTime?
   jobs          ServerJob[]

@@ -152,6 +152,46 @@ export function useProxies() {
     },
   });
 
+  const bulkRenewMutation = useMutation({
+    mutationFn: async ({ ids, duration }: { ids: string[]; duration: string }) => {
+      const res = await fetch('/api/proxies/bulk-renew', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids, duration }),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message);
+      return data;
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ['proxies'] });
+      toast.success(data.message);
+    },
+    onError: (error: any) => {
+      toast.error(error.message);
+    },
+  });
+
+  const bulkUpdateAutoRenewMutation = useMutation({
+    mutationFn: async ({ ids, autoRenew }: { ids: string[]; autoRenew: boolean }) => {
+      const res = await fetch('/api/proxies/bulk-update-auto-renew', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids, autoRenew }),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message);
+      return data;
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ['proxies'] });
+      toast.success(data.message);
+    },
+    onError: (error: any) => {
+      toast.error(error.message);
+    },
+  });
+
   return {
     proxies: proxiesQuery.data || [],
     isLoading: proxiesQuery.isLoading,
@@ -160,6 +200,8 @@ export function useProxies() {
     updateMutation,
     deleteMutation,
     bulkDeleteMutation,
+    bulkRenewMutation,
+    bulkUpdateAutoRenewMutation,
     rotateProxyMutation,
     checkGoogleMutation,
   };

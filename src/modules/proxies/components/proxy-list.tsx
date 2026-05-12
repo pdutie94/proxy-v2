@@ -20,8 +20,10 @@ import {
   ChoiceList,
   Tooltip,
   IndexFiltersProps,
+  BlockStack,
+  Icon
 } from "@shopify/polaris";
-import { DeleteIcon, EditIcon, RefreshIcon, ClipboardIcon, SearchIcon } from "@shopify/polaris-icons";
+import { DeleteIcon, EditIcon, RefreshIcon, ClipboardIcon, SearchIcon, ClockIcon, NoteIcon, ExportIcon, CalendarIcon } from "@shopify/polaris-icons";
 import { format } from "date-fns";
 import { Proxy, Server } from '@prisma/client';
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
@@ -29,6 +31,7 @@ import { JobProgressModal } from '@/components/jobs/job-progress-modal';
 import { toast } from 'sonner';
 import { useSession } from 'next-auth/react';
 import { copyToClipboard } from '@/utils/clipboard';
+import { getCountdown, getStatusTone } from '@/utils/date';
 
 interface ProxyWithServer extends Proxy {
   server: Server;
@@ -40,7 +43,16 @@ interface ProxyListProps {
 
 export function ProxyList({ onEdit }: ProxyListProps) {
   const { smDown, mdDown } = useBreakpoints();
-  const { proxies, isLoading, deleteMutation, bulkDeleteMutation, rotateProxyMutation, checkGoogleMutation } = useProxies();
+  const { 
+    proxies, 
+    isLoading, 
+    deleteMutation, 
+    bulkDeleteMutation, 
+    bulkRenewMutation,
+    bulkUpdateAutoRenewMutation,
+    rotateProxyMutation, 
+    checkGoogleMutation 
+  } = useProxies();
   const { data: session } = useSession();
   const userRole = (session?.user as any)?.role || "USER";
   const canDelete = userRole === "ADMIN";
@@ -235,6 +247,49 @@ export function ProxyList({ onEdit }: ProxyListProps) {
     });
   }, [selectedResources, filteredProxies]);
 
+  const handleExportProxies = useCallback(() => {
+    const selectedProxies = filteredProxies.filter(p => selectedResources.includes(p.id));
+    if (selectedProxies.length === 0) return;
+    
+    const text = selectedProxies.map(p => {
+      const host = p.server?.host || '0.0.0.0';
+      return `${host}:${p.port}:${p.username}:${p.password}`;
+    }).join('\n');
+
+    const blob = new Blob([text], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `proxies_${format(new Date(), 'yyyyMMdd_HHmmss')}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    toast.success(`Đã xuất ${selectedProxies.length} proxy ra file TXT`);
+    setSelectedResources([]);
+  }, [selectedResources, filteredProxies]);
+
+  const [activeRenewModal, setActiveRenewModal] = useState(false);
+  const [renewalDuration, setRenewalDuration] = useState('1m');
+
+  const handleBulkRenew = () => {
+    bulkRenewMutation.mutate({ ids: selectedResources, duration: renewalDuration }, {
+      onSuccess: () => {
+        setActiveRenewModal(false);
+        setSelectedResources([]);
+      }
+    });
+  };
+
+  const handleBulkToggleAutoRenew = (status: boolean) => {
+    bulkUpdateAutoRenewMutation.mutate({ ids: selectedResources, autoRenew: status }, {
+      onSuccess: () => {
+        setSelectedResources([]);
+      }
+    });
+  };
+
   const handleBulkCheckGoogle = useCallback(() => {
     if (selectedResources.length === 0) return;
     
@@ -252,13 +307,26 @@ export function ProxyList({ onEdit }: ProxyListProps) {
       icon: ClipboardIcon,
     },
     {
-      content: `Check Google`,
-      onAction: handleBulkCheckGoogle,
-      icon: SearchIcon,
+      content: `Export TXT`,
+      onAction: handleExportProxies,
+      icon: ExportIcon,
+    },
+    {
+      content: `Gia hạn`,
+      onAction: () => setActiveRenewModal(true),
+      icon: CalendarIcon,
     },
   ];
 
   const bulkActions = [
+    {
+      content: 'Bật tự động gia hạn',
+      onAction: () => handleBulkToggleAutoRenew(true),
+    },
+    {
+      content: 'Tắt tự động gia hạn',
+      onAction: () => handleBulkToggleAutoRenew(false),
+    },
     {
       content: 'Xóa đã chọn',
       onAction: handleBulkDeleteClick,
@@ -288,23 +356,80 @@ export function ProxyList({ onEdit }: ProxyListProps) {
         position={index}
         selected={selectedResources.includes(proxy.id)}
       >
+      <IndexTable.Cell>
+        <BlockStack gap="100">
+          <Text as="span" variant="bodyMd" fontWeight="bold">
+            {proxy.server?.name || proxy.server?.host || 'Unknown'}
+          </Text>
+          <InlineStack gap="100">
+            <Badge tone="info">{proxy.ipType}</Badge>
+          </InlineStack>
+        </BlockStack>
+      </IndexTable.Cell>
+      <IndexTable.Cell>
+        <div style={{ minWidth: '240px' }}>
+          <BlockStack gap="050">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
+              <Text as="span" variant="bodySm" tone="subdued" style={{ whiteSpace: 'nowrap' }}>Proxy IP:PORT</Text>
+              <div style={{ flexGrow: 1, borderBottom: '1px dotted #E2E8F0' }}></div>
+              <Text as="span" variant="bodySm" fontWeight="bold">{proxy.server?.host}:{proxy.port}</Text>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
+              <Text as="span" variant="bodySm" tone="subdued" style={{ whiteSpace: 'nowrap' }}>Login</Text>
+              <div style={{ flexGrow: 1, borderBottom: '1px dotted #E2E8F0' }}></div>
+              <Text as="span" variant="bodySm" fontWeight="medium">{proxy.username}</Text>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
+              <Text as="span" variant="bodySm" tone="subdued" style={{ whiteSpace: 'nowrap' }}>Pass</Text>
+              <div style={{ flexGrow: 1, borderBottom: '1px dotted #E2E8F0' }}></div>
+              <Text as="span" variant="bodySm" fontWeight="medium">{proxy.password}</Text>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
+              <Text as="span" variant="bodySm" tone="subdued" style={{ whiteSpace: 'nowrap' }}>Type</Text>
+              <div style={{ flexGrow: 1, borderBottom: '1px dotted #E2E8F0' }}></div>
+              <Badge size="small">HTTPS / SOCKS5</Badge>
+            </div>
+            {proxy.ipv6 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
+                <Text as="span" variant="bodySm" tone="subdued">IPv6</Text>
+                <div style={{ flexGrow: 1, borderBottom: '1px dotted #E2E8F0' }}></div>
+                <Text as="span" variant="bodySm">{proxy.ipv6}</Text>
+              </div>
+            )}
+          </BlockStack>
+        </div>
+      </IndexTable.Cell>
         <IndexTable.Cell>
-          <Text as="span" fontWeight="bold">{proxy.port}</Text>
+          <div style={{ minWidth: '160px' }}>
+            <BlockStack gap="050">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
+                <Text as="span" variant="bodySm" tone="subdued">Hết hạn</Text>
+                <div style={{ flexGrow: 1, borderBottom: '1px dotted #E2E8F0' }}></div>
+                <Text as="span" variant="bodySm">
+                  {proxy.expiresAt ? format(new Date(proxy.expiresAt), 'dd/MM/yyyy HH:mm') : 'Vĩnh viễn'}
+                </Text>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
+                <Text as="span" variant="bodySm" tone="subdued">Còn lại</Text>
+                <div style={{ flexGrow: 1, borderBottom: '1px dotted #E2E8F0' }}></div>
+                <Text as="span" variant="bodySm" fontWeight="medium" tone={getStatusTone(proxy.expiresAt)}>
+                  {getCountdown(proxy.expiresAt)}
+                </Text>
+              </div>
+            </BlockStack>
+          </div>
         </IndexTable.Cell>
-        <IndexTable.Cell>{proxy.username}</IndexTable.Cell>
-        <IndexTable.Cell>{proxy.server?.name || '-'}</IndexTable.Cell>
-        {!mdDown && (
-          <IndexTable.Cell>
-            <Text as="span" variant="bodyXs" tone="subdued" breakWord>{proxy.ipv6 || '-'}</Text>
-          </IndexTable.Cell>
-        )}
         <IndexTable.Cell>
           <Badge tone={proxy.status === 'ACTIVE' ? 'success' : proxy.status === 'CREATING' ? 'attention' : 'critical'}>
             {proxy.status === 'ACTIVE' ? 'Hoạt động' : proxy.status === 'CREATING' ? 'Đang tạo' : 'Lỗi'}
           </Badge>
         </IndexTable.Cell>
         <IndexTable.Cell>
-          {proxy.expiresAt ? format(new Date(proxy.expiresAt), 'dd/MM/yyyy') : 'Vĩnh viễn'}
+          {proxy.comment ? (
+            <Tooltip content={proxy.comment}>
+              <Icon source={NoteIcon} tone="base" />
+            </Tooltip>
+          ) : '-'}
         </IndexTable.Cell>
         <IndexTable.Cell>
           <div style={{ minWidth: smDown ? '120px' : 'auto' }}>
@@ -372,12 +497,11 @@ export function ProxyList({ onEdit }: ProxyListProps) {
   );
 
   const headings = [
-    { title: 'Port' },
-    { title: 'Tài khoản' },
     { title: 'Máy chủ' },
-    ...(mdDown ? [] : [{ title: 'IPv6 (Exit IP)' }]),
+    { title: 'Thông tin Proxy', width: '200px' },
+    { title: 'Hết hạn', width: '160px' },
     { title: 'Trạng thái' },
-    { title: 'Hết hạn' },
+    { title: 'Ghi chú' },
     { title: 'Thao tác', alignment: 'end' },
   ] as any;
 
@@ -509,6 +633,38 @@ export function ProxyList({ onEdit }: ProxyListProps) {
               ? `Bạn có chắc chắn muốn xóa ${selectedResources.length} Proxy đã chọn? Cấu hình sẽ bị gỡ bỏ khỏi máy chủ và không thể khôi phục.`
               : "Bạn có chắc chắn muốn xóa Proxy này? Cấu hình sẽ bị gỡ bỏ khỏi máy chủ và không thể khôi phục."}
           </Text>
+        </Modal.Section>
+      </Modal>
+
+      <Modal
+        open={activeRenewModal}
+        onClose={() => setActiveRenewModal(false)}
+        title="Gia hạn Proxy"
+        primaryAction={{
+          content: 'Xác nhận gia hạn',
+          onAction: handleBulkRenew,
+          loading: bulkRenewMutation.isPending,
+        }}
+        secondaryActions={[{ content: 'Hủy bỏ', onAction: () => setActiveRenewModal(false) }]}
+      >
+        <Modal.Section>
+          <BlockStack gap="400">
+            <Text as="p">Chọn thời gian gia hạn cho {selectedResources.length} proxy đã chọn:</Text>
+            <ChoiceList
+              title="Thời gian gia hạn"
+              choices={[
+                { label: '1 ngày', value: '1d' },
+                { label: '3 ngày', value: '3d' },
+                { label: '1 tuần', value: '1w' },
+                { label: '1 tháng', value: '1m' },
+                { label: '3 tháng', value: '3m' },
+                { label: '6 tháng', value: '6m' },
+                { label: '1 năm', value: '1y' },
+              ]}
+              selected={[renewalDuration]}
+              onChange={(val) => setRenewalDuration(val[0])}
+            />
+          </BlockStack>
         </Modal.Section>
       </Modal>
 

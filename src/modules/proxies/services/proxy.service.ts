@@ -3,6 +3,7 @@ import { ProxySchema } from '../schemas/proxy.schema';
 import { BulkProxySchema } from '../schemas/bulk-proxy.schema';
 import { JobType } from '@prisma/client';
 import prisma from '@/lib/prisma';
+import { addDays, addWeeks, addMonths, addYears } from 'date-fns';
 
 export class ProxyService {
   async getAllProxies() {
@@ -34,6 +35,9 @@ export class ProxyService {
 
     const proxy = await proxyRepository.create({
       ...rest,
+      autoRenew: data.autoRenew || false,
+      renewalDuration: data.renewalDuration || '1m',
+      comment: data.comment || null,
       server: { connect: { id: serverId } },
       status: 'CREATING',
     });
@@ -169,6 +173,9 @@ export class ProxyService {
             serverId,
             status: 'CREATING',
             expiresAt: expiresAt ? new Date(expiresAt) : null,
+            autoRenew: data.autoRenew || false,
+            renewalDuration: data.renewalDuration || '1m',
+            comment: data.comment || null,
           }
         });
       })
@@ -309,6 +316,68 @@ export class ProxyService {
     }
 
     return updated;
+  }
+
+  async bulkRenew(ids: string[], duration: string) {
+    const proxies = await prisma.proxy.findMany({
+      where: { id: { in: ids } }
+    });
+
+    const results = await prisma.$transaction(
+      proxies.map(proxy => {
+        const currentExpiry = proxy.expiresAt && proxy.expiresAt > new Date() 
+          ? proxy.expiresAt 
+          : new Date();
+        
+        let newExpiry: Date;
+        switch (duration) {
+          case '1d': newExpiry = addDays(currentExpiry, 1); break;
+          case '3d': newExpiry = addDays(currentExpiry, 3); break;
+          case '1w': newExpiry = addWeeks(currentExpiry, 1); break;
+          case '1m': newExpiry = addMonths(currentExpiry, 1); break;
+          case '3m': newExpiry = addMonths(currentExpiry, 3); break;
+          case '6m': newExpiry = addMonths(currentExpiry, 6); break;
+          case '1y': newExpiry = addYears(currentExpiry, 1); break;
+          default: newExpiry = addMonths(currentExpiry, 1);
+        }
+
+        return prisma.proxy.update({
+          where: { id: proxy.id },
+          data: { 
+            expiresAt: newExpiry,
+            status: 'ACTIVE', // Re-enable if expired
+            isEnabled: true
+          }
+        });
+      })
+    );
+
+    // Trigger provision job for each renewed proxy to ensure it's active on server
+    const { addJob } = await import('@/worker/queue/job.queue');
+    for (const proxy of results) {
+      const serverJob = await prisma.serverJob.create({
+        data: {
+          type: JobType.PROVISION_PROXY,
+          serverId: proxy.serverId,
+          proxyId: proxy.id,
+          status: 'WAITING',
+        }
+      });
+
+      await addJob(JobType.PROVISION_PROXY, {
+        proxyId: proxy.id,
+        jobId: serverJob.id,
+      });
+    }
+
+    return results;
+  }
+
+  async bulkUpdateAutoRenew(ids: string[], autoRenew: boolean) {
+    return prisma.proxy.updateMany({
+      where: { id: { in: ids } },
+      data: { autoRenew }
+    });
   }
 }
 

@@ -42,8 +42,8 @@ export async function processRotateProxy(job: Job) {
       throw new Error(`Lỗi script rotate: ${rotateResult.stderr}`);
     }
 
-    // 3. Lấy IPv6 mới
-    const getIpResult = await ssh.execute(`grep "^${proxy.port}|" /root/proxy-ipv6.txt | cut -d'|' -f2`);
+    // 3. Lấy IPv6 mới (lấy dòng cuối cùng nếu có nhiều bản ghi)
+    const getIpResult = await ssh.execute(`grep "^${proxy.port}|" /root/proxy-ipv6.txt | tail -n 1 | cut -d'|' -f2`);
     const newIpv6 = getIpResult.stdout.trim();
 
     await addLog(`Đã đổi sang IPv6 mới: ${newIpv6}`);

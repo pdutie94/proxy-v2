@@ -8,6 +8,9 @@ export const bulkProxySchema = z.object({
   password: z.string().min(1, 'Mật khẩu là bắt buộc'),
   ipType: z.enum(['IPv4', 'IPv6']).default('IPv6'),
   expiresAt: z.string().optional().nullable(),
+  autoRenew: z.boolean().default(false),
+  renewalDuration: z.string().default('1m'),
+  comment: z.string().optional().nullable(),
 });
 
 export type BulkProxySchema = z.infer<typeof bulkProxySchema>;
