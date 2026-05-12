@@ -155,117 +155,142 @@ EOF`,
     
     const proxyCreateScript = `cat > /usr/local/bin/proxy-create << 'EOF'
 #!/bin/bash
-IFACE=$(ip route | grep default | awk '{print $5}' | head -n1)
-PREFIX="${prefix}"
-SERVER_IP="${server.host}"
 PORT=\$1
 USER=\$2
 PASS=\$3
-TYPE=\${4:-ipv6}
-MARK=\$((PORT + 1000))
+PREFIX=\$4
+TYPE=\$5
+PROTOCOL=\$6
 
+IFACE=\$(ip route | grep default | awk '{print \$5}' | head -n1)
+MARK=\$((PORT + 1000))
 LINUX_USER="gost\$PORT"
+
+# Đảm bảo User tồn tại
 id "\$LINUX_USER" &>/dev/null || useradd -r -M -s /bin/false "\$LINUX_USER"
 LINUX_UID=\$(id -u "\$LINUX_USER")
 
-pkill -f "gost.*:\$PORT"
+# Dọn rác cũ triệt để
+pkill -u \$LINUX_UID gost 2>/dev/null
+while ip6tables -t nat -D POSTROUTING -m mark --mark "\$MARK" -j SNAT 2>/dev/null; do :; done
+while ip6tables -t mangle -D OUTPUT -m owner --uid-owner "\$LINUX_UID" -j MARK --set-mark "\$MARK" 2>/dev/null; do :; done
+OLD_IP=\$(grep "^\$PORT|" /root/proxy-ipv6.txt | cut -d'|' -f2)
+[ ! -z "\$OLD_IP" ] && ip -6 addr del \$OLD_IP/64 dev \$IFACE 2>/dev/null
+sed -i "/^\$PORT|/d" /root/proxy-ipv6.txt
 
-if [ "\$TYPE" == "ipv4" ]; then
-    runuser -u "\$LINUX_USER" -- gost -L "socks5://\$USER:\$PASS@:\$PORT?udp=true" -F "direct://?prefer=ipv4" >> /var/log/gost.log 2>&1 &
-    echo "\$PORT|ipv4|\$MARK" >> /root/proxy-ipv6.txt
-else
+OUTBOUND="direct://?prefer=ipv6&strategy=ipv6_first"
+
+if [ "\$TYPE" == "ipv6" ]; then
     IPV6="\${PREFIX}:\$(printf '%x:%x:%x:%x' \$RANDOM \$RANDOM \$RANDOM \$RANDOM)"
     ip -6 addr add \$IPV6/64 dev \$IFACE nodad
     ip6tables -t mangle -A OUTPUT -m owner --uid-owner "\$LINUX_UID" -j MARK --set-mark "\$MARK"
-    ip6tables -t nat -A POSTROUTING -m mark --mark "\$MARK" -j SNAT --to-source "\$IPV6"
-    runuser -u "\$LINUX_USER" -- gost -L "socks5://\$USER:\$PASS@:\$PORT?udp=true" -F "direct://?prefer=ipv6&strategy=ipv6_first" >> /var/log/gost.log 2>&1 &
-    echo "\$PORT|\$IPV6|\$MARK" >> /root/proxy-ipv6.txt
+    ip6tables -t nat -I POSTROUTING 1 -m mark --mark "\$MARK" -j SNAT --to-source "\$IPV6"
+    echo "\$PORT|\$IPV6|\$MARK|\$PROTOCOL" >> /root/proxy-ipv6.txt
 fi
 
+runuser -u \$LINUX_USER -- gost -L \${PROTOCOL}://\${USER}:\${PASS}@:\${PORT}?udp=true -F \$OUTBOUND >> /var/log/gost.log 2>&1 &
 echo "\$SERVER_IP:\$PORT:\$USER:\$PASS" >> /root/proxies.txt
-ip6tables-save > /etc/iptables/rules.v6
 EOF`;
 
     const proxyRotateScript = `cat > /usr/local/bin/proxy-rotate-one << 'EOF'
 #!/bin/bash
-IFACE=$(ip route | grep default | awk '{print $5}' | head -n1)
-PREFIX="${prefix}"
 PORT=\$1
+PREFIX=\$2
+IFACE=\$(ip route | grep default | awk '{print \$5}' | head -n1)
 MARK=\$((PORT + 1000))
-OLD_DATA=\$(grep "^\$PORT|" /root/proxy-ipv6.txt)
-OLD_IP=\$(echo \$OLD_DATA | cut -d'|' -f2)
+LINUX_USER="gost\$PORT"
+LINUX_UID=\$(id -u "\$LINUX_USER")
+
+OLD_LINE=\$(grep "^\$PORT|" /root/proxy-ipv6.txt | tail -n 1)
+OLD_IP=\$(echo \$OLD_LINE | cut -d'|' -f2)
+PROTO=\$(echo \$OLD_LINE | cut -d'|' -f4)
+[ -z "\$PROTO" ] && PROTO="socks5"
+
+[ ! -z "\$OLD_IP" ] && ip -6 addr del \$OLD_IP/64 dev \$IFACE 2>/dev/null
+while ip6tables -t nat -D POSTROUTING -m mark --mark "\$MARK" -j SNAT 2>/dev/null; do :; done
+while ip6tables -t mangle -D OUTPUT -m owner --uid-owner "\$LINUX_UID" -j MARK --set-mark "\$MARK" 2>/dev/null; do :; done
+
 NEW_IP="\${PREFIX}:\$(printf '%x:%x:%x:%x' \$RANDOM \$RANDOM \$RANDOM \$RANDOM)"
 ip -6 addr add \$NEW_IP/64 dev \$IFACE nodad
-ip6tables -t nat -D POSTROUTING -m mark --mark \$MARK -j SNAT --to-source \$OLD_IP 2>/dev/null
-ip6tables -t nat -A POSTROUTING -m mark --mark \$MARK -j SNAT --to-source \$NEW_IP
-ip -6 addr del \$OLD_IP/64 dev \$IFACE 2>/dev/null
-sed -i "s|^\$PORT|\$OLD_IP|\$MARK|\$PORT|\$NEW_IP|\$MARK|" /root/proxy-ipv6.txt
-ip6tables-save > /etc/iptables/rules.v6
+ip6tables -t mangle -A OUTPUT -m owner --uid-owner "\$LINUX_UID" -j MARK --set-mark "\$MARK"
+ip6tables -t nat -I POSTROUTING 1 -m mark --mark "\$MARK" -j SNAT --to-source "\$NEW_IP"
+
+sed -i "/^\$PORT|/d" /root/proxy-ipv6.txt
+echo "\$PORT|\$NEW_IP|\$MARK|\$PROTO" >> /root/proxy-ipv6.txt
+
+pkill -u \$LINUX_USER gost 2>/dev/null
+sleep 0.5
+CRE=\$(grep ":\$PORT:" /root/proxies.txt | head -n1)
+U=\$(echo \$CRE | cut -d: -f3); P=\$(echo \$CRE | cut -d: -f4)
+runuser -u "\$LINUX_USER" -- gost -L "\${PROTO}://\$U:\$P@:\$PORT?udp=true" -F "direct://?prefer=ipv6&strategy=ipv6_first" >> /var/log/gost.log 2>&1 &
 EOF`;
 
     const proxyDeleteScript = `cat > /usr/local/bin/proxy-delete << 'EOF'
 #!/bin/bash
-IFACE=$(ip route | grep default | awk '{print $5}' | head -n1)
 PORT=\$1
+IFACE=\$(ip route | grep default | awk '{print \$5}' | head -n1)
 MARK=\$((PORT + 1000))
 LINUX_USER="gost\$PORT"
-LINUX_UID=\$(id -u "\$LINUX_USER" 2>/dev/null)
-OLD_DATA=\$(grep "^\$PORT|" /root/proxy-ipv6.txt)
-OLD_IP=\$(echo \$OLD_DATA | cut -d'|' -f2)
 
-pkill -f "gost.*:\$PORT"
-ip6tables -t mangle -D OUTPUT -m owner --uid-owner "\$LINUX_UID" -j MARK --set-mark "\$MARK" 2>/dev/null
-ip6tables -t nat -D POSTROUTING -m mark --mark \$MARK -j SNAT --to-source \$OLD_IP 2>/dev/null
-ip -6 addr del \$OLD_IP/64 dev \$IFACE 2>/dev/null
-userdel -r "\$LINUX_USER" 2>/dev/null
+# 1. Dừng tiến trình
+pkill -u \$LINUX_USER gost 2>/dev/null
+
+# 2. Lấy IP để xóa
+OLD_IP=\$(grep "^\$PORT|" /root/proxy-ipv6.txt | cut -d'|' -f2)
+[ ! -z "\$OLD_IP" ] && ip -6 addr del \$OLD_IP/64 dev \$IFACE 2>/dev/null
+
+# 3. Dọn sạch iptables
+while ip6tables -t nat -D POSTROUTING -m mark --mark "\$MARK" -j SNAT 2>/dev/null; do :; done
+while ip6tables -t mangle -D OUTPUT -m owner --uid-owner "\$LINUX_USER" -j MARK --set-mark "\$MARK" 2>/dev/null; do :; done
+
+# 4. Xóa khỏi file state
 sed -i "/^\$PORT|/d" /root/proxy-ipv6.txt
 sed -i "/:\$PORT:/d" /root/proxies.txt
-ip6tables-save > /etc/iptables/rules.v6
 EOF`;
 
     const proxyResetScript = `cat > /usr/local/bin/proxy-reset << 'EOF'
 #!/bin/bash
-IFACE=$(ip route | grep default | awk '{print $5}' | head -n1)
+IFACE=\$(ip route | grep default | awk '{print \$5}' | head -n1)
 PREFIX="${prefix}"
 pkill -9 gost 2>/dev/null
-[ -f /root/proxy-ipv6.txt ] && while IFS='|' read -r PORT IP MARK; do
-  userdel -r gost\$PORT 2>/dev/null
-done < /root/proxy-ipv6.txt
-ip6tables -t mangle -F OUTPUT
-ip6tables -t nat -F POSTROUTING
+# Xóa sạch IP theo Prefix
 ip -6 addr show dev \$IFACE | grep "\${PREFIX}" | awk '{print \$2}' | while read ADDR; do
   ip -6 addr del "\$ADDR" dev \$IFACE 2>/dev/null
 done
+# Xóa sạch iptables
+ip6tables -t mangle -F OUTPUT
+ip6tables -t nat -F POSTROUTING
+# Xóa trắng file
 > /root/proxies.txt
 > /root/proxy-ipv6.txt
-ip6tables-save > /etc/iptables/rules.v6
 EOF`;
 
     const proxyRestoreScript = `cat > /usr/local/bin/proxy-restore << 'EOF'
 #!/bin/bash
 sleep 5
-IFACE=$(ip route | grep default | awk '{print $5}' | head -n1)
-PREFIX="${prefix}"
-GW=\$(ip -6 route show default | sed -n 's/.*via \\([^ ]*\\).*/\\1/p' | head -n1)
-[ -z "\$GW" ] && GW=\$(ip -6 neighbor show | grep router | awk '{print \$1}' | head -n1)
-[ -n "\$GW" ] && ip -6 route add default via \$GW dev \$IFACE 2>/dev/null
-ip -6 route add local \${PREFIX}::/64 dev lo 2>/dev/null
+IFACE=\$(ip route | grep default | awk '{print \$5}' | head -n1)
+FIRST_IP=\$(head -n1 /root/proxy-ipv6.txt | cut -d'|' -f2)
+PREFIX=\$(echo \$FIRST_IP | cut -d: -f1-4)
 
-while IFS='|' read -r PORT IP MARK; do
-  [ "\$IP" == "ipv4" ] && continue
+ip6tables -t nat -F POSTROUTING
+ip6tables -t mangle -F OUTPUT
+if [ ! -z "\$PREFIX" ]; then
+    ip -6 route add local \${PREFIX}::/64 dev lo 2>/dev/null
+fi
+
+while IFS='|' read -r PORT IP MARK PROTO; do
+  [ -z "\$PROTO" ] && PROTO="socks5"
   ip -6 addr add \$IP/64 dev \$IFACE nodad 2>/dev/null
   LINUX_USER="gost\$PORT"
+  id "\$LINUX_USER" &>/dev/null || useradd -r -M -s /bin/false "\$LINUX_USER"
   LINUX_UID=\$(id -u "\$LINUX_USER")
-  ip6tables -t mangle -A OUTPUT -m owner --uid-owner "\$LINUX_UID" -j MARK --set-mark "\$MARK" 2>/dev/null
-  ip6tables -t nat -A POSTROUTING -m mark --mark "\$MARK" -j SNAT --to-source "\$IP" 2>/dev/null
   
-  if ! pgrep -f "gost.*:\$PORT" >/dev/null; then
-    CRE=\$(grep ":\$PORT:" /root/proxies.txt | head -n1)
-    U=\$(echo \$CRE | cut -d: -f3)
-    P=\$(echo \$CRE | cut -d: -f4)
-    [ -z "\$U" ] && continue
-    runuser -u "\$LINUX_USER" -- gost -L "socks5://\$U:\$P@:\$PORT?udp=true" -F "direct://?prefer=ipv6&strategy=ipv6_first" >> /var/log/gost.log 2>&1 &
-  fi
+  ip6tables -t mangle -A OUTPUT -m owner --uid-owner "\$LINUX_UID" -j MARK --set-mark "\$MARK"
+  ip6tables -t nat -I POSTROUTING 1 -m mark --mark "\$MARK" -j SNAT --to-source "\$IP"
+  
+  CRE=\$(grep ":\$PORT:" /root/proxies.txt | head -n1)
+  U=\$(echo \$CRE | cut -d: -f3); P=\$(echo \$CRE | cut -d: -f4)
+  runuser -u "\$LINUX_USER" -- gost -L "\${PROTO}://\$U:\$P@:\$PORT?udp=true" -F "direct://?prefer=ipv6&strategy=ipv6_first" >> /var/log/gost.log 2>&1 &
 done < /root/proxy-ipv6.txt
 EOF`;
 
