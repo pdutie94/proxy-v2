@@ -5,7 +5,7 @@ import { bulkProxySchema } from '@/modules/proxies/schemas/bulk-proxy.schema';
 
 export async function POST(req: Request) {
   const session = await auth();
-  if (!session) {
+  if (!session?.user) {
     return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
   }
 
@@ -13,7 +13,15 @@ export async function POST(req: Request) {
     const body = await req.json();
     const validatedData = bulkProxySchema.parse(body);
     
-    const result = await proxyService.bulkCreateProxies(validatedData);
+    // Determine the owner: if admin provides userId, use it, else use current user
+    const targetUserId = ((session.user as any).role === 'ADMIN' && validatedData.userId) 
+      ? validatedData.userId 
+      : (session.user as any).id;
+
+    const result = await proxyService.bulkCreateProxies({
+      ...validatedData,
+      userId: targetUserId
+    });
     
     return NextResponse.json({ 
       success: true, 

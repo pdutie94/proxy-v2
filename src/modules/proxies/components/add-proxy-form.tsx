@@ -27,6 +27,8 @@ import { useCallback, useState, useMemo, forwardRef, useImperativeHandle, useEff
 import { format, addDays, addWeeks, addMonths, addYears } from 'date-fns';
 import { Proxy } from '@prisma/client';
 import { generateRandomString, generateRandomPassword } from '@/utils/random';
+import { useSession } from 'next-auth/react';
+import { useUsers } from '@/hooks/use-users';
 
 const EXPIRATION_OPTIONS = [
   { label: 'Vĩnh viễn', value: 'permanent' },
@@ -52,6 +54,10 @@ export interface AddProxyFormRef {
 
 export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
   ({ onClose, onJobCreated, proxy }, ref) => {
+    const { data: session } = useSession();
+    const { users } = useUsers();
+    const isAdmin = (session?.user as any)?.role === 'ADMIN';
+
     const { bulkCreateMutation, updateMutation } = useProxies();
     const { servers } = useServers();
     const [popoverActive, setPopoverActive] = useState(false);
@@ -62,6 +68,7 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
     const form = useForm<BulkProxySchema>({
       resolver: zodResolver(bulkProxySchema) as any,
       defaultValues: {
+        userId: proxy?.userId || '',
         serverId: '',
         startPort: 10000,
         count: 10,
@@ -152,6 +159,14 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
       }))
     ], [servers]);
 
+    const userOptions = useMemo(() => [
+      { label: 'Không gán (Hệ thống)', value: '' },
+      ...users.map((u) => ({
+        label: `${u.email} (${u.role})`,
+        value: u.id,
+      }))
+    ], [users]);
+
     const togglePopoverActive = useCallback(
       () => setPopoverActive((active) => !active),
       [],
@@ -194,6 +209,24 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
     return (
       <Box padding="400">
         <FormLayout>
+          {isAdmin && (
+            <FormLayout.Group>
+              <Controller
+                name="userId"
+                control={form.control}
+                render={({ field }) => (
+                  <Select
+                    label="Chủ sở hữu (User)"
+                    options={userOptions}
+                    onChange={field.onChange}
+                    value={field.value || ''}
+                    error={form.formState.errors.userId?.message}
+                  />
+                )}
+              />
+            </FormLayout.Group>
+          )}
+
           <FormLayout.Group>
             <Controller
               name="serverId"
@@ -424,7 +457,7 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
                     <Checkbox
                       label="Tự động gia hạn"
                       helpText={
-                        <Text variant="bodyXs" tone="subdued">
+                        <Text as="p" variant="bodyXs" tone="subdued">
                           Tự động kéo dài thời gian khi sắp hết hạn (dưới 24h)
                         </Text>
                       }

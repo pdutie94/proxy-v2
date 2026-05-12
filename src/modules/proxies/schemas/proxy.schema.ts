@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 export const proxySchema = z.object({
+  userId: z.string().optional().nullable(),
   serverId: z.string().min(1, 'Server is required'),
   port: z.number().int().min(1024).max(65535),
   username: z.string().min(1, 'Username is required'),

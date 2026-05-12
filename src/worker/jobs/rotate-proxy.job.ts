@@ -35,20 +35,8 @@ export async function processRotateProxy(job: Job) {
     await ssh.connect(proxy.server);
 
     // 2. Thực thi rotate
-    let subnetParam = "";
-    if (proxy.ipType === 'IPv6') {
-      const subnets = await prisma.serverSubnet.findMany({
-        where: { serverId: proxy.serverId, status: 'ACTIVE' }
-      });
-      if (subnets.length > 0) {
-        const randomSubnet = subnets[Math.floor(Math.random() * subnets.length)];
-        subnetParam = `--subnet ${randomSubnet.ipv6Range}`;
-        await addLog(`Chọn ngẫu nhiên subnet để xoay: ${randomSubnet.ipv6Range}`);
-      }
-    }
-
     const protocol = proxy.proxyType.toLowerCase();
-    const rotateCmd = `/usr/local/bin/proxy-rotate-one ${proxy.port} ${protocol} ${subnetParam}`.trim();
+    const rotateCmd = `/usr/local/bin/proxy-rotate-one ${proxy.port} ${protocol}`.trim();
     await addLog(`Thực thi: ${rotateCmd}`);
     const rotateResult = await ssh.execute(rotateCmd);
     

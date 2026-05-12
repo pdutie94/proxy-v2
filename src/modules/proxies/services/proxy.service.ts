@@ -35,12 +35,13 @@ export class ProxyService {
 
     const proxy = await proxyRepository.create({
       ...rest,
+      userId: data.userId || null,
       autoRenew: data.autoRenew || false,
       renewalDuration: data.renewalDuration || '1m',
       comment: data.comment || null,
       server: { connect: { id: serverId } },
       status: 'CREATING',
-    });
+    } as any);
 
     // Update server lastPort
     await prisma.server.update({
@@ -171,12 +172,13 @@ export class ProxyService {
             username,
             password,
             serverId,
+            userId: data.userId || null,
             status: 'CREATING',
             expiresAt: expiresAt ? new Date(expiresAt) : null,
             autoRenew: data.autoRenew || false,
             renewalDuration: data.renewalDuration || '1m',
             comment: data.comment || null,
-          }
+          } as any
         });
       })
     );

@@ -99,24 +99,24 @@ PASS=$3
 IP_TYPE=$4       # ipv4 / ipv6
 PROTO=$5         # http / socks5 / http+socks5
 SUBNET_ARG=$6    # --subnet (optional)
-SUBNET_VAL=$7    # range (optional)
 
 # Mặc định nếu không truyền
 [ -z "$PROTO" ] && PROTO="http+socks5"
 
 # Xác định PREFIX
-if [[ "$SUBNET_ARG" == "--subnet" && -n "$SUBNET_VAL" ]]; then
-  PREFIX=$(echo $SUBNET_VAL | cut -d/ -f1 | sed 's/::$//')
-else
-  PREFIX="2001:19f0:4401:903" # Thay bằng PREFIX mặc định của bạn
-fi
+PREFIX="2001:19f0:5c00:4108" # Thay bằng PREFIX mặc định của server này
 
 MARK=$((PORT + 1000))
 LINUX_USER="gost$PORT"
 id "$LINUX_USER" &>/dev/null || useradd -r -M -s /bin/false "$LINUX_USER"
 LINUX_UID=$(id -u "$LINUX_USER")
 
+# Dọn dẹp cũ nếu có
 pkill -f "gost.*:$PORT"
+ip -6 addr del $(ip -6 addr show dev $IFACE | grep "inet6" | grep "scope global" | awk '{print $2}' | grep -v "fe80" | head -n 1) dev $IFACE 2>/dev/null
+ip6tables -t mangle -D OUTPUT -m owner --uid-owner "$LINUX_UID" -j MARK --set-mark "$MARK" 2>/dev/null
+ip6tables -t nat -D POSTROUTING -m mark --mark "$MARK" -j SNAT 2>/dev/null
+sed -i "/^$PORT|/d" /root/proxy-ipv6.txt
 
 if [ "$IP_TYPE" == "ipv6" ]; then
   IPV6="${PREFIX}:$(printf '%x:%x:%x:%x' $RANDOM $RANDOM $RANDOM $RANDOM)"
@@ -125,14 +125,12 @@ if [ "$IP_TYPE" == "ipv6" ]; then
   ip6tables -t nat -A POSTROUTING -m mark --mark "$MARK" -j SNAT --to-source "$IPV6"
   OUTBOUND="direct://?prefer=ipv6&strategy=ipv6_first"
 else
-  # IPv4 use server primary IP
   IPV6="server-ip"
   OUTBOUND="direct://"
 fi
 
 runuser -u "$LINUX_USER" -- gost -L "${PROTO}://$USER:$PASS@:$PORT?udp=true" -F "$OUTBOUND" >> /var/log/gost.log 2>&1 &
 
-# Lưu thêm PROTO vào file state
 echo "$PORT|$IPV6|$MARK|$PROTO" >> /root/proxy-ipv6.txt
 ip6tables-save > /etc/iptables/rules.v6
 EOF
@@ -156,27 +154,27 @@ MARK=$(echo $OLD_LINE | cut -d'|' -f3)
 [ -z "$PROTO" ] && PROTO=$(echo $OLD_LINE | cut -d'|' -f4)
 [ -z "$PROTO" ] && PROTO="http+socks5"
 
-if [[ "$SUBNET_ARG" == "--subnet" && -n "$SUBNET_VAL" ]]; then
-  PREFIX=$(echo $SUBNET_VAL | cut -d/ -f1 | sed 's/::$//')
-else
-  PREFIX=$(echo $OLD_IP | cut -d: -f1-4)
-fi
+PREFIX=$(echo $OLD_IP | cut -d: -f1-4)
 
+# Tạo IP mới
 NEW_IP="${PREFIX}:$(printf '%x:%x:%x:%x' $RANDOM $RANDOM $RANDOM $RANDOM)"
 
-# Xóa IP cũ
+# Xóa IP cũ khỏi interface
 [ -n "$OLD_IP" ] && ip -6 addr del $OLD_IP/64 dev $IFACE 2>/dev/null
 
-# Thêm IP mới
+# Quan trọng: Xóa quy tắc iptables cũ cho MARK này trước khi thêm mới
+# Tránh việc bị lặp quy tắc khiến IP không đổi
+ip6tables -t nat -D POSTROUTING -m mark --mark "$MARK" -j SNAT 2>/dev/null
+
+# Thêm IP mới vào interface và iptables
 ip -6 addr add $NEW_IP/64 dev $IFACE nodad
-ip6tables -t nat -R POSTROUTING $(ip6tables -t nat -L POSTROUTING --line-numbers | grep "mark 0x$(printf '%x' $MARK)" | awk '{print $1}') -m mark --mark "$MARK" -j SNAT --to-source "$NEW_IP" 2>/dev/null || \
 ip6tables -t nat -A POSTROUTING -m mark --mark "$MARK" -j SNAT --to-source "$NEW_IP"
 
-# Cập nhật file state
+# Cập nhật file state (Xóa tất cả dòng cũ của port này và ghi lại)
 sed -i "/^$PORT|/d" /root/proxy-ipv6.txt
 echo "$PORT|$NEW_IP|$MARK|$PROTO" >> /root/proxy-ipv6.txt
 
-# Khởi động lại Gost với IP mới và đúng Protocol
+# Khởi động lại Gost
 pkill -f "gost.*:$PORT"
 CRE=$(grep ":$PORT:" /root/proxies.txt | head -n1)
 U=$(echo $CRE | cut -d: -f3); P=$(echo $CRE | cut -d: -f4)
@@ -186,6 +184,37 @@ runuser -u "$LINUX_USER" -- gost -L "${PROTO}://$U:$P@:$PORT?udp=true" -F "direc
 ip6tables-save > /etc/iptables/rules.v6
 EOF
 chmod +x /usr/local/bin/proxy-rotate-one
+```
+
+### 3.3. Xóa Proxy (`proxy-delete`)
+```bash
+cat > /usr/local/bin/proxy-delete << 'EOF'
+#!/bin/bash
+PORT=$1
+IFACE=$(ip route | grep default | awk '{print $5}' | head -n1)
+
+# Lấy thông tin
+LINE=$(grep "^$PORT|" /root/proxy-ipv6.txt | tail -n 1)
+OLD_IP=$(echo $LINE | cut -d'|' -f2)
+MARK=$(echo $LINE | cut -d'|' -f3)
+LINUX_USER="gost$PORT"
+LINUX_UID=$(id -u "$LINUX_USER" 2>/dev/null)
+
+# Dừng tiến trình
+pkill -f "gost.*:$PORT"
+
+# Xóa IP và quy tắc iptables
+ip -6 addr del $OLD_IP/64 dev $IFACE 2>/dev/null
+ip6tables -t mangle -D OUTPUT -m owner --uid-owner "$LINUX_UID" -j MARK --set-mark "$MARK" 2>/dev/null
+ip6tables -t nat -D POSTROUTING -m mark --mark "$MARK" -j SNAT 2>/dev/null
+
+# Xóa khỏi file state
+sed -i "/^$PORT|/d" /root/proxy-ipv6.txt
+
+ip6tables-save > /etc/iptables/rules.v6
+echo "Đã xóa Proxy cổng $PORT."
+EOF
+chmod +x /usr/local/bin/proxy-delete
 ```
 
 ---

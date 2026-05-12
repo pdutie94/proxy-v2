@@ -39,9 +39,10 @@ export async function processBulkProvisionProxy(job: Job) {
 
         await addLog(`[${index + 1}/${proxyIds.length}] Đang tạo port ${proxy.port}...`);
 
-        // proxy-create <port> <user> <pass> <type>
+        // proxy-create <port> <user> <pass> <type> <protocol>
         const ipType = proxy.ipType.toLowerCase();
-        const cmd = `/usr/local/bin/proxy-create ${proxy.port} ${proxy.username} ${proxy.password} ${ipType}`;
+        const protocol = proxy.proxyType.toLowerCase();
+        const cmd = `/usr/local/bin/proxy-create ${proxy.port} ${proxy.username} ${proxy.password} ${ipType} ${protocol}`;
         await ssh.execute(cmd);
 
         // Lấy IPv6 nếu cần

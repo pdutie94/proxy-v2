@@ -409,13 +409,15 @@ export function ProxyList({ onEdit }: ProxyListProps) {
                   {proxy.expiresAt ? format(new Date(proxy.expiresAt), 'dd/MM/yyyy HH:mm') : 'Vĩnh viễn'}
                 </Text>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
-                <Text as="span" variant="bodySm" tone="subdued">Còn lại</Text>
-                <div style={{ flexGrow: 1, borderBottom: '1px dotted #E2E8F0' }}></div>
-                <Text as="span" variant="bodySm" fontWeight="medium" tone={getStatusTone(proxy.expiresAt)}>
-                  {getCountdown(proxy.expiresAt)}
-                </Text>
-              </div>
+              {proxy.expiresAt && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
+                  <Text as="span" variant="bodySm" tone="subdued">Còn lại</Text>
+                  <div style={{ flexGrow: 1, borderBottom: '1px dotted #E2E8F0' }}></div>
+                  <Text as="span" variant="bodySm" fontWeight="medium" tone={getStatusTone(proxy.expiresAt)}>
+                    {getCountdown(proxy.expiresAt)}
+                  </Text>
+                </div>
+              )}
             </BlockStack>
           </div>
         </IndexTable.Cell>
@@ -431,6 +433,15 @@ export function ProxyList({ onEdit }: ProxyListProps) {
             </Tooltip>
           ) : '-'}
         </IndexTable.Cell>
+        {userRole === 'ADMIN' && (
+          <IndexTable.Cell>
+            <div style={{ maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <Text as="span" variant="bodySm">
+                {(proxy as any).user?.email || 'Hệ thống'}
+              </Text>
+            </div>
+          </IndexTable.Cell>
+        )}
         <IndexTable.Cell>
           <div style={{ minWidth: smDown ? '120px' : 'auto' }}>
             <InlineStack align="end" gap="200" wrap={false}>
@@ -502,6 +513,7 @@ export function ProxyList({ onEdit }: ProxyListProps) {
     { title: 'Hết hạn', width: '160px' },
     { title: 'Trạng thái' },
     { title: 'Ghi chú' },
+    ...(userRole === 'ADMIN' ? [{ title: 'User' }] : []),
     { title: 'Thao tác', alignment: 'end' },
   ] as any;
 
