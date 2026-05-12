@@ -3,7 +3,7 @@ import { ProxySchema } from '../schemas/proxy.schema';
 import { BulkProxySchema } from '../schemas/bulk-proxy.schema';
 import { JobType } from '@prisma/client';
 import prisma from '@/lib/prisma';
-import { addDays, addWeeks, addMonths, addYears } from 'date-fns';
+import { addMinutes, addDays, addWeeks, addMonths, addYears } from 'date-fns';
 
 export class ProxyService {
   async getAllProxies() {
@@ -333,6 +333,7 @@ export class ProxyService {
         
         let newExpiry: Date;
         switch (duration) {
+          case '2min': newExpiry = addMinutes(currentExpiry, 2); break;
           case '1d': newExpiry = addDays(currentExpiry, 1); break;
           case '3d': newExpiry = addDays(currentExpiry, 3); break;
           case '1w': newExpiry = addWeeks(currentExpiry, 1); break;

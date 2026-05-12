@@ -24,7 +24,7 @@ import {
 } from "@shopify/polaris";
 import { CalendarIcon, RefreshIcon, InfoIcon } from "@shopify/polaris-icons";
 import { useCallback, useState, useMemo, forwardRef, useImperativeHandle, useEffect } from 'react';
-import { format, addDays, addWeeks, addMonths, addYears } from 'date-fns';
+import { format, addMinutes, addDays, addWeeks, addMonths, addYears } from 'date-fns';
 import { Proxy } from '@prisma/client';
 import { generateRandomString, generateRandomPassword } from '@/utils/random';
 import { useSession } from 'next-auth/react';
@@ -32,6 +32,7 @@ import { useUsers } from '@/hooks/use-users';
 
 const EXPIRATION_OPTIONS = [
   { label: 'Vĩnh viễn', value: 'permanent' },
+  { label: '2 phút (Test)', value: '2min' },
   { label: '1 ngày', value: '1d' },
   { label: '3 ngày', value: '3d' },
   { label: '1 tuần', value: '1w' },
@@ -183,10 +184,12 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
       setExpirationOption(value);
       if (value === 'permanent') {
         form.setValue('expiresAt', null);
+        form.setValue('autoRenew', false);
       } else if (value !== 'custom') {
         const now = new Date();
         let expiry: Date;
         switch (value) {
+          case '2min': expiry = addMinutes(now, 2); break;
           case '1d': expiry = addDays(now, 1); break;
           case '3d': expiry = addDays(now, 3); break;
           case '1w': expiry = addWeeks(now, 1); break;
@@ -450,37 +453,41 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
           </BlockStack>
 
           <FormLayout.Group>
-            <Controller
-              name="autoRenew"
-              control={form.control}
-              render={({ field }) => (
-                    <Checkbox
-                      label="Tự động gia hạn"
-                      helpText={
-                        <Text as="p" variant="bodyXs" tone="subdued">
-                          Tự động kéo dài thời gian khi sắp hết hạn (dưới 24h)
-                        </Text>
-                      }
-                      checked={field.value}
-                      onChange={field.onChange}
-                    />
-              )}
-            />
-            {form.watch('autoRenew') && (
-              <Controller
-                name="renewalDuration"
-                control={form.control}
-                render={({ field }) => (
-                  <Select
-                    label="Thời hạn gia hạn tự động"
-                    options={RENEWAL_OPTIONS}
-                    onChange={field.onChange}
-                    value={field.value}
+            {expirationOption !== 'permanent' && (
+              <>
+                <Controller
+                  name="autoRenew"
+                  control={form.control}
+                  render={({ field }) => (
+                        <Checkbox
+                          label="Tự động gia hạn"
+                          helpText={
+                            <Text as="p" variant="bodyXs" tone="subdued">
+                              Tự động kéo dài thời gian khi sắp hết hạn (dưới 24h)
+                            </Text>
+                          }
+                          checked={field.value}
+                          onChange={field.onChange}
+                        />
+                  )}
+                />
+                {form.watch('autoRenew') && (
+                  <Controller
+                    name="renewalDuration"
+                    control={form.control}
+                    render={({ field }) => (
+                      <Select
+                        label="Thời hạn gia hạn tự động"
+                        options={RENEWAL_OPTIONS}
+                        onChange={field.onChange}
+                        value={field.value}
+                      />
+                    )}
                   />
                 )}
-              />
+                {!form.watch('autoRenew') && <Box />}
+              </>
             )}
-            {!form.watch('autoRenew') && <Box />}
           </FormLayout.Group>
 
           <Controller

@@ -2,7 +2,7 @@ import { Job } from 'bullmq';
 import prisma from '../../lib/prisma';
 import { addJob } from '../queue/job.queue';
 import { JobType } from '@prisma/client';
-import { addHours, addDays, addWeeks, addMonths, addYears } from 'date-fns';
+import { addHours, addMinutes, addDays, addWeeks, addMonths, addYears } from 'date-fns';
 
 export async function processAutomation(job: Job) {
   console.log('[Automation] Bắt đầu chạy chu kỳ tự động hóa...');
@@ -75,6 +75,7 @@ export async function processAutomation(job: Job) {
       let newExpiry: Date;
       const duration = proxy.renewalDuration || '1m';
       switch (duration) {
+        case '2min': newExpiry = addMinutes(currentExpiry, 2); break;
         case '1d': newExpiry = addDays(currentExpiry, 1); break;
         case '3d': newExpiry = addDays(currentExpiry, 3); break;
         case '1w': newExpiry = addWeeks(currentExpiry, 1); break;

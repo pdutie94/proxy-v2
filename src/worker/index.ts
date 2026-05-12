@@ -31,7 +31,7 @@ export async function startWorker() {
     { type: JobType.AUTOMATION },
     {
       repeat: {
-        every: 5 * 60 * 1000, // 5 minutes
+        every: 1 * 60 * 1000, // 1 minute
       },
       jobId: 'automation-cycle', // Prevent duplicates
     }
