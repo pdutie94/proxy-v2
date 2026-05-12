@@ -34,7 +34,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
     const { createMutation, updateMutation } = useServers();
     
     const { control, handleSubmit, formState: { errors }, reset, watch } = useForm<ServerSchema>({
-      resolver: zodResolver(serverSchema),
+      resolver: zodResolver(serverSchema) as any,
       defaultValues: {
         name: '',
         host: '',
@@ -178,7 +178,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                       <InlineStack gap="100">
                         <Text as="span">IPv6 Prefix</Text>
                         <Tooltip content="Nhập 4 cụm đầu của dải IPv6 được cấp (Ví dụ: 2001:19f0:4401:903)">
-                          <Icon source={InfoIcon} color="subdued" />
+                          <Icon source={InfoIcon} tone="subdued" />
                         </Tooltip>
                       </InlineStack>
                     }
@@ -217,7 +217,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                       <InlineStack gap="100">
                         <Text as="span">Cổng bắt đầu</Text>
                         <Tooltip content="Cổng mặc định khi tạo Proxy hàng loạt (Ví dụ: 10000)">
-                          <Icon source={InfoIcon} color="subdued" />
+                          <Icon source={InfoIcon} tone="subdued" />
                         </Tooltip>
                       </InlineStack>
                     }
@@ -254,7 +254,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                         <InlineStack gap="100">
                           <Text as="span">Chu kỳ xoay (Phút)</Text>
                           <Tooltip content="Hệ thống sẽ tự động đổi toàn bộ IP Proxy sau mỗi X phút">
-                            <Icon source={InfoIcon} color="subdued" />
+                            <Icon source={InfoIcon} tone="subdued" />
                           </Tooltip>
                         </InlineStack>
                       }

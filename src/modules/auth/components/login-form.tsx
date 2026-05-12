@@ -16,7 +16,8 @@ import {
   Box,
   Banner,
   Card,
-  InlineStack
+  InlineStack,
+  Divider
 } from "@shopify/polaris";
 import { LockIcon, EmailIcon } from "@shopify/polaris-icons";
 
@@ -109,7 +110,7 @@ export function LoginForm() {
                     />
                   )}
                 />
-                <Box paddingTop="200">
+                <Box paddingBlockStart="200">
                   <Button 
                     variant="primary" 
                     submit 
@@ -137,6 +138,4 @@ export function LoginForm() {
   );
 }
 
-function Divider() {
-  return <Box borderTopWidth="1px" borderColor="border-subdued" />;
-}
+

@@ -19,6 +19,7 @@ import {
   useBreakpoints,
   ChoiceList,
   Tooltip,
+  IndexFiltersProps,
 } from "@shopify/polaris";
 import { DeleteIcon, EditIcon, RefreshIcon, ClipboardIcon, SearchIcon } from "@shopify/polaris-icons";
 import { format } from "date-fns";
@@ -289,7 +290,7 @@ export function ProxyList({ onEdit }: ProxyListProps) {
         <IndexTable.Cell>{proxy.server?.name || '-'}</IndexTable.Cell>
         {!mdDown && (
           <IndexTable.Cell>
-            <Text as="span" variant="bodyXs" color="subdued" breakWord>{proxy.ipv6 || '-'}</Text>
+            <Text as="span" variant="bodyXs" tone="subdued" breakWord>{proxy.ipv6 || '-'}</Text>
           </IndexTable.Cell>
         )}
         <IndexTable.Cell>
@@ -331,7 +332,7 @@ export function ProxyList({ onEdit }: ProxyListProps) {
                 smDown ? (
                   <Button icon={DeleteIcon} variant="tertiary" tone="critical" onClick={() => handleDeleteClick(proxy.id)} />
                 ) : (
-                  <Tooltip content="Xóa Proxy" tone="critical">
+                  <Tooltip content="Xóa Proxy">
                     <Button icon={DeleteIcon} variant="tertiary" tone="critical" onClick={() => handleDeleteClick(proxy.id)} />
                   </Tooltip>
                 )

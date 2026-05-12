@@ -136,7 +136,7 @@ export default function LogsPage() {
       primaryAction={{
         content: 'Dọn dẹp nhật ký',
         icon: DeleteIcon,
-        tone: 'critical',
+        destructive: true,
         onAction: () => setIsDeleteModalOpen(true),
         disabled: logs.length === 0
       }}
@@ -150,6 +150,8 @@ export default function LogsPage() {
               setSelectedTab(index);
               setPage(1);
             }}
+            onQueryChange={() => {}}
+            onQueryClear={() => {}}
             mode={IndexFiltersMode.Filtering}
             setMode={() => {}}
             filters={[]}
@@ -184,7 +186,7 @@ export default function LogsPage() {
         open={!!selectedLog}
         onClose={() => setSelectedLog(null)}
         title={`Chi tiết công việc: ${selectedLog ? getJobTitle(selectedLog) : ''}`}
-        large
+        size="large"
       >
         <Modal.Section>
           <Box background="bg-surface-secondary" padding="400" borderRadius="200">

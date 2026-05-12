@@ -44,15 +44,15 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
     const [popoverActive, setPopoverActive] = useState(false);
     
     const form = useForm<BulkProxySchema>({
-      resolver: zodResolver(bulkProxySchema),
+      resolver: zodResolver(bulkProxySchema) as any,
       defaultValues: {
         serverId: '',
         startPort: 10000,
         count: 10,
         username: generateRandomString(6),
         password: generateRandomPassword(6),
-        ipType: 'IPv6',
-        expiresAt: '',
+        ipType: 'IPv6' as const,
+        expiresAt: undefined,
       }
     });
 
@@ -162,7 +162,7 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
                       <Text as="span">Số lượng Proxy</Text>
                       {!proxy && (
                         <Tooltip content="Tối đa 1000 proxy một lần tạo">
-                          <Icon source={InfoIcon} color="subdued" />
+                          <Icon source={InfoIcon} tone="subdued" />
                         </Tooltip>
                       )}
                     </InlineStack>
@@ -190,7 +190,7 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
                       <Text as="span">{proxy ? "Cổng (Port)" : "Cổng bắt đầu"}</Text>
                       {!proxy && (
                         <Tooltip content="Các port sẽ được tăng dần từ cổng này">
-                          <Icon source={InfoIcon} color="subdued" />
+                          <Icon source={InfoIcon} tone="subdued" />
                         </Tooltip>
                       )}
                     </InlineStack>

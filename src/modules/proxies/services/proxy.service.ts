@@ -277,6 +277,39 @@ export class ProxyService {
       });
     });
   }
+
+  async toggleProxy(id: string, isEnabled: boolean) {
+    const proxy = await proxyRepository.findById(id);
+    if (!proxy) throw new Error('Proxy not found');
+
+    const updated = await prisma.proxy.update({
+      where: { id },
+      data: { 
+        status: isEnabled ? 'ACTIVE' : 'EXPIRED' 
+      }
+    });
+
+    // Create sync job to reload gost config on server
+    const job = await prisma.serverJob.create({
+      data: {
+        type: JobType.SYNC_SERVER_PORT,
+        serverId: proxy.serverId,
+        status: 'WAITING',
+      },
+    });
+
+    try {
+      const { addJob } = await import('@/worker/queue/job.queue');
+      await addJob(JobType.SYNC_SERVER_PORT, {
+        serverId: proxy.serverId,
+        jobId: job.id,
+      });
+    } catch (error) {
+      console.error('[ProxyService] Failed to dispatch sync job.', error);
+    }
+
+    return updated;
+  }
 }
 
 export const proxyService = new ProxyService();

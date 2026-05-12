@@ -32,6 +32,14 @@ export function UserList({ onEdit }: UserListProps) {
   const [sortSelected, setSortSelected] = useState(['createdAt desc']);
   const itemsPerPage = 20;
 
+  const handleSort = useCallback((headingIndex: number, direction: 'ascending' | 'descending') => {
+    const keys = ['email', 'role', 'createdAt'];
+    const key = keys[headingIndex];
+    if (key) {
+      setSortSelected([`${key} ${direction === 'ascending' ? 'asc' : 'desc'}`]);
+    }
+  }, []);
+
   const sortedUsers = useMemo(() => {
     let result = [...users];
     if (sortSelected.length > 0) {
@@ -86,7 +94,7 @@ export function UserList({ onEdit }: UserListProps) {
           <Badge tone={
             user.role === 'ADMIN' ? 'info' : 
             user.role === 'MODERATOR' ? 'attention' : 
-            'default'
+            undefined
           }>
             {user.role === 'ADMIN' ? 'Quản trị viên' : 
              user.role === 'MODERATOR' ? 'Điều hành viên' : 
@@ -122,7 +130,7 @@ export function UserList({ onEdit }: UserListProps) {
                 onClick={() => setDeleteId(user.id)}
               />
             ) : (
-              <Tooltip content="Xóa người dùng" tone="critical">
+              <Tooltip content="Xóa người dùng">
                 <Button 
                   icon={DeleteIcon} 
                   variant="tertiary" 
@@ -152,8 +160,6 @@ export function UserList({ onEdit }: UserListProps) {
           ]}
           selectable={false}
           sortable={[true, true, true, false]}
-          sortSelected={sortSelected}
-          onSort={setSortSelected}
           pagination={{
             hasNext: page < totalPages,
             hasPrevious: page > 1,

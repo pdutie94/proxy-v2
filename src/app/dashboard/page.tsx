@@ -202,9 +202,9 @@ export default function DashboardPage() {
                       {servers.slice(0, 5).map((server) => {
                         const proxyCount = proxies.filter(p => p.serverId === server.id).length;
                         const percentage = Math.min(Math.round((proxyCount / server.maxProxies) * 100), 100);
-                        let progressTone: "success" | "attention" | "critical" = "success";
+                        let progressTone: "success" | "critical" | undefined = "success";
                         if (percentage > 85) progressTone = "critical";
-                        else if (percentage > 60) progressTone = "attention";
+                        else if (percentage > 60) progressTone = undefined;
 
                         return (
                           <BlockStack gap="100" key={server.id}>
@@ -217,7 +217,7 @@ export default function DashboardPage() {
                         );
                       })}
                       {servers.length > 5 && (
-                        <Button variant="tertiary" url="/dashboard/servers">Xem thêm {servers.length - 5} máy chủ</Button>
+                        <Button variant="tertiary" url="/dashboard/servers">Xem thêm {`${servers.length - 5}`} máy chủ</Button>
                       )}
                     </BlockStack>
                   </BlockStack>
@@ -270,7 +270,7 @@ export default function DashboardPage() {
         open={!!selectedLog}
         onClose={() => setSelectedLog(null)}
         title={`Chi tiết: ${selectedLog ? getJobTitle(selectedLog) : ''}`}
-        large
+        size="large"
       >
         <Modal.Section>
           <Box background="bg-surface-secondary" padding="400" borderRadius="200">

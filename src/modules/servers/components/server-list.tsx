@@ -34,6 +34,14 @@ export function ServerList({ onEdit }: ServerListProps) {
   const [sortSelected, setSortSelected] = useState(['id desc']);
   const itemsPerPage = 10;
 
+  const handleSort = useCallback((headingIndex: number, direction: 'ascending' | 'descending') => {
+    const keys = ['name', 'host'];
+    const key = keys[headingIndex];
+    if (key) {
+      setSortSelected([`${key} ${direction === 'ascending' ? 'asc' : 'desc'}`]);
+    }
+  }, []);
+
   const sortedServers = useMemo(() => {
     let result = [...servers];
     if (sortSelected.length > 0) {
@@ -235,8 +243,6 @@ export function ServerList({ onEdit }: ServerListProps) {
           ]}
           selectable={false}
           sortable={[true, true, false, false, false, false]}
-          sortSelected={sortSelected}
-          onSort={setSortSelected}
           pagination={{
             hasNext: page < totalPages,
             hasPrevious: page > 1,
@@ -302,7 +308,7 @@ export function ServerList({ onEdit }: ServerListProps) {
         <Modal.Section>
           <BlockStack gap="300">
             {activeConfirmServer?.status === 'ONLINE' && (
-              <Box padding="300" background="bg-surface-critical-subdued" borderRadius="200">
+              <Box padding="300" background="bg-surface-critical" borderRadius="200">
                 <Text as="p" tone="critical" fontWeight="bold">
                   ⚠️ CẢNH BÁO: Máy chủ này đang ở trạng thái HOẠT ĐỘNG (ONLINE). 
                   Việc thiết lập lại sẽ xóa sạch toàn bộ cấu hình Proxy hiện tại và ngắt các kết nối đang chạy!
@@ -312,7 +318,7 @@ export function ServerList({ onEdit }: ServerListProps) {
             <Text as="p">
               Hệ thống sẽ thực hiện dọn dẹp (Deep Clean) và cài đặt lại toàn bộ môi trường Super-V5.0.0 trên máy chủ <b>{activeConfirmServer?.host}</b>.
             </Text>
-            <Text as="p" variant="bodySm" color="subdued">
+            <Text as="p" variant="bodySm" tone="subdued">
               Quá trình này có thể mất 1-2 phút. Bạn có muốn tiếp tục không?
             </Text>
           </BlockStack>
