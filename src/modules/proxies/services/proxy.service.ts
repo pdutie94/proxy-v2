@@ -71,19 +71,25 @@ export class ProxyService {
 
   async deleteProxy(id: string) {
     const proxy = await proxyRepository.findById(id);
-    if (!proxy) throw new Error('Proxy not found');
+    if (!proxy) throw new Error('Không tìm thấy Proxy');
 
-    // Create a job record for removal
+    // 1. Cập nhật các job liên quan để gỡ bỏ tham chiếu proxyId (tránh lỗi khóa ngoại)
+    await prisma.serverJob.updateMany({
+      where: { proxyId: id },
+      data: { proxyId: null }
+    });
+
+    // 2. Tạo job xóa trên remote server thông qua worker
     const job = await prisma.serverJob.create({
       data: {
         type: JobType.DELETE_PROXY,
         serverId: proxy.serverId,
-        proxyId: proxy.id,
+        proxyId: null,
         status: 'WAITING',
       },
     });
 
-    // Dispatch job (Dynamic Import)
+    // Dispatch job
     try {
       const { addJob } = await import('@/worker/queue/job.queue');
       await addJob(JobType.DELETE_PROXY, {
@@ -92,7 +98,7 @@ export class ProxyService {
         jobId: job.id,
       });
     } catch (error) {
-      console.error('[ProxyService] Failed to dispatch delete job. Is Redis running?', error);
+      console.error('[ProxyService] Lỗi khi tạo job xóa Proxy:', error);
     }
 
     await proxyRepository.delete(id);
@@ -235,20 +241,25 @@ export class ProxyService {
 
     const { addJob } = await import('@/worker/queue/job.queue');
 
-    // Create jobs and delete in a transaction
+    // Xử lý trong transaction để đảm bảo tính nhất quán
     await prisma.$transaction(async (tx) => {
+      // 1. Gỡ bỏ tham chiếu proxyId trong các job liên quan
+      await tx.serverJob.updateMany({
+        where: { proxyId: { in: ids } },
+        data: { proxyId: null }
+      });
+
       for (const proxy of proxies) {
-        // 1. Create a job record
+        // 2. Tạo job xóa trên remote server
         const job = await tx.serverJob.create({
           data: {
             type: JobType.DELETE_PROXY,
             serverId: proxy.serverId,
-            proxyId: proxy.id,
+            proxyId: null,
             status: 'WAITING',
           },
         });
 
-        // 2. Dispatch job
         try {
           await addJob(JobType.DELETE_PROXY, {
             port: proxy.port,
@@ -256,11 +267,11 @@ export class ProxyService {
             jobId: job.id,
           });
         } catch (error) {
-          console.error(`[ProxyService] Failed to dispatch delete job for port ${proxy.port}`, error);
+          console.error(`[ProxyService] Lỗi dispatch job xóa cho cổng ${proxy.port}`, error);
         }
       }
 
-      // 3. Delete from DB
+      // 3. Xóa các bản ghi proxy khỏi DB
       await tx.proxy.deleteMany({
         where: { id: { in: ids } }
       });

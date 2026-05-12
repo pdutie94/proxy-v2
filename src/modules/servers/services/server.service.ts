@@ -20,10 +20,14 @@ export class ServerService {
   }
 
   async deleteServer(id: string) {
-    const proxyCount = await prisma.proxy.count({ where: { id: id } });
+    // Kiểm tra xem có proxy nào đang chạy trên server này không
+    const proxyCount = await prisma.proxy.count({ where: { serverId: id } });
     if (proxyCount > 0) {
-      throw new Error('Cannot delete server with active proxies. Delete proxies first.');
+      throw new Error('Không thể xóa máy chủ đang có Proxy. Vui lòng xóa tất cả Proxy của máy chủ này trước.');
     }
+    
+    // Xóa các job liên quan để tránh lỗi ràng buộc khóa ngoại
+    await prisma.serverJob.deleteMany({ where: { serverId: id } });
     
     return serverRepository.delete(id);
   }
