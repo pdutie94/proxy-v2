@@ -28,6 +28,7 @@ import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { JobProgressModal } from '@/components/jobs/job-progress-modal';
 import { toast } from 'sonner';
 import { useSession } from 'next-auth/react';
+import { copyToClipboard } from '@/utils/clipboard';
 
 interface ProxyWithServer extends Proxy {
   server: Server;
@@ -224,9 +225,13 @@ export function ProxyList({ onEdit }: ProxyListProps) {
       return `${host}:${p.port}:${p.username}:${p.password}`;
     }).join('\n');
 
-    navigator.clipboard.writeText(text).then(() => {
-      toast.success(`Đã copy ${selectedProxies.length} proxy vào bộ nhớ tạm`);
-      setSelectedResources([]);
+    copyToClipboard(text).then((success) => {
+      if (success) {
+        toast.success(`Đã copy ${selectedProxies.length} proxy vào bộ nhớ tạm`);
+        setSelectedResources([]);
+      } else {
+        toast.error('Không thể copy vào bộ nhớ tạm');
+      }
     });
   }, [selectedResources, filteredProxies]);
 
@@ -304,6 +309,28 @@ export function ProxyList({ onEdit }: ProxyListProps) {
         <IndexTable.Cell>
           <div style={{ minWidth: smDown ? '120px' : 'auto' }}>
             <InlineStack align="end" gap="200" wrap={false}>
+              {smDown ? (
+                <Button icon={ClipboardIcon} variant="tertiary" onClick={() => {
+                  const host = proxy.server?.host || '0.0.0.0';
+                  const text = `${host}:${proxy.port}:${proxy.username}:${proxy.password}`;
+                  copyToClipboard(text).then(success => {
+                    if (success) toast.success('Đã copy proxy');
+                    else toast.error('Lỗi khi copy');
+                  });
+                }} />
+              ) : (
+                <Tooltip content="Copy Proxy (host:port:user:pass)">
+                  <Button icon={ClipboardIcon} variant="tertiary" onClick={() => {
+                    const host = proxy.server?.host || '0.0.0.0';
+                    const text = `${host}:${proxy.port}:${proxy.username}:${proxy.password}`;
+                    copyToClipboard(text).then(success => {
+                      if (success) toast.success('Đã copy proxy');
+                      else toast.error('Lỗi khi copy');
+                    });
+                  }} />
+                </Tooltip>
+              )}
+
               {smDown ? (
                 <Button icon={SearchIcon} variant="tertiary" onClick={() => checkGoogleMutation.mutate(proxy.id, { onSuccess: (job) => setActiveJobId(job.id) })} loading={checkGoogleMutation.isPending && checkGoogleMutation.variables === proxy.id} disabled={proxy.status !== 'ACTIVE'} />
               ) : (

@@ -23,9 +23,21 @@ import {
 } from "@shopify/polaris";
 import { CalendarIcon, RefreshIcon, InfoIcon } from "@shopify/polaris-icons";
 import { useCallback, useState, useMemo, forwardRef, useImperativeHandle, useEffect } from 'react';
-import { format } from 'date-fns';
+import { format, addDays, addWeeks, addMonths, addYears, isBefore, startOfToday } from 'date-fns';
 import { Proxy } from '@prisma/client';
 import { generateRandomString, generateRandomPassword } from '@/utils/random';
+
+const EXPIRATION_OPTIONS = [
+  { label: 'Vĩnh viễn', value: 'permanent' },
+  { label: '1 ngày', value: '1d' },
+  { label: '3 ngày', value: '3d' },
+  { label: '1 tuần', value: '1w' },
+  { label: '1 tháng', value: '1m' },
+  { label: '3 tháng', value: '3m' },
+  { label: '6 tháng', value: '6m' },
+  { label: '1 năm', value: '1y' },
+  { label: 'Tùy chỉnh', value: 'custom' },
+];
 
 interface AddProxyFormProps {
   onClose: () => void;
@@ -42,6 +54,9 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
     const { bulkCreateMutation, updateMutation } = useProxies();
     const { servers } = useServers();
     const [popoverActive, setPopoverActive] = useState(false);
+    const [expirationOption, setExpirationOption] = useState('permanent');
+    const [viewMonth, setViewMonth] = useState(new Date().getMonth());
+    const [viewYear, setViewYear] = useState(new Date().getFullYear());
     
     const form = useForm<BulkProxySchema>({
       resolver: zodResolver(bulkProxySchema) as any,
@@ -133,6 +148,34 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
       form.setValue('username', generateRandomString(6));
       form.setValue('password', generateRandomPassword(6));
     };
+
+    const handleExpirationChange = useCallback((value: string) => {
+      setExpirationOption(value);
+      if (value === 'permanent') {
+        form.setValue('expiresAt', null);
+      } else if (value !== 'custom') {
+        const now = new Date();
+        let expiry: Date;
+        switch (value) {
+          case '1d': expiry = addDays(now, 1); break;
+          case '3d': expiry = addDays(now, 3); break;
+          case '1w': expiry = addWeeks(now, 1); break;
+          case '1m': expiry = addMonths(now, 1); break;
+          case '3m': expiry = addMonths(now, 3); break;
+          case '6m': expiry = addMonths(now, 6); break;
+          case '1y': expiry = addYears(now, 1); break;
+          default: return;
+        }
+        form.setValue('expiresAt', expiry.toISOString());
+      } else {
+        // For custom, if currently null, set to tomorrow at current time
+        if (!form.getValues('expiresAt')) {
+          const tomorrow = addDays(new Date(), 1);
+          form.setValue('expiresAt', tomorrow.toISOString());
+        }
+        setPopoverActive(true);
+      }
+    }, [form]);
 
     return (
       <Box padding="400">
@@ -267,35 +310,64 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
           </FormLayout.Group>
 
           <FormLayout.Group>
-            <Box>
-              <Popover
-                active={popoverActive}
-                activator={
-                  <TextField
-                    label="Ngày hết hạn (Tùy chọn)"
-                    autoComplete="off"
-                    prefix={<Icon source={CalendarIcon} />}
-                    value={form.watch('expiresAt') ? format(new Date(form.watch('expiresAt') as any), 'dd/MM/yyyy') : ''}
-                    onFocus={togglePopoverActive}
-                    placeholder="Chọn ngày hết hạn"
-                  />
-                }
-                onClose={togglePopoverActive}
-              >
-                <Box padding="400">
-                  <DatePicker
-                    month={new Date(form.watch('expiresAt') || new Date()).getMonth()}
-                    year={new Date(form.watch('expiresAt') || new Date()).getFullYear()}
-                    onChange={(date) => {
-                      form.setValue('expiresAt', format(date.start, 'yyyy-MM-dd'));
-                      togglePopoverActive();
-                    }}
-                    selected={form.watch('expiresAt') ? new Date(form.watch('expiresAt') as any) : new Date()}
-                  />
-                </Box>
-              </Popover>
-            </Box>
-            <Box />
+            <Select
+              label="Thời hạn sử dụng"
+              options={EXPIRATION_OPTIONS}
+              onChange={handleExpirationChange}
+              value={expirationOption}
+            />
+            
+            {expirationOption === 'custom' && (
+              <Box>
+                <Popover
+                  active={popoverActive}
+                  activator={
+                    <TextField
+                      label="Ngày hết hạn cụ thể"
+                      autoComplete="off"
+                      prefix={<Icon source={CalendarIcon} />}
+                      value={form.watch('expiresAt') ? format(new Date(form.watch('expiresAt') as string), 'dd/MM/yyyy HH:mm') : ''}
+                      onFocus={() => setPopoverActive(true)}
+                      placeholder="Chọn ngày hết hạn"
+                      readOnly
+                    />
+                  }
+                  onClose={() => setPopoverActive(false)}
+                >
+                  <Box padding="400">
+                    <DatePicker
+                      month={viewMonth}
+                      year={viewYear}
+                      onChange={(date) => {
+                        // Keep current time, only change date
+                        const currentDate = new Date(form.getValues('expiresAt') || new Date());
+                        const newDate = new Date(date.start);
+                        newDate.setHours(currentDate.getHours());
+                        newDate.setMinutes(currentDate.getMinutes());
+                        newDate.setSeconds(currentDate.getSeconds());
+                        
+                        form.setValue('expiresAt', newDate.toISOString());
+                        setPopoverActive(false);
+                      }}
+                      onMonthChange={(month, year) => {
+                        setViewMonth(month);
+                        setViewYear(year);
+                      }}
+                      selected={form.watch('expiresAt') ? new Date(form.watch('expiresAt') as string) : addDays(new Date(), 1)}
+                      disableDatesBefore={addDays(new Date(), 1)}
+                    />
+                  </Box>
+                </Popover>
+              </Box>
+            )}
+            {expirationOption !== 'custom' && expirationOption !== 'permanent' && (
+              <Box paddingBlockStart="500">
+                <Text as="p" tone="subdued">
+                  Sẽ hết hạn vào: {form.watch('expiresAt') ? format(new Date(form.watch('expiresAt') as string), 'dd/MM/yyyy HH:mm') : '-'}
+                </Text>
+              </Box>
+            )}
+            {(expirationOption === 'permanent') && <Box />}
           </FormLayout.Group>
         </FormLayout>
       </Box>
