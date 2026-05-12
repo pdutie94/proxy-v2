@@ -33,7 +33,7 @@ export async function GET(req: Request) {
 
 export async function DELETE() {
   const session = await auth();
-  if (!session || session.user.role !== 'ADMIN') {
+  if (!session?.user || (session.user as any).role !== 'ADMIN') {
     return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
   }
 
