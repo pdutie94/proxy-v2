@@ -26,6 +26,8 @@ import {
 import { Server } from '@prisma/client';
 import { useState, useCallback, useMemo } from 'react';
 import { JobProgressModal } from '@/components/jobs/job-progress-modal';
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 interface ServerListProps {
   onEdit: (server: Server) => void;
@@ -33,6 +35,7 @@ interface ServerListProps {
 
 export function ServerList({ onEdit }: ServerListProps) {
   const { servers, isLoading, deleteMutation, setupMutation, resetMutation, syncMutation } = useServers();
+  const queryClient = useQueryClient();
   const { smDown } = useBreakpoints();
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
@@ -337,6 +340,11 @@ export function ServerList({ onEdit }: ServerListProps) {
         jobId={activeJobId}
         open={!!activeJobId}
         onClose={() => setActiveJobId(null)}
+        onCompleted={() => {
+          queryClient.invalidateQueries({ queryKey: ['servers'] });
+          queryClient.invalidateQueries({ queryKey: ['proxies'] });
+          toast.success('Xử lý hoàn tất');
+        }}
       />
 
     </>

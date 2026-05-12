@@ -32,6 +32,7 @@ import { toast } from 'sonner';
 import { useSession } from 'next-auth/react';
 import { copyToClipboard } from '@/utils/clipboard';
 import { getCountdown, getStatusTone } from '@/utils/date';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface ProxyWithServer extends Proxy {
   server: Server;
@@ -53,6 +54,7 @@ export function ProxyList({ onEdit }: ProxyListProps) {
     rotateProxyMutation, 
     checkGoogleMutation 
   } = useProxies();
+  const queryClient = useQueryClient();
   const { data: session } = useSession();
   const userRole = (session?.user as any)?.role || "USER";
   const canDelete = userRole === "ADMIN";
@@ -685,6 +687,11 @@ export function ProxyList({ onEdit }: ProxyListProps) {
         jobId={activeJobId}
         open={!!activeJobId}
         onClose={() => setActiveJobId(null)}
+        onCompleted={() => {
+          queryClient.invalidateQueries({ queryKey: ['proxies'] });
+          queryClient.invalidateQueries({ queryKey: ['servers'] });
+          toast.success('Xử lý hoàn tất');
+        }}
       />
     </Box>
   );
