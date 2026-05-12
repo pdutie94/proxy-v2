@@ -13,6 +13,7 @@ export async function processRotateProxy(job: Job) {
       where: { id: jobId },
       data: { logs }
     });
+    console.log(`[RotateJob:${jobId}] ${message}`);
   };
 
   try {
