@@ -11,7 +11,7 @@ import {
   ExitIcon
 } from "@shopify/polaris-icons";
 import { usePathname } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { signOut, useSession } from "next-auth/react";
 
 interface DashboardContainerProps {
@@ -22,6 +22,11 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
   const pathname = usePathname();
   const { data: session } = useSession();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+  // Close mobile navigation when pathname changes
+  useEffect(() => {
+    setIsMobileOpen(false);
+  }, [pathname]);
 
   const toggleMobileOpen = useCallback(
     () => setIsMobileOpen((open) => !open),

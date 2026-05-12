@@ -17,7 +17,8 @@ import {
   Banner,
   Card,
   InlineStack,
-  Divider
+  Divider,
+  Icon
 } from "@shopify/polaris";
 import { LockIcon, EmailIcon } from "@shopify/polaris-icons";
 
@@ -85,7 +86,7 @@ export function LoginForm() {
                   render={({ field }) => (
                     <TextField
                       label="Địa chỉ Email"
-                      prefix={<EmailIcon width="20" />}
+                      prefix={<Icon source={EmailIcon} />}
                       autoComplete="email"
                       placeholder="admin@example.com"
                       value={field.value}
@@ -100,7 +101,7 @@ export function LoginForm() {
                   render={({ field }) => (
                     <TextField
                       label="Mật khẩu"
-                      prefix={<LockIcon width="20" />}
+                      prefix={<Icon source={LockIcon} />}
                       type="password"
                       autoComplete="current-password"
                       placeholder="••••••••"

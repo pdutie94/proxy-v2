@@ -26,3 +26,26 @@ body {
 	padding-top: 0 !important;
 	margin-top: 0 !important;
 }
+
+/* Fix for Polaris icon and navigation alignment */
+.Polaris-Icon {
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+}
+
+.Polaris-Navigation__Item {
+	align-items: center !important;
+}
+
+.Polaris-Navigation__Text {
+	display: flex !important;
+	align-items: center !important;
+}
+
+/* Ensure icons in inputs are centered */
+.Polaris-TextField__Prefix {
+	display: flex !important;
+	align-items: center !important;
+}
+
