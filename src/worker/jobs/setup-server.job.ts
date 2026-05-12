@@ -177,7 +177,9 @@ while ip6tables -t nat -D POSTROUTING -m mark --mark "\$MARK" -j SNAT 2>/dev/nul
 while ip6tables -t mangle -D OUTPUT -m owner --uid-owner "\$LINUX_UID" -j MARK --set-mark "\$MARK" 2>/dev/null; do :; done
 OLD_IP=\$(grep "^\$PORT|" /root/proxy-ipv6.txt | cut -d'|' -f2)
 [ ! -z "\$OLD_IP" ] && ip -6 addr del \$OLD_IP/64 dev \$IFACE 2>/dev/null
-sed -i "/^\$PORT|/d" /root/proxy-ipv6.txt
+# Xóa sạch dấu vết cũ trong cả 2 file state
+grep -v "^\$PORT|" /root/proxy-ipv6.txt > /root/proxy-ipv6.tmp && mv /root/proxy-ipv6.tmp /root/proxy-ipv6.txt
+grep -v ":\$PORT:" /root/proxies.txt > /root/proxies.tmp && mv /root/proxies.tmp /root/proxies.txt
 
 OUTBOUND="direct://?prefer=ipv6&strategy=ipv6_first"
 

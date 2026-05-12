@@ -40,12 +40,7 @@ export async function PATCH(
     }
 
     // Handle full update
-    const { proxyRepository } = await import('@/modules/proxies/repositories/proxy.repository');
-    const updated = await proxyRepository.update(id, {
-      ...body,
-      expiresAt: body.expiresAt ? new Date(body.expiresAt) : null,
-    });
-
+    const updated = await proxyService.updateProxy(id, body);
     return NextResponse.json({ success: true, data: updated });
   } catch (error: any) {
     return NextResponse.json({ success: false, message: error.message }, { status: 400 });

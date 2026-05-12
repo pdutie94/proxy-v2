@@ -154,10 +154,12 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
 
     const serverOptions = useMemo(() => [
       { label: 'Chọn máy chủ', value: '' },
-      ...servers.map((server) => ({
-        label: `${server.name} (${server.host})`,
-        value: server.id,
-      }))
+      ...servers
+        .filter(server => server.status === 'ONLINE')
+        .map((server) => ({
+          label: `${server.name} (${server.host})`,
+          value: server.id,
+        }))
     ], [servers]);
 
     const userOptions = useMemo(() => [

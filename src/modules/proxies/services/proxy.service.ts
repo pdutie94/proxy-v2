@@ -110,6 +110,42 @@ export class ProxyService {
     return { jobId: job.id };
   }
 
+  async updateProxy(id: string, data: any) {
+    const expiresAt = data.expiresAt ? new Date(data.expiresAt) : undefined;
+    
+    // Đảm bảo không bị lệch múi giờ khi lưu
+    const updated = await prisma.proxy.update({
+      where: { id },
+      data: {
+        ...data,
+        expiresAt: expiresAt !== undefined ? expiresAt : undefined,
+      },
+      include: { server: true }
+    });
+
+    // Sau khi update DB, tạo job để đồng bộ xuống server ngay lập tức
+    const job = await prisma.serverJob.create({
+      data: {
+        type: JobType.PROVISION_PROXY,
+        serverId: updated.serverId,
+        proxyId: updated.id,
+        status: 'WAITING',
+      },
+    });
+
+    try {
+      const { addJob } = await import('@/worker/queue/job.queue');
+      await addJob(JobType.PROVISION_PROXY, {
+        proxyId: updated.id,
+        jobId: job.id,
+      });
+    } catch (error) {
+      console.error('[ProxyService] Lỗi khi tạo job đồng bộ sau khi Edit:', error);
+    }
+
+    return updated;
+  }
+
   async rotateProxy(id: string) {
     const proxy = await proxyRepository.findById(id);
     if (!proxy) throw new Error('Proxy not found');
@@ -327,21 +363,25 @@ export class ProxyService {
 
     const results = await prisma.$transaction(
       proxies.map(proxy => {
-        const currentExpiry = proxy.expiresAt && proxy.expiresAt > new Date() 
-          ? proxy.expiresAt 
-          : new Date();
+        // Luôn sử dụng thời điểm hiện tại chuẩn UTC
+        const now = new Date();
+        
+        // Nếu proxy còn hạn, lấy mốc đó làm gốc, nếu không lấy 'bây giờ'
+        let baseDate = proxy.expiresAt && proxy.expiresAt > now 
+          ? new Date(proxy.expiresAt) 
+          : now;
         
         let newExpiry: Date;
         switch (duration) {
-          case '2min': newExpiry = addMinutes(currentExpiry, 2); break;
-          case '1d': newExpiry = addDays(currentExpiry, 1); break;
-          case '3d': newExpiry = addDays(currentExpiry, 3); break;
-          case '1w': newExpiry = addWeeks(currentExpiry, 1); break;
-          case '1m': newExpiry = addMonths(currentExpiry, 1); break;
-          case '3m': newExpiry = addMonths(currentExpiry, 3); break;
-          case '6m': newExpiry = addMonths(currentExpiry, 6); break;
-          case '1y': newExpiry = addYears(currentExpiry, 1); break;
-          default: newExpiry = addMonths(currentExpiry, 1);
+          case '2min': newExpiry = addMinutes(baseDate, 2); break;
+          case '1d': newExpiry = addDays(baseDate, 1); break;
+          case '3d': newExpiry = addDays(baseDate, 3); break;
+          case '1w': newExpiry = addWeeks(baseDate, 1); break;
+          case '1m': newExpiry = addMonths(baseDate, 1); break;
+          case '3m': newExpiry = addMonths(baseDate, 3); break;
+          case '6m': newExpiry = addMonths(baseDate, 6); break;
+          case '1y': newExpiry = addYears(baseDate, 1); break;
+          default: newExpiry = addMonths(baseDate, 1);
         }
 
         return prisma.proxy.update({

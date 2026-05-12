@@ -52,38 +52,47 @@ export async function processAutomation(job: Job) {
   }
 
   // 1.5. Xử lý Tự động gia hạn (Auto-Renew)
-  const tomorrow = addHours(new Date(), 24);
-  const proxiesToAutoRenew = await prisma.proxy.findMany({
+  // Chỉ lấy những proxy bật tự động gia hạn và còn hiệu lực
+  const activeAutoRenewProxies = await prisma.proxy.findMany({
     where: {
       autoRenew: true,
-      expiresAt: {
-        lte: tomorrow,
-      },
-      status: {
-        not: 'ERROR'
-      }
+      status: { not: 'ERROR' }
     }
   });
 
-  if (proxiesToAutoRenew.length > 0) {
-    console.log(`[Automation] Tìm thấy ${proxiesToAutoRenew.length} proxy cần tự động gia hạn.`);
-    for (const proxy of proxiesToAutoRenew) {
-      const currentExpiry = proxy.expiresAt && proxy.expiresAt > new Date() 
-        ? proxy.expiresAt 
-        : new Date();
+  const now = new Date();
+
+  if (activeAutoRenewProxies.length > 0) {
+    for (const proxy of activeAutoRenewProxies) {
+      if (!proxy.expiresAt) continue;
+
+      const diffMs = proxy.expiresAt.getTime() - now.getTime();
+      const diffMinutes = diffMs / (1000 * 60);
+
+      // Ngưỡng gia hạn: 
+      // - Nếu gói 2 phút: Gia hạn khi còn dưới 1 phút
+      // - Các gói khác: Gia hạn khi còn dưới 60 phút (1 tiếng)
+      const threshold = proxy.renewalDuration === '2min' ? 1 : 60;
+
+      if (diffMinutes > threshold) continue; // Chưa đến lúc gia hạn
+      if (diffMinutes < -1440) continue; // Quá hạn quá lâu (1 ngày) thì không tự gia hạn nữa
+
+      console.log(`[Automation] Đang tự động gia hạn proxy ${proxy.port} (Còn lại: ${Math.round(diffMinutes)} phút)`);
+      
+      const baseDate = proxy.expiresAt > now ? proxy.expiresAt : now;
       
       let newExpiry: Date;
       const duration = proxy.renewalDuration || '1m';
       switch (duration) {
-        case '2min': newExpiry = addMinutes(currentExpiry, 2); break;
-        case '1d': newExpiry = addDays(currentExpiry, 1); break;
-        case '3d': newExpiry = addDays(currentExpiry, 3); break;
-        case '1w': newExpiry = addWeeks(currentExpiry, 1); break;
-        case '1m': newExpiry = addMonths(currentExpiry, 1); break;
-        case '3m': newExpiry = addMonths(currentExpiry, 3); break;
-        case '6m': newExpiry = addMonths(currentExpiry, 6); break;
-        case '1y': newExpiry = addYears(currentExpiry, 1); break;
-        default: newExpiry = addMonths(currentExpiry, 1);
+        case '2min': newExpiry = addMinutes(baseDate, 2); break;
+        case '1d': newExpiry = addDays(baseDate, 1); break;
+        case '3d': newExpiry = addDays(baseDate, 3); break;
+        case '1w': newExpiry = addWeeks(baseDate, 1); break;
+        case '1m': newExpiry = addMonths(baseDate, 1); break;
+        case '3m': newExpiry = addMonths(baseDate, 3); break;
+        case '6m': newExpiry = addMonths(baseDate, 6); break;
+        case '1y': newExpiry = addYears(baseDate, 1); break;
+        default: newExpiry = addMonths(baseDate, 1);
       }
 
       await prisma.proxy.update({

@@ -665,6 +665,7 @@ export function ProxyList({ onEdit }: ProxyListProps) {
             <ChoiceList
               title="Thời gian gia hạn"
               choices={[
+                { label: '2 phút (Test)', value: '2min' },
                 { label: '1 ngày', value: '1d' },
                 { label: '3 ngày', value: '3d' },
                 { label: '1 tuần', value: '1w' },
