@@ -35,9 +35,23 @@ export async function processProvisionProxy(job: Job) {
     await ssh.connect(proxy.server);
 
     // 2. Chạy lệnh tạo proxy trên server
-    // proxy-create <port> <user> <pass> <type>
     const ipType = proxy.ipType.toLowerCase();
-    const cmd = `/usr/local/bin/proxy-create ${proxy.port} ${proxy.username} ${proxy.password} ${ipType}`;
+    let subnetParam = "";
+
+    if (proxy.ipType === 'IPv6') {
+      const subnets = await prisma.serverSubnet.findMany({
+        where: { serverId: proxy.serverId, status: 'ACTIVE' }
+      });
+
+      if (subnets.length > 0) {
+        const randomSubnet = subnets[Math.floor(Math.random() * subnets.length)];
+        subnetParam = `--subnet ${randomSubnet.ipv6Range}`;
+        await addLog(`Chọn ngẫu nhiên subnet: ${randomSubnet.ipv6Range}`);
+      }
+    }
+
+    const protocol = proxy.proxyType.toLowerCase();
+    const cmd = `/usr/local/bin/proxy-create ${proxy.port} ${proxy.username} ${proxy.password} ${ipType} ${protocol} ${subnetParam}`.trim();
     await addLog(`Thực thi: ${cmd}`);
     await ssh.execute(cmd);
 

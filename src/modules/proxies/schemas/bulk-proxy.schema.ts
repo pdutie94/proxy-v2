@@ -7,6 +7,7 @@ export const bulkProxySchema = z.object({
   username: z.string().min(1, 'Tài khoản là bắt buộc'),
   password: z.string().min(1, 'Mật khẩu là bắt buộc'),
   ipType: z.enum(['IPv4', 'IPv6']).default('IPv6'),
+  proxyType: z.enum(['HTTP', 'SOCKS5']).default('SOCKS5'),
   expiresAt: z.string().optional().nullable(),
   autoRenew: z.boolean().default(false),
   renewalDuration: z.string().default('1m'),

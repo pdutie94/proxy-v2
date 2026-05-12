@@ -15,10 +15,18 @@ import {
   BlockStack,
   useBreakpoints
 } from "@shopify/polaris";
-import { DeleteIcon, EditIcon, PlayIcon, RefreshIcon, ResetIcon } from "@shopify/polaris-icons";
+import { 
+  DeleteIcon, 
+  EditIcon, 
+  PlayIcon, 
+  RefreshIcon, 
+  ResetIcon,
+  ViewIcon 
+} from "@shopify/polaris-icons";
 import { Server } from '@prisma/client';
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { JobProgressModal } from '@/components/jobs/job-progress-modal';
+import { SubnetManagementModal } from './subnet-management-modal';
 
 interface ServerListProps {
   onEdit: (server: Server) => void;
@@ -30,6 +38,7 @@ export function ServerList({ onEdit }: ServerListProps) {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
   const [activeConfirmServer, setActiveConfirmServer] = useState<Server | null>(null);
+  const [subnetServer, setSubnetServer] = useState<Server | null>(null);
   const [page, setPage] = useState(1);
   const [sortSelected, setSortSelected] = useState(['id desc']);
   const itemsPerPage = 10;
@@ -188,6 +197,22 @@ export function ServerList({ onEdit }: ServerListProps) {
 
               {smDown ? (
                 <Button 
+                  icon={ViewIcon} 
+                  variant="tertiary" 
+                  onClick={() => setSubnetServer(server)}
+                />
+              ) : (
+                <Tooltip content="Quản lý IPv6 Subnets">
+                  <Button 
+                    icon={ViewIcon} 
+                    variant="tertiary" 
+                    onClick={() => setSubnetServer(server)}
+                  />
+                </Tooltip>
+              )}
+
+              {smDown ? (
+                <Button 
                   icon={EditIcon} 
                   variant="tertiary" 
                   onClick={() => onEdit(server)}
@@ -329,6 +354,13 @@ export function ServerList({ onEdit }: ServerListProps) {
         jobId={activeJobId}
         open={!!activeJobId}
         onClose={() => setActiveJobId(null)}
+      />
+
+      <SubnetManagementModal
+        open={!!subnetServer}
+        onClose={() => setSubnetServer(null)}
+        serverId={subnetServer?.id || null}
+        serverName={subnetServer?.name || null}
       />
     </>
   );

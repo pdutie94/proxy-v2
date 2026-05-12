@@ -46,6 +46,12 @@ enum ProxyIPType {
   IPv6
 }
 
+// Proxy protocols
+enum ProxyType {
+  HTTP
+  SOCKS5
+}
+
 // Job types
 enum JobType {
   SETUP_SERVER
@@ -95,12 +101,26 @@ model Server {
   autoRotate        Boolean        @default(false)
   rotationInterval  Int            @default(0) // Minutes, 0 = disabled
   notes             String?        @db.Text
+  subnets           ServerSubnet[]
   jobs              ServerJob[]
   proxies           Proxy[]
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
 
   @@index([status])
+}
+
+model ServerSubnet {
+  id        String   @id @default(cuid())
+  serverId  String
+  ipv6Range String   // Ví dụ: 2001:db8:a::/64
+  status    String   @default("ACTIVE") // ACTIVE, BLOCKED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  server    Server   @relation(fields: [serverId], references: [id], onDelete: Cascade)
+
+  @@index([serverId])
 }
 
 model Proxy {
@@ -113,6 +133,7 @@ model Proxy {
   ipType        ProxyIPType @default(IPv6)
   ipv6          String?
   status        ProxyStatus @default(CREATING)
+  proxyType     ProxyType   @default(SOCKS5)
   isEnabled     Boolean     @default(true)
   autoRenew     Boolean     @default(false)
   renewalDuration String    @default("1m")

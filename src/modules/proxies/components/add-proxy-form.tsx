@@ -24,7 +24,7 @@ import {
 } from "@shopify/polaris";
 import { CalendarIcon, RefreshIcon, InfoIcon } from "@shopify/polaris-icons";
 import { useCallback, useState, useMemo, forwardRef, useImperativeHandle, useEffect } from 'react';
-import { format, addDays, addWeeks, addMonths, addYears, isBefore, startOfToday } from 'date-fns';
+import { format, addDays, addWeeks, addMonths, addYears } from 'date-fns';
 import { Proxy } from '@prisma/client';
 import { generateRandomString, generateRandomPassword } from '@/utils/random';
 
@@ -68,6 +68,7 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
         username: generateRandomString(6),
         password: generateRandomPassword(6),
         ipType: 'IPv6' as const,
+        proxyType: 'SOCKS5' as const,
         expiresAt: undefined,
         autoRenew: false,
         renewalDuration: '1m',
@@ -96,6 +97,7 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
           username: proxy.username,
           password: proxy.password,
           ipType: proxy.ipType as any,
+          proxyType: proxy.proxyType as any,
           expiresAt: proxy.expiresAt ? format(new Date(proxy.expiresAt), 'yyyy-MM-dd HH:mm') : '',
           autoRenew: proxy.autoRenew || false,
           renewalDuration: proxy.renewalDuration || '1m',
@@ -113,6 +115,7 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
           username: data.username,
           password: data.password,
           ipType: data.ipType,
+          proxyType: data.proxyType,
           expiresAt: data.expiresAt,
           autoRenew: data.autoRenew,
           renewalDuration: data.renewalDuration,
@@ -124,7 +127,6 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
       } else {
         bulkCreateMutation.mutate(data, {
           onSuccess: (response: any) => {
-            // response.data contains the jobId (updated in previous task)
             const jobId = response.data?.jobId;
             if (jobId && onJobCreated) {
               onJobCreated(jobId);
@@ -181,7 +183,6 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
         }
         form.setValue('expiresAt', expiry.toISOString());
       } else {
-        // For custom, if currently null, set to tomorrow at current time
         if (!form.getValues('expiresAt')) {
           const tomorrow = addDays(new Date(), 1);
           form.setValue('expiresAt', tomorrow.toISOString());
@@ -272,7 +273,13 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
                   onChange={field.onChange}
                   error={form.formState.errors.username?.message}
                   suffix={
-                    <Button icon={RefreshIcon} variant="tertiary" onClick={refreshRandom} />
+                    <div 
+                      style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }} 
+                      onClick={refreshRandom}
+                      title="Tạo ngẫu nhiên"
+                    >
+                      <Icon source={RefreshIcon} tone="subdued" />
+                    </div>
                   }
                 />
               )}
@@ -295,6 +302,9 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
                 />
               )}
             />
+          </FormLayout.Group>
+
+          <FormLayout.Group>
             <Controller
               name="ipType"
               control={form.control}
@@ -320,82 +330,107 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
                 </BlockStack>
               )}
             />
+            <Controller
+              name="proxyType"
+              control={form.control}
+              render={({ field }) => (
+                <BlockStack gap="100">
+                  <Label id="proxyType">Giao thức Proxy</Label>
+                  <ButtonGroup variant="segmented">
+                    <Button 
+                      pressed={field.value === 'HTTP'} 
+                      onClick={() => field.onChange('HTTP')}
+                    >
+                      HTTP
+                    </Button>
+                    <Button 
+                      pressed={field.value === 'SOCKS5'} 
+                      onClick={() => field.onChange('SOCKS5')}
+                    >
+                      SOCKS5
+                    </Button>
+                  </ButtonGroup>
+                </BlockStack>
+              )}
+            />
           </FormLayout.Group>
 
-          <FormLayout.Group>
+          <BlockStack gap="300">
             <Select
               label="Thời hạn sử dụng"
               options={EXPIRATION_OPTIONS}
               onChange={handleExpirationChange}
               value={expirationOption}
             />
-            
+
             {expirationOption === 'custom' && (
-              <Box>
-                <Popover
-                  active={popoverActive}
-                  activator={
-                    <TextField
-                      label="Ngày hết hạn cụ thể"
-                      autoComplete="off"
-                      prefix={<Icon source={CalendarIcon} />}
-                      value={form.watch('expiresAt') ? format(new Date(form.watch('expiresAt') as string), 'dd/MM/yyyy HH:mm') : ''}
-                      onFocus={() => setPopoverActive(true)}
-                      placeholder="Chọn ngày hết hạn"
-                      readOnly
-                    />
-                  }
-                  onClose={() => setPopoverActive(false)}
-                >
-                  <Box padding="400">
-                    <DatePicker
-                      month={viewMonth}
-                      year={viewYear}
-                      onChange={(date) => {
-                        // Keep current time, only change date
-                        const currentDate = new Date(form.getValues('expiresAt') || new Date());
-                        const newDate = new Date(date.start);
-                        newDate.setHours(currentDate.getHours());
-                        newDate.setMinutes(currentDate.getMinutes());
-                        newDate.setSeconds(currentDate.getSeconds());
-                        
-                        form.setValue('expiresAt', newDate.toISOString());
-                        setPopoverActive(false);
-                      }}
-                      onMonthChange={(month, year) => {
-                        setViewMonth(month);
-                        setViewYear(year);
-                      }}
-                      selected={form.watch('expiresAt') ? new Date(form.watch('expiresAt') as string) : addDays(new Date(), 1)}
-                      disableDatesBefore={addDays(new Date(), 1)}
-                    />
-                  </Box>
-                </Popover>
+              <Popover
+                active={popoverActive}
+                activator={
+                  <TextField
+                    label="Ngày hết hạn cụ thể"
+                    autoComplete="off"
+                    prefix={<Icon source={CalendarIcon} />}
+                    value={form.watch('expiresAt') ? format(new Date(form.watch('expiresAt') as string), 'dd/MM/yyyy HH:mm') : ''}
+                    onFocus={() => setPopoverActive(true)}
+                    placeholder="Chọn ngày hết hạn"
+                    readOnly
+                  />
+                }
+                onClose={() => setPopoverActive(false)}
+              >
+                <Box padding="400">
+                  <DatePicker
+                    month={viewMonth}
+                    year={viewYear}
+                    onChange={(date) => {
+                      const currentDate = new Date(form.getValues('expiresAt') || new Date());
+                      const newDate = new Date(date.start);
+                      newDate.setHours(currentDate.getHours());
+                      newDate.setMinutes(currentDate.getMinutes());
+                      newDate.setSeconds(currentDate.getSeconds());
+                      
+                      form.setValue('expiresAt', newDate.toISOString());
+                      setPopoverActive(false);
+                    }}
+                    onMonthChange={(month, year) => {
+                      setViewMonth(month);
+                      setViewYear(year);
+                    }}
+                    selected={form.watch('expiresAt') ? new Date(form.watch('expiresAt') as string) : new Date()}
+                    disableDatesBefore={new Date()}
+                  />
+                </Box>
+              </Popover>
+            )}
+            
+            {expirationOption !== 'permanent' && expirationOption !== 'custom' && (
+              <Box paddingInlineStart="100">
+                <InlineStack gap="100" align="start">
+                  <Text as="span" variant="bodySm" tone="subdued">Sẽ hết hạn vào:</Text>
+                  <Text as="span" variant="bodySm" fontWeight="medium">
+                    {form.watch('expiresAt') ? format(new Date(form.watch('expiresAt') as string), 'dd/MM/yyyy HH:mm') : '---'}
+                  </Text>
+                </InlineStack>
               </Box>
             )}
-            {expirationOption !== 'custom' && expirationOption !== 'permanent' && (
-              <Box paddingBlockStart="500">
-                <Text as="p" tone="subdued">
-                  Sẽ hết hạn vào: {form.watch('expiresAt') ? format(new Date(form.watch('expiresAt') as string), 'dd/MM/yyyy HH:mm') : '-'}
-                </Text>
-              </Box>
-            )}
-            {(expirationOption === 'permanent') && <Box />}
-          </FormLayout.Group>
+          </BlockStack>
 
           <FormLayout.Group>
             <Controller
               name="autoRenew"
               control={form.control}
               render={({ field }) => (
-                <div style={{ paddingTop: '10px' }}>
-                  <Checkbox
-                    label="Tự động gia hạn"
-                    helpText="Tự động kéo dài thời gian khi sắp hết hạn (dưới 24h)"
-                    checked={field.value}
-                    onChange={field.onChange}
-                  />
-                </div>
+                    <Checkbox
+                      label="Tự động gia hạn"
+                      helpText={
+                        <Text variant="bodyXs" tone="subdued">
+                          Tự động kéo dài thời gian khi sắp hết hạn (dưới 24h)
+                        </Text>
+                      }
+                      checked={field.value}
+                      onChange={field.onChange}
+                    />
               )}
             />
             {form.watch('autoRenew') && (

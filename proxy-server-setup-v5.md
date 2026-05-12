@@ -93,25 +93,99 @@ touch /root/proxy-ipv6.txt /root/proxies.txt
 cat > /usr/local/bin/proxy-create << 'EOF'
 #!/bin/bash
 IFACE=$(ip route | grep default | awk '{print $5}' | head -n1)
-PREFIX="2001:19f0:4401:903" # HARDCODE PREFIX TẠI ĐÂY
 PORT=$1
 USER=$2
 PASS=$3
+IP_TYPE=$4       # ipv4 / ipv6
+PROTO=$5         # http / socks5 / http+socks5
+SUBNET_ARG=$6    # --subnet (optional)
+SUBNET_VAL=$7    # range (optional)
+
+# Mặc định nếu không truyền
+[ -z "$PROTO" ] && PROTO="http+socks5"
+
+# Xác định PREFIX
+if [[ "$SUBNET_ARG" == "--subnet" && -n "$SUBNET_VAL" ]]; then
+  PREFIX=$(echo $SUBNET_VAL | cut -d/ -f1 | sed 's/::$//')
+else
+  PREFIX="2001:19f0:4401:903" # Thay bằng PREFIX mặc định của bạn
+fi
+
 MARK=$((PORT + 1000))
 LINUX_USER="gost$PORT"
 id "$LINUX_USER" &>/dev/null || useradd -r -M -s /bin/false "$LINUX_USER"
 LINUX_UID=$(id -u "$LINUX_USER")
 
 pkill -f "gost.*:$PORT"
-IPV6="${PREFIX}:$(printf '%x:%x:%x:%x' $RANDOM $RANDOM $RANDOM $RANDOM)"
-ip -6 addr add $IPV6/64 dev $IFACE nodad
-ip6tables -t mangle -A OUTPUT -m owner --uid-owner "$LINUX_UID" -j MARK --set-mark "$MARK"
-ip6tables -t nat -A POSTROUTING -m mark --mark "$MARK" -j SNAT --to-source "$IPV6"
-runuser -u "$LINUX_USER" -- gost -L "socks5://$USER:$PASS@:$PORT?udp=true" -F "direct://?prefer=ipv6&strategy=ipv6_first" >> /var/log/gost.log 2>&1 &
-echo "$PORT|$IPV6|$MARK" >> /root/proxy-ipv6.txt
+
+if [ "$IP_TYPE" == "ipv6" ]; then
+  IPV6="${PREFIX}:$(printf '%x:%x:%x:%x' $RANDOM $RANDOM $RANDOM $RANDOM)"
+  ip -6 addr add $IPV6/64 dev $IFACE nodad
+  ip6tables -t mangle -A OUTPUT -m owner --uid-owner "$LINUX_UID" -j MARK --set-mark "$MARK"
+  ip6tables -t nat -A POSTROUTING -m mark --mark "$MARK" -j SNAT --to-source "$IPV6"
+  OUTBOUND="direct://?prefer=ipv6&strategy=ipv6_first"
+else
+  # IPv4 use server primary IP
+  IPV6="server-ip"
+  OUTBOUND="direct://"
+fi
+
+runuser -u "$LINUX_USER" -- gost -L "${PROTO}://$USER:$PASS@:$PORT?udp=true" -F "$OUTBOUND" >> /var/log/gost.log 2>&1 &
+
+# Lưu thêm PROTO vào file state
+echo "$PORT|$IPV6|$MARK|$PROTO" >> /root/proxy-ipv6.txt
 ip6tables-save > /etc/iptables/rules.v6
 EOF
 chmod +x /usr/local/bin/proxy-create
+```
+
+### 3.2. Đổi IP ngẫu nhiên (`proxy-rotate-one`)
+```bash
+cat > /usr/local/bin/proxy-rotate-one << 'EOF'
+#!/bin/bash
+PORT=$1
+PROTO=$2        # Nhận giao thức để restart
+SUBNET_ARG=$3
+SUBNET_VAL=$4
+IFACE=$(ip route | grep default | awk '{print $5}' | head -n1)
+
+# Lấy thông tin cũ
+OLD_LINE=$(grep "^$PORT|" /root/proxy-ipv6.txt | tail -n 1)
+OLD_IP=$(echo $OLD_LINE | cut -d'|' -f2)
+MARK=$(echo $OLD_LINE | cut -d'|' -f3)
+[ -z "$PROTO" ] && PROTO=$(echo $OLD_LINE | cut -d'|' -f4)
+[ -z "$PROTO" ] && PROTO="http+socks5"
+
+if [[ "$SUBNET_ARG" == "--subnet" && -n "$SUBNET_VAL" ]]; then
+  PREFIX=$(echo $SUBNET_VAL | cut -d/ -f1 | sed 's/::$//')
+else
+  PREFIX=$(echo $OLD_IP | cut -d: -f1-4)
+fi
+
+NEW_IP="${PREFIX}:$(printf '%x:%x:%x:%x' $RANDOM $RANDOM $RANDOM $RANDOM)"
+
+# Xóa IP cũ
+[ -n "$OLD_IP" ] && ip -6 addr del $OLD_IP/64 dev $IFACE 2>/dev/null
+
+# Thêm IP mới
+ip -6 addr add $NEW_IP/64 dev $IFACE nodad
+ip6tables -t nat -R POSTROUTING $(ip6tables -t nat -L POSTROUTING --line-numbers | grep "mark 0x$(printf '%x' $MARK)" | awk '{print $1}') -m mark --mark "$MARK" -j SNAT --to-source "$NEW_IP" 2>/dev/null || \
+ip6tables -t nat -A POSTROUTING -m mark --mark "$MARK" -j SNAT --to-source "$NEW_IP"
+
+# Cập nhật file state
+sed -i "/^$PORT|/d" /root/proxy-ipv6.txt
+echo "$PORT|$NEW_IP|$MARK|$PROTO" >> /root/proxy-ipv6.txt
+
+# Khởi động lại Gost với IP mới và đúng Protocol
+pkill -f "gost.*:$PORT"
+CRE=$(grep ":$PORT:" /root/proxies.txt | head -n1)
+U=$(echo $CRE | cut -d: -f3); P=$(echo $CRE | cut -d: -f4)
+LINUX_USER="gost$PORT"
+runuser -u "$LINUX_USER" -- gost -L "${PROTO}://$U:$P@:$PORT?udp=true" -F "direct://?prefer=ipv6&strategy=ipv6_first" >> /var/log/gost.log 2>&1 &
+
+ip6tables-save > /etc/iptables/rules.v6
+EOF
+chmod +x /usr/local/bin/proxy-rotate-one
 ```
 
 ---
@@ -130,7 +204,8 @@ GW=$(ip -6 route show default | sed -n 's/.*via \([^ ]*\).*/\1/p' | head -n1)
 ip -6 route add default via $GW dev $IFACE 2>/dev/null
 ip -6 route add local ${PREFIX}::/64 dev lo 2>/dev/null
 
-while IFS='|' read -r PORT IP MARK; do
+while IFS='|' read -r PORT IP MARK PROTO; do
+  [ -z "$PROTO" ] && PROTO="http+socks5"
   ip -6 addr add $IP/64 dev $IFACE nodad 2>/dev/null
   LINUX_USER="gost$PORT"
   LINUX_UID=$(id -u "$LINUX_USER")
@@ -138,7 +213,7 @@ while IFS='|' read -r PORT IP MARK; do
   ip6tables -t nat -A POSTROUTING -m mark --mark "$MARK" -j SNAT --to-source "$IP" 2>/dev/null
   CRE=$(grep ":$PORT:" /root/proxies.txt | head -n1)
   U=$(echo $CRE | cut -d: -f3); P=$(echo $CRE | cut -d: -f4)
-  runuser -u "$LINUX_USER" -- gost -L "socks5://$U:$P@:$PORT?udp=true" -F "direct://?prefer=ipv6&strategy=ipv6_first" >> /var/log/gost.log 2>&1 &
+  runuser -u "$LINUX_USER" -- gost -L "${PROTO}://$U:$P@:$PORT?udp=true" -F "direct://?prefer=ipv6&strategy=ipv6_first" >> /var/log/gost.log 2>&1 &
 done < /root/proxy-ipv6.txt
 EOF
 chmod +x /usr/local/bin/proxy-restore
