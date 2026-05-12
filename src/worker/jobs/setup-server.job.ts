@@ -155,6 +155,7 @@ EOF`,
     
     const proxyCreateScript = `cat > /usr/local/bin/proxy-create << 'EOF'
 #!/bin/bash
+SERVER_IP="${server.host}"
 PORT=\$1
 USER=\$2
 PASS=\$3
