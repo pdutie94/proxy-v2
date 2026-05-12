@@ -4,7 +4,7 @@ import { serverService } from '@/modules/servers/services/server.service';
 
 export async function POST(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth();
   if (!session) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });

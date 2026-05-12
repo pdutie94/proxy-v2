@@ -6,7 +6,7 @@ import { JobType } from '@prisma/client';
 
 export async function POST(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth();
   if (!session || (session.user as any).role !== 'ADMIN') {

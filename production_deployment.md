@@ -46,7 +46,7 @@ cd /var/www
 # Thay thế URL bằng repository của bạn
 git clone https://github.com/your-repo/proxy-v2.git
 cd proxy-v2
-npm install
+npm install --legacy-peer-deps
 ```
 
 ## 6. Cấu hình Biến môi trường (.env)
