@@ -165,24 +165,17 @@ cd /var/www/proxy-v2
 git pull
 ```
 
-### Bước 2: Cài đặt thư viện & Cập nhật Database
+### Bước 2: Chạy Script cập nhật tự động
 ```bash
-# Cài đặt thư viện mới (nếu có)
-npm install --legacy-peer-deps
+# Cấp quyền thực thi (chỉ cần chạy lần đầu)
+chmod +x update.sh
 
-# Cập nhật Prisma Client & Database
-npx prisma generate
-npx prisma db push
+# Chạy script cập nhật
+./update.sh
 ```
 
-### Bước 3: Build & Restart
-```bash
-# Build lại ứng dụng
-npm run build
-
-# Khởi động lại dịch vụ qua PM2
-pm2 restart all
-```
+> [!NOTE]
+> Script này sẽ tự động: `npm install` -> `prisma generate` -> `prisma db push` -> `npm build` -> `pm2 restart`.
 
 > [!TIP]
 > Nếu bạn thay đổi cấu trúc file trạng thái trên các Proxy Node (như file `/root/proxy-ipv6.txt`), hãy nhớ cập nhật lại các Script điều khiển trên các Node đó theo hướng dẫn trong `proxy-server-setup-v5.md`.
