@@ -1,7 +1,6 @@
 import { Job } from 'bullmq';
 import prisma from '../../lib/prisma';
 import { SSHService } from '../ssh/ssh.service';
-import { JobStatus, ServerStatus } from '@prisma/client';
 
 export async function processSetupServer(job: Job) {
   const { serverId, jobId } = job.data;
@@ -336,8 +335,9 @@ EOF`;
     });
 
     await addLog('Hệ thống Super-V5.0.0 (Deep Clean) đã sẵn sàng.');
-  } catch (error: any) {
-    await addLog(`LỖI: ${error.message}`);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    await addLog(`LỖI: ${message}`);
     await prisma.server.update({
       where: { id: serverId },
       data: { status: 'ERROR' }

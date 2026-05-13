@@ -28,7 +28,7 @@ export const AddUserForm = forwardRef<AddUserFormRef, AddUserFormProps>(
     const { createMutation, updateMutation } = useUsers();
     
     const { control, handleSubmit, formState: { errors }, reset } = useForm<UserSchema>({
-      resolver: zodResolver(userSchema) as any,
+      resolver: zodResolver(userSchema),
       defaultValues: {
         email: '',
         password: '',

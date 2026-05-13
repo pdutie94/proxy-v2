@@ -21,7 +21,7 @@ export async function startWorker() {
   }
 
   // Log để debug cấu hình
-  const redisOptions = (redis as any).options;
+  const redisOptions = (redis as unknown as { options: { host?: string; port?: number } }).options;
   console.log(`[Worker] Đang kết nối tới Redis: ${redisOptions?.host || 'localhost'}:${redisOptions?.port || '6379'}`);
   console.log(`[Worker] Khởi tạo worker lắng nghe hàng đợi: ${QUEUE_NAME}`);
 
@@ -77,8 +77,9 @@ export async function startWorker() {
           default:
             console.warn(`[Worker] Không tìm thấy trình xử lý cho loại job: ${job.name}`);
         }
-      } catch (err: any) {
-        console.error(`[Worker] Lỗi khi xử lý job ${job.id}:`, err.message);
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.error(`[Worker] Lỗi khi xử lý job ${job.id}:`, message);
         throw err; // Để BullMQ xử lý retry
       }
     },

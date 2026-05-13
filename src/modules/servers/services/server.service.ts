@@ -1,7 +1,7 @@
 import { serverRepository } from '../repositories/server.repository';
 import { ServerSchema } from '../schemas/server.schema';
 import { encrypt } from '@/utils/crypto';
-import { ServerAuthType, JobType } from '@prisma/client';
+import { Prisma, JobType } from '@prisma/client';
 import prisma from '@/lib/prisma';
 
 export class ServerService {
@@ -34,7 +34,7 @@ export class ServerService {
 
   async updateServer(id: string, data: Partial<ServerSchema>) {
     const { password, ...rest } = data;
-    const updateData: any = { ...rest };
+    const updateData: Prisma.ServerUpdateInput = { ...rest };
     
     if (password) {
       updateData.passwordEncrypted = encrypt(password);
@@ -49,7 +49,7 @@ export class ServerService {
 
     const job = await prisma.serverJob.create({
       data: {
-        type: 'SYNC_SERVER_PORT' as any,
+        type: JobType.SYNC_SERVER_PORT,
         serverId: id,
         status: 'WAITING',
       },
@@ -57,7 +57,7 @@ export class ServerService {
 
     // Sử dụng dynamic import để tránh lỗi bundle BullMQ
     const { addJob } = await import('@/worker/queue/job.queue');
-    await addJob('SYNC_SERVER_PORT' as any, {
+    await addJob(JobType.SYNC_SERVER_PORT, {
       serverId: id,
       jobId: job.id,
     });

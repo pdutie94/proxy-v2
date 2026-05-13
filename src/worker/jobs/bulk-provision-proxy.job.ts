@@ -58,8 +58,9 @@ export async function processBulkProvisionProxy(job: Job) {
           where: { id: proxy.id },
           data: { status: 'ACTIVE', ipv6 }
         });
-      } catch (err: any) {
-        await addLog(`[Lỗi] Không thể tạo proxy ID ${proxyId}: ${err.message}`);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        await addLog(`[Lỗi] Không thể tạo proxy ID ${proxyId}: ${msg}`);
       }
     }
 
@@ -80,8 +81,9 @@ export async function processBulkProvisionProxy(job: Job) {
     });
 
     await addLog(`Hoàn tất khởi tạo hàng loạt.`);
-  } catch (error: any) {
-    await addLog(`LỖI NGHIÊM TRỌNG: ${error.message}`);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    await addLog(`LỖI NGHIÊM TRỌNG: ${message}`);
     await prisma.serverJob.update({
       where: { id: jobId },
       data: { status: 'FAILED', finishedAt: new Date() }

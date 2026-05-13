@@ -30,8 +30,8 @@ export function useLogs(limit = 10, serverId?: string) {
       queryClient.invalidateQueries({ queryKey: ['logs'] });
       toast.success('Đã dọn dẹp toàn bộ nhật ký');
     },
-    onError: (error: any) => {
-      toast.error(error.message);
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
     }
   });
 

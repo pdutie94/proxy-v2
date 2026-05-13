@@ -16,7 +16,7 @@ export const jobQueue = new Queue(JOB_QUEUE_NAME, {
   },
 });
 
-export const addJob = async (type: JobType, data: any) => {
+export const addJob = async (type: JobType, data: Record<string, unknown>) => {
   console.log(`[Queue] Đang đẩy job mới: ${type}`, data);
   try {
     const job = await jobQueue.add(type, data);

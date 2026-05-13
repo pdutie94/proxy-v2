@@ -17,7 +17,7 @@ import {
 import { DeleteIcon, EditIcon } from "@shopify/polaris-icons";
 import { format } from "date-fns";
 import { User } from '@prisma/client';
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 
 interface UserListProps {
   onEdit: (user: User) => void;
@@ -29,35 +29,11 @@ export function UserList({ onEdit }: UserListProps) {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   
   const [page, setPage] = useState(1);
-  const [sortSelected, setSortSelected] = useState(['createdAt desc']);
   const itemsPerPage = 20;
 
-  const handleSort = useCallback((headingIndex: number, direction: 'ascending' | 'descending') => {
-    const keys = ['email', 'role', 'createdAt'];
-    const key = keys[headingIndex];
-    if (key) {
-      setSortSelected([`${key} ${direction === 'ascending' ? 'asc' : 'desc'}`]);
-    }
-  }, []);
-
-  const sortedUsers = useMemo(() => {
-    let result = [...users];
-    if (sortSelected.length > 0) {
-      const [key, direction] = sortSelected[0].split(' ');
-      result.sort((a, b) => {
-        const valA = a[key as keyof User]?.toString().toLowerCase() || '';
-        const valB = b[key as keyof User]?.toString().toLowerCase() || '';
-        if (valA < valB) return direction === 'asc' ? -1 : 1;
-        if (valA > valB) return direction === 'asc' ? 1 : -1;
-        return 0;
-      });
-    }
-    return result;
-  }, [users, sortSelected]);
-
-  const totalPages = Math.ceil(sortedUsers.length / itemsPerPage);
+  const totalPages = Math.ceil(users.length / itemsPerPage);
   const startIndex = (page - 1) * itemsPerPage;
-  const paginatedUsers = sortedUsers.slice(startIndex, startIndex + itemsPerPage);
+  const paginatedUsers = users.slice(startIndex, startIndex + itemsPerPage);
 
   const handleDelete = useCallback(() => {
     if (deleteId) {
@@ -151,7 +127,7 @@ export function UserList({ onEdit }: UserListProps) {
       <Card padding="0">
         <IndexTable
           resourceName={resourceName}
-          itemCount={sortedUsers.length}
+          itemCount={users.length}
           headings={[
             { title: 'Email', id: 'email' },
             { title: 'Vai trò', id: 'role' },
@@ -159,7 +135,6 @@ export function UserList({ onEdit }: UserListProps) {
             { title: 'Thao tác', alignment: 'end' },
           ]}
           selectable={false}
-          sortable={[true, true, true, false]}
           pagination={{
             hasNext: page < totalPages,
             hasPrevious: page > 1,

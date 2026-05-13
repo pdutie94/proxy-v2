@@ -11,7 +11,6 @@ import {
   Box,
   Checkbox,
   Text,
-  Divider,
   Tooltip,
   Icon,
   InlineStack
@@ -34,7 +33,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
     const { createMutation, updateMutation } = useServers();
     
     const { control, handleSubmit, formState: { errors }, reset, watch } = useForm<ServerSchema>({
-      resolver: zodResolver(serverSchema) as any,
+      resolver: zodResolver(serverSchema),
       defaultValues: {
         name: '',
         host: '',

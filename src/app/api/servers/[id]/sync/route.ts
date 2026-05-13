@@ -18,8 +18,9 @@ export async function POST(
       message: 'Đã bắt đầu đồng bộ cổng từ máy chủ',
       data: { jobId: job.id }
     });
-  } catch (error: any) {
-    console.error(`[API] Sync error: ${error.message}`);
-    return NextResponse.json({ success: false, message: error.message }, { status: 400 });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Có lỗi xảy ra';
+    console.error(`[API] Sync error: ${message}`);
+    return NextResponse.json({ success: false, message }, { status: 400 });
   }
 }

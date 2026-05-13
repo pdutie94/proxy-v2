@@ -22,13 +22,13 @@ export class SSHService {
     if (server.passwordEncrypted) {
       try {
         password = decrypt(server.passwordEncrypted);
-      } catch (err: any) {
+      } catch {
         throw new Error('Không thể giải mã mật khẩu server. Kiểm tra ENCRYPTION_KEY.');
       }
     }
 
     const maxAttempts = 3;
-    let lastError: any;
+    let lastError: Error | null = null;
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
@@ -45,7 +45,7 @@ export class SSHService {
             conn.removeListener('error', onError);
             resolve();
           };
-          const onError = (err: any) => {
+          const onError = (err: Error) => {
             conn.removeListener('ready', onReady);
             reject(err);
           };
@@ -65,8 +65,8 @@ export class SSHService {
         });
         
         return; // Kết nối thành công
-      } catch (err: any) {
-        lastError = err;
+      } catch (err: unknown) {
+        lastError = err instanceof Error ? err : new Error(String(err));
         this.client.end(); // Đảm bảo đóng socket trước khi thử lại
         this.client = new Client(); // Tạo client mới cho lần thử sau
         if (attempt === maxAttempts) break;

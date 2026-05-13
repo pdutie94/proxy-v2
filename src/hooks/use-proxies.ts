@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Proxy } from '@prisma/client';
+import { Proxy, Server } from '@prisma/client';
 import { toast } from 'sonner';
 
 export function useProxies() {
@@ -11,17 +11,17 @@ export function useProxies() {
       const res = await fetch('/api/proxies');
       const data = await res.json();
       if (!data.success) throw new Error(data.message);
-      return data.data as (Proxy & { server: any })[];
+      return data.data as (Proxy & { server: Server })[];
     },
     refetchInterval: (query) => {
-      const proxies = query.state.data as any[];
+      const proxies = query.state.data as (Proxy & { server: Server })[] | undefined;
       const hasProcessing = proxies?.some(p => p.status === 'CREATING');
       return hasProcessing ? 3000 : false;
     }
   });
 
   const createMutation = useMutation({
-    mutationFn: async (newData: any) => {
+    mutationFn: async (newData: unknown) => {
       const res = await fetch('/api/proxies', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -35,13 +35,13 @@ export function useProxies() {
       queryClient.invalidateQueries({ queryKey: ['proxies'] });
       toast.success('Đã tạo Proxy thành công');
     },
-    onError: (error: any) => {
-      toast.error(error.message);
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
     },
   });
 
   const bulkCreateMutation = useMutation({
-    mutationFn: async (bulkData: any) => {
+    mutationFn: async (bulkData: unknown) => {
       const res = await fetch('/api/proxies/bulk', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -51,17 +51,17 @@ export function useProxies() {
       if (!data.success) throw new Error(data.message);
       return data.data;
     },
-    onSuccess: (data: any) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['proxies'] });
       toast.success('Đã bắt đầu tạo hàng loạt Proxy');
     },
-    onError: (error: any) => {
-      toast.error(error.message);
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+    mutationFn: async ({ id, data }: { id: string; data: unknown }) => {
       const res = await fetch(`/api/proxies/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -75,8 +75,8 @@ export function useProxies() {
       queryClient.invalidateQueries({ queryKey: ['proxies'] });
       toast.success('Đã cập nhật Proxy');
     },
-    onError: (error: any) => {
-      toast.error(error.message);
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
     },
   });
 
@@ -92,8 +92,8 @@ export function useProxies() {
       queryClient.invalidateQueries({ queryKey: ['proxies'] });
       toast.success('Đã xóa Proxy');
     },
-    onError: (error: any) => {
-      toast.error(error.message);
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
     },
   });
 
@@ -110,8 +110,8 @@ export function useProxies() {
       queryClient.invalidateQueries({ queryKey: ['proxies'] });
       toast.success('Đã bắt đầu xoay IPv6');
     },
-    onError: (error: any) => {
-      toast.error(error.message);
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
     },
   });
 
@@ -127,8 +127,8 @@ export function useProxies() {
     onSuccess: () => {
       toast.success('Đã bắt đầu kiểm tra Google (Xem kết quả trong Logs)');
     },
-    onError: (error: any) => {
-      toast.error(error.message);
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
     },
   });
 
@@ -143,12 +143,12 @@ export function useProxies() {
       if (!data.success) throw new Error(data.message);
       return data;
     },
-    onSuccess: (data) => {
+    onSuccess: (data: { message?: string }) => {
       queryClient.invalidateQueries({ queryKey: ['proxies'] });
-      toast.success(data.message);
+      toast.success(data.message || 'Đã xóa các Proxy đã chọn');
     },
-    onError: (error: any) => {
-      toast.error(error.message);
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
     },
   });
 
@@ -163,32 +163,32 @@ export function useProxies() {
       if (!data.success) throw new Error(data.message);
       return data;
     },
-    onSuccess: (data: any) => {
+    onSuccess: (data: { message?: string }) => {
       queryClient.invalidateQueries({ queryKey: ['proxies'] });
       toast.success(data.message);
     },
-    onError: (error: any) => {
-      toast.error(error.message);
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
     },
   });
 
   const bulkUpdateAutoRenewMutation = useMutation({
-    mutationFn: async ({ ids, autoRenew }: { ids: string[]; autoRenew: boolean }) => {
+    mutationFn: async ({ ids, autoRenew, renewalDuration }: { ids: string[]; autoRenew: boolean; renewalDuration?: string }) => {
       const res = await fetch('/api/proxies/bulk-update-auto-renew', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids, autoRenew }),
+        body: JSON.stringify({ ids, autoRenew, renewalDuration }),
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.message);
       return data;
     },
-    onSuccess: (data: any) => {
+    onSuccess: (data: { message?: string }) => {
       queryClient.invalidateQueries({ queryKey: ['proxies'] });
       toast.success(data.message);
     },
-    onError: (error: any) => {
-      toast.error(error.message);
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
     },
   });
 

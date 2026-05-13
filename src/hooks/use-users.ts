@@ -16,7 +16,7 @@ export function useUsers() {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (newData: any) => {
+    mutationFn: async (newData: unknown) => {
       const res = await fetch('/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -30,13 +30,13 @@ export function useUsers() {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       toast.success('Đã thêm người dùng thành công');
     },
-    onError: (error: any) => {
-      toast.error(error.message);
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+    mutationFn: async ({ id, data }: { id: string; data: unknown }) => {
       const res = await fetch(`/api/users/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -50,8 +50,8 @@ export function useUsers() {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       toast.success('Đã cập nhật người dùng');
     },
-    onError: (error: any) => {
-      toast.error(error.message);
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
     },
   });
 
@@ -67,8 +67,8 @@ export function useUsers() {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       toast.success('Đã xóa người dùng');
     },
-    onError: (error: any) => {
-      toast.error(error.message);
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
     },
   });
 

@@ -22,7 +22,6 @@ import {
   ShieldCheckMarkIcon, 
   PersonIcon,
   ViewIcon,
-  DesktopIcon,
   DatabaseIcon,
   CalendarTimeIcon
 } from "@shopify/polaris-icons";
@@ -35,6 +34,12 @@ import { IncomingIcon } from "@shopify/polaris-icons";
 import { formatDistanceToNow } from "date-fns";
 import { vi } from "date-fns/locale";
 import { useState, useMemo } from "react";
+import { ServerJob, Server, Proxy } from "@prisma/client";
+
+type LogEntry = ServerJob & {
+  server?: Server | null;
+  proxy?: Proxy | null;
+};
 
 export default function DashboardPage() {
   const { servers } = useServers();
@@ -42,7 +47,7 @@ export default function DashboardPage() {
   const { users } = useUsers();
   const { logs } = useLogs(8);
   const { data: healthData, isLoading: isHealthLoading } = useSystemHealth();
-  const [selectedLog, setSelectedLog] = useState<any>(null);
+  const [selectedLog, setSelectedLog] = useState<LogEntry | null>(null);
 
   const activeProxies = useMemo(() => proxies.filter(p => p.status === 'ACTIVE').length, [proxies]);
   const onlineServers = useMemo(() => servers.filter(s => s.status === 'ONLINE').length, [servers]);
@@ -74,7 +79,7 @@ export default function DashboardPage() {
     }
   ];
 
-  const getJobTitle = (job: any) => {
+  const getJobTitle = (job: LogEntry) => {
     switch (job.type) {
       case 'SETUP_SERVER': return `Thiết lập server ${job.server?.name || 'Unknown'}`;
       case 'PROVISION_PROXY': return `Tạo Proxy cổng ${job.proxy?.port || ''}`;
@@ -140,7 +145,7 @@ export default function DashboardPage() {
                   ]}
                   selectable={false}
                 >
-                  {logs.map((job: any, index: number) => (
+                  {logs.map((job: LogEntry, index: number) => (
                     <IndexTable.Row id={job.id} key={job.id} position={index}>
                       <IndexTable.Cell>
                         <Text as="span" variant="bodySm" tone="subdued">

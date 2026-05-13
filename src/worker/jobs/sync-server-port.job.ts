@@ -54,10 +54,11 @@ export async function processSyncServerPort(job: Job) {
       }
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
     await prisma.serverJob.update({
       where: { id: jobId },
-      data: { status: 'FAILED', finishedAt: new Date(), logs: `Lỗi đồng bộ: ${error.message}` }
+      data: { status: 'FAILED', finishedAt: new Date(), logs: `Lỗi đồng bộ: ${message}` }
     });
     throw error;
   } finally {

@@ -2,16 +2,17 @@ import { Job } from 'bullmq';
 import prisma from '../../lib/prisma';
 import { addJob } from '../queue/job.queue';
 import { JobType } from '@prisma/client';
-import { addHours, addMinutes, addDays, addWeeks, addMonths, addYears } from 'date-fns';
+import { addMinutes, addDays, addWeeks, addMonths, addYears } from 'date-fns';
 
-export async function processAutomation(job: Job) {
-  console.log('[Automation] Bắt đầu chạy chu kỳ tự động hóa...');
+export async function processAutomation(_job: Job) {
+  const now = new Date();
+  console.log(`[Automation] Bắt đầu chu kỳ quét (Job: ${_job.id}) lúc: ${now.toISOString()}`);
 
   // 1. Xử lý Proxy hết hạn
   const expiredProxies = await prisma.proxy.findMany({
     where: {
       expiresAt: {
-        lte: new Date(),
+        lte: now,
       },
       status: {
         not: 'EXPIRED'
@@ -59,8 +60,6 @@ export async function processAutomation(job: Job) {
       status: { not: 'ERROR' }
     }
   });
-
-  const now = new Date();
 
   if (activeAutoRenewProxies.length > 0) {
     for (const proxy of activeAutoRenewProxies) {
@@ -145,7 +144,6 @@ export async function processAutomation(job: Job) {
       orderBy: { lastRotatedAt: 'desc' }
     });
 
-    const now = new Date();
     const intervalMs = server.rotationInterval * 60 * 1000;
     
     // Nếu chưa từng xoay hoặc đã quá interval

@@ -3,7 +3,7 @@ import prisma from '../../lib/prisma';
 import { SSHService } from '../ssh/ssh.service';
 
 export async function processProvisionProxy(job: Job) {
-  const { proxyId, serverId, jobId } = job.data;
+  const { proxyId, jobId } = job.data;
   const ssh = new SSHService();
   let logs = '';
 
@@ -84,8 +84,9 @@ export async function processProvisionProxy(job: Job) {
     });
 
     await addLog(`Proxy đã sẵn sàng hoạt động.`);
-  } catch (error: any) {
-    await addLog(`LỖI: ${error.message}`);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    await addLog(`LỖI: ${message}`);
     await prisma.proxy.update({
       where: { id: proxyId },
       data: { status: 'ERROR' }

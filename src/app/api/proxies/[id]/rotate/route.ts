@@ -17,7 +17,10 @@ export async function POST(
       message: 'Đã bắt đầu xoay IPv6',
       data: { jobId: result.jobId }
     });
-  } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 400 });
+  } catch (error) {
+    return NextResponse.json({ 
+      success: false, 
+      message: error instanceof Error ? error.message : 'Có lỗi xảy ra' 
+    }, { status: 400 });
   }
 }

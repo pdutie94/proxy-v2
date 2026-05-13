@@ -51,7 +51,7 @@ export function LoginForm() {
         router.push('/dashboard');
         router.refresh();
       }
-    } catch (err) {
+    } catch {
       setError('Đã xảy ra lỗi khi đăng nhập');
     } finally {
       setLoading(false);

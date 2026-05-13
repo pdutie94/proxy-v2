@@ -34,8 +34,11 @@ export async function GET(
       success: true,
       data: job
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Get job error:', error);
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    return NextResponse.json({ 
+      success: false, 
+      message: error instanceof Error ? error.message : 'Internal Server Error' 
+    }, { status: 500 });
   }
 }

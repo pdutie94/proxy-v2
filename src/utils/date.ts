@@ -1,5 +1,4 @@
-import { differenceInSeconds, formatDistanceToNow, isPast } from 'date-fns';
-import { vi } from 'date-fns/locale';
+import { differenceInSeconds, isPast } from 'date-fns';
 
 export function getCountdown(date: Date | string | null): string {
   if (!date) return 'Vĩnh viễn';

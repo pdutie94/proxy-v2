@@ -20,11 +20,10 @@ import {
   EditIcon, 
   PlayIcon, 
   RefreshIcon, 
-  ResetIcon,
-  ViewIcon 
+  ResetIcon 
 } from "@shopify/polaris-icons";
 import { Server } from '@prisma/client';
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback } from 'react';
 import { JobProgressModal } from '@/components/jobs/job-progress-modal';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -41,34 +40,8 @@ export function ServerList({ onEdit }: ServerListProps) {
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
   const [activeConfirmServer, setActiveConfirmServer] = useState<Server | null>(null);
   const [page, setPage] = useState(1);
-  const [sortSelected, setSortSelected] = useState(['id desc']);
   const itemsPerPage = 10;
 
-  const handleSort = useCallback((headingIndex: number, direction: 'ascending' | 'descending') => {
-    const keys = ['name', 'host'];
-    const key = keys[headingIndex];
-    if (key) {
-      setSortSelected([`${key} ${direction === 'ascending' ? 'asc' : 'desc'}`]);
-    }
-  }, []);
-
-  const sortedServers = useMemo(() => {
-    let result = [...servers];
-    if (sortSelected.length > 0) {
-      const [key, direction] = sortSelected[0].split(' ');
-      result.sort((a, b) => {
-        const valA = a[key as keyof Server]?.toString().toLowerCase() || '';
-        const valB = b[key as keyof Server]?.toString().toLowerCase() || '';
-        if (valA < valB) return direction === 'asc' ? -1 : 1;
-        if (valA > valB) return direction === 'asc' ? 1 : -1;
-        return 0;
-      });
-    } else {
-      // Default sort by id desc
-      result.sort((a, b) => (b.id > a.id ? 1 : -1));
-    }
-    return result;
-  }, [servers, sortSelected]);
 
   const handleDelete = useCallback(() => {
     if (deleteId) {
@@ -93,9 +66,9 @@ export function ServerList({ onEdit }: ServerListProps) {
     plural: 'máy chủ',
   };
 
-  const totalPages = Math.ceil(sortedServers.length / itemsPerPage);
+  const totalPages = Math.ceil(servers.length / itemsPerPage);
   const startIndex = (page - 1) * itemsPerPage;
-  const paginatedServers = sortedServers.slice(startIndex, startIndex + itemsPerPage);
+  const paginatedServers = servers.slice(startIndex, startIndex + itemsPerPage);
 
   const rowMarkup = paginatedServers.map(
     (server, index) => (
@@ -108,14 +81,14 @@ export function ServerList({ onEdit }: ServerListProps) {
         <IndexTable.Cell>{server.host}</IndexTable.Cell>
         <IndexTable.Cell>
           <Badge tone={
-            (server.status as any) === 'ONLINE' ? 'success' : 
-            (server.status as any) === 'SETTING_UP' ? 'attention' : 
-            (server.status as any) === 'PENDING' ? 'attention' : 
+            server.status === 'ONLINE' ? 'success' : 
+            server.status === 'SETTING_UP' ? 'attention' : 
+            server.status === 'PENDING' ? 'attention' : 
             'critical'
           }>
-            {(server.status as any) === 'ONLINE' ? 'Trực tuyến' : 
-             (server.status as any) === 'SETTING_UP' ? 'Đang cài đặt' : 
-             (server.status as any) === 'PENDING' ? 'Đang chờ' : 
+            {server.status === 'ONLINE' ? 'Trực tuyến' : 
+             server.status === 'SETTING_UP' ? 'Đang cài đặt' : 
+             server.status === 'PENDING' ? 'Đang chờ' : 
              'Lỗi'}
           </Badge>
         </IndexTable.Cell>
@@ -134,7 +107,7 @@ export function ServerList({ onEdit }: ServerListProps) {
                   variant="tertiary" 
                   onClick={() => setActiveConfirmServer(server)}
                   loading={setupMutation.isPending && setupMutation.variables === server.id}
-                  disabled={(server.status as any) === 'SETTING_UP'}
+                  disabled={server.status === 'SETTING_UP'}
                 />
               ) : (
                 <Tooltip content="Thiết lập Server (Cài đặt Gost/IP)">
@@ -143,7 +116,7 @@ export function ServerList({ onEdit }: ServerListProps) {
                     variant="tertiary" 
                     onClick={() => setActiveConfirmServer(server)}
                     loading={setupMutation.isPending && setupMutation.variables === server.id}
-                    disabled={(server.status as any) === 'SETTING_UP'}
+                    disabled={server.status === 'SETTING_UP'}
                   />
                 </Tooltip>
               )}
@@ -157,7 +130,7 @@ export function ServerList({ onEdit }: ServerListProps) {
                     onSuccess: (job) => setActiveJobId(job.jobId)
                   })}
                   loading={resetMutation.isPending && resetMutation.variables === server.id}
-                  disabled={(server.status as any) === 'SETTING_UP'}
+                  disabled={server.status === 'SETTING_UP'}
                 />
               ) : (
                 <Tooltip content="Reset Server (Xóa hết Proxy)">
@@ -169,7 +142,7 @@ export function ServerList({ onEdit }: ServerListProps) {
                       onSuccess: (job) => setActiveJobId(job.jobId)
                     })}
                     loading={resetMutation.isPending && resetMutation.variables === server.id}
-                    disabled={(server.status as any) === 'SETTING_UP'}
+                    disabled={server.status === 'SETTING_UP'}
                   />
                 </Tooltip>
               )}
@@ -243,7 +216,7 @@ export function ServerList({ onEdit }: ServerListProps) {
       <Card padding="0">
         <IndexTable
           resourceName={resourceName}
-          itemCount={sortedServers.length}
+          itemCount={servers.length}
           headings={[
             { title: 'Tên Máy chủ', id: 'name' },
             { title: 'Địa chỉ IP', id: 'host' },
@@ -253,7 +226,6 @@ export function ServerList({ onEdit }: ServerListProps) {
             { title: 'Thao tác', alignment: 'end' },
           ]}
           selectable={false}
-          sortable={[true, true, false, false, false, false]}
           pagination={{
             hasNext: page < totalPages,
             hasPrevious: page > 1,
@@ -337,6 +309,7 @@ export function ServerList({ onEdit }: ServerListProps) {
       </Modal>
 
       <JobProgressModal 
+        key={activeJobId || 'none'}
         jobId={activeJobId}
         open={!!activeJobId}
         onClose={() => setActiveJobId(null)}

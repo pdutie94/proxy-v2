@@ -3,13 +3,14 @@ import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
 import { addJob } from '@/worker/queue/job.queue';
 import { JobType } from '@prisma/client';
+import { AuthUser } from '@/types';
 
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth();
-  if (!session || (session.user as any).role !== 'ADMIN') {
+  if (!session || (session.user as AuthUser).role !== 'ADMIN') {
     return NextResponse.json({ success: false, message: 'Forbidden' }, { status: 403 });
   }
 
@@ -47,7 +48,10 @@ export async function POST(
       message: 'Setup job enqueued',
       data: { jobId: job.id }
     });
-  } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 400 });
+  } catch (error) {
+    return NextResponse.json({ 
+      success: false, 
+      message: error instanceof Error ? error.message : 'Có lỗi xảy ra' 
+    }, { status: 400 });
   }
 }

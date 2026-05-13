@@ -66,8 +66,9 @@ export async function processRotateProxy(job: Job) {
     });
 
     await addLog('Đổi IP Proxy thành công.');
-  } catch (error: any) {
-    await addLog(`LỖI: ${error.message}`);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    await addLog(`LỖI: ${message}`);
     await prisma.serverJob.update({
       where: { id: jobId },
       data: { status: 'FAILED', finishedAt: new Date() }

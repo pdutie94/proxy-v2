@@ -11,8 +11,8 @@ export class ProxyService {
   }
 
   async createProxy(data: ProxySchema) {
-    const { serverId, ...rest } = data;
-    
+    const { serverId } = data;
+
     // Check server capacity
     const server = await prisma.server.findUnique({ where: { id: serverId } });
     if (!server) throw new Error('Server not found');
@@ -34,14 +34,18 @@ export class ProxyService {
     }
 
     const proxy = await proxyRepository.create({
-      ...rest,
-      userId: data.userId || null,
+      port: data.port,
+      username: data.username,
+      password: data.password,
+      ipType: data.ipType,
+      proxyType: data.proxyType,
+      user: data.userId ? { connect: { id: data.userId } } : undefined,
       autoRenew: data.autoRenew || false,
       renewalDuration: data.renewalDuration || '1m',
       comment: data.comment || null,
       server: { connect: { id: serverId } },
       status: 'CREATING',
-    } as any);
+    });
 
     // Update server lastPort
     await prisma.server.update({
@@ -110,14 +114,15 @@ export class ProxyService {
     return { jobId: job.id };
   }
 
-  async updateProxy(id: string, data: any) {
+  async updateProxy(id: string, data: Partial<ProxySchema>) {
     const expiresAt = data.expiresAt ? new Date(data.expiresAt) : undefined;
     
     // Đảm bảo không bị lệch múi giờ khi lưu
     const updated = await prisma.proxy.update({
       where: { id },
       data: {
-        ...data,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ...data as any,
         expiresAt: expiresAt !== undefined ? expiresAt : undefined,
       },
       include: { server: true }
@@ -207,14 +212,16 @@ export class ProxyService {
             port,
             username,
             password,
-            serverId,
-            userId: data.userId || null,
+            server: { connect: { id: serverId } },
+            user: data.userId ? { connect: { id: data.userId } } : undefined,
             status: 'CREATING',
             expiresAt: expiresAt ? new Date(expiresAt) : null,
             autoRenew: data.autoRenew || false,
             renewalDuration: data.renewalDuration || '1m',
             comment: data.comment || null,
-          } as any
+            ipType: data.ipType,
+            proxyType: data.proxyType,
+          }
         });
       })
     );
@@ -367,7 +374,7 @@ export class ProxyService {
         const now = new Date();
         
         // Nếu proxy còn hạn, lấy mốc đó làm gốc, nếu không lấy 'bây giờ'
-        let baseDate = proxy.expiresAt && proxy.expiresAt > now 
+        const baseDate = proxy.expiresAt && proxy.expiresAt > now 
           ? new Date(proxy.expiresAt) 
           : now;
         
@@ -416,10 +423,13 @@ export class ProxyService {
     return results;
   }
 
-  async bulkUpdateAutoRenew(ids: string[], autoRenew: boolean) {
+  async bulkUpdateAutoRenew(ids: string[], autoRenew: boolean, renewalDuration?: string) {
     return prisma.proxy.updateMany({
       where: { id: { in: ids } },
-      data: { autoRenew }
+      data: { 
+        autoRenew,
+        ...(renewalDuration ? { renewalDuration } : {})
+      }
     });
   }
 }

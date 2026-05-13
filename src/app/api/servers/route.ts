@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { serverService } from '@/modules/servers/services/server.service';
 import { serverSchema } from '@/modules/servers/schemas/server.schema';
+import { AuthUser } from '@/types';
 
 export async function GET() {
   const session = await auth();
@@ -10,14 +11,17 @@ export async function GET() {
   try {
     const servers = await serverService.getAllServers();
     return NextResponse.json({ success: true, data: servers });
-  } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+  } catch (error) {
+    return NextResponse.json({ 
+      success: false, 
+      message: error instanceof Error ? error.message : 'Có lỗi xảy ra' 
+    }, { status: 500 });
   }
 }
 
 export async function POST(req: Request) {
   const session = await auth();
-  if (!session || (session.user as any).role !== 'ADMIN') {
+  if (!session || (session.user as AuthUser).role !== 'ADMIN') {
     return NextResponse.json({ success: false, message: 'Forbidden' }, { status: 403 });
   }
 
@@ -26,7 +30,10 @@ export async function POST(req: Request) {
     const validated = serverSchema.parse(body);
     const server = await serverService.createServer(validated);
     return NextResponse.json({ success: true, data: server });
-  } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 400 });
+  } catch (error) {
+    return NextResponse.json({ 
+      success: false, 
+      message: error instanceof Error ? error.message : 'Có lỗi xảy ra' 
+    }, { status: 400 });
   }
 }

@@ -1,8 +1,7 @@
-import { Job } from 'bullmq';
 import prisma from '../../lib/prisma';
 import { proxyService } from '../../modules/proxies/services/proxy.service';
 
-export async function processExpirationCleanup(job: Job) {
+export async function processExpirationCleanup() {
   console.log(`[ExpirationCleanup] Bắt đầu quét proxy hết hạn...`);
   
   try {
@@ -42,14 +41,16 @@ export async function processExpirationCleanup(job: Job) {
           data: { status: 'EXPIRED' }
         });
 
-      } catch (err: any) {
-        console.error(`[ExpirationCleanup] Lỗi khi xử lý proxy ${proxy.id}: ${err.message}`);
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.error(`[ExpirationCleanup] Lỗi khi xử lý proxy ${proxy.id}: ${message}`);
       }
     }
 
     return { count: expiredProxies.length };
-  } catch (error: any) {
-    console.error(`[ExpirationCleanup] LỖI HỆ THỐNG: ${error.message}`);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`[ExpirationCleanup] LỖI HỆ THỐNG: ${message}`);
     throw error;
   }
 }

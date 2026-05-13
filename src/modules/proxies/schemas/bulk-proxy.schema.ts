@@ -7,11 +7,11 @@ export const bulkProxySchema = z.object({
   count: z.number().int().min(1, 'Số lượng tối thiểu là 1').max(1000, 'Số lượng tối đa 1 lần là 1000'),
   username: z.string().min(1, 'Tài khoản là bắt buộc'),
   password: z.string().min(1, 'Mật khẩu là bắt buộc'),
-  ipType: z.enum(['IPv4', 'IPv6']).default('IPv6'),
-  proxyType: z.enum(['HTTP', 'SOCKS5']).default('SOCKS5'),
+  ipType: z.enum(['IPv4', 'IPv6']),
+  proxyType: z.enum(['HTTP', 'SOCKS5']),
   expiresAt: z.string().optional().nullable(),
-  autoRenew: z.boolean().default(false),
-  renewalDuration: z.string().default('1m'),
+  autoRenew: z.boolean(),
+  renewalDuration: z.string(),
   comment: z.string().optional().nullable(),
 });
 

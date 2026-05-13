@@ -94,8 +94,9 @@ export async function processResetServer(job: Job) {
     });
 
     await addLog('Reset máy chủ hoàn tất thành công. Trạng thái server đã chuyển về ĐANG CHỜ.');
-  } catch (error: any) {
-    await addLog(`LỖI: ${error.message}`);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    await addLog(`LỖI: ${message}`);
     await prisma.serverJob.update({
       where: { id: jobId },
       data: { status: 'FAILED', finishedAt: new Date() }

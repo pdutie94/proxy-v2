@@ -57,7 +57,7 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
   ({ onClose, onJobCreated, proxy }, ref) => {
     const { data: session } = useSession();
     const { users } = useUsers();
-    const isAdmin = (session?.user as any)?.role === 'ADMIN';
+    const isAdmin = session?.user?.role === 'ADMIN';
 
     const { bulkCreateMutation, updateMutation } = useProxies();
     const { servers } = useServers();
@@ -67,7 +67,7 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
     const [viewYear, setViewYear] = useState(new Date().getFullYear());
     
     const form = useForm<BulkProxySchema>({
-      resolver: zodResolver(bulkProxySchema) as any,
+      resolver: zodResolver(bulkProxySchema),
       defaultValues: {
         userId: proxy?.userId || '',
         serverId: '',
@@ -104,8 +104,8 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
           count: 1,
           username: proxy.username,
           password: proxy.password,
-          ipType: proxy.ipType as any,
-          proxyType: proxy.proxyType as any,
+          ipType: proxy.ipType,
+          proxyType: proxy.proxyType,
           expiresAt: proxy.expiresAt ? format(new Date(proxy.expiresAt), 'yyyy-MM-dd HH:mm') : '',
           autoRenew: proxy.autoRenew || false,
           renewalDuration: proxy.renewalDuration || '1m',
@@ -129,12 +129,12 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
           renewalDuration: data.renewalDuration,
           comment: data.comment,
         };
-        updateMutation.mutate({ id: proxy.id, data: updateData as any }, {
+        updateMutation.mutate({ id: proxy.id, data: updateData }, {
           onSuccess: () => onClose(),
         });
       } else {
         bulkCreateMutation.mutate(data, {
-          onSuccess: (response: any) => {
+          onSuccess: (response) => {
             const jobId = response.data?.jobId;
             if (jobId && onJobCreated) {
               onJobCreated(jobId);
@@ -169,11 +169,6 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
         value: u.id,
       }))
     ], [users]);
-
-    const togglePopoverActive = useCallback(
-      () => setPopoverActive((active) => !active),
-      [],
-    );
 
     const RENEWAL_OPTIONS = EXPIRATION_OPTIONS.filter(o => o.value !== 'permanent' && o.value !== 'custom');
 

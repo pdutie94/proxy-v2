@@ -14,7 +14,10 @@ export async function POST(req: Request) {
 
     await proxyService.bulkRenew(ids, duration);
     return NextResponse.json({ success: true, message: `Đã gia hạn thành công ${ids.length} proxy` });
-  } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+  } catch (error) {
+    return NextResponse.json({
+      success: false,
+      message: error instanceof Error ? error.message : 'Có lỗi xảy ra'
+    }, { status: 500 });
   }
 }

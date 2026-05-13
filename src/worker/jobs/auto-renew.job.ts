@@ -1,9 +1,8 @@
-import { Job } from 'bullmq';
 import prisma from '../../lib/prisma';
 import { proxyService } from '../../modules/proxies/services/proxy.service';
 import { addHours } from 'date-fns';
 
-export async function processAutoRenew(job: Job) {
+export async function processAutoRenew() {
   console.log(`[AutoRenew] Bắt đầu quét proxy cần gia hạn tự động...`);
   
   try {
@@ -26,7 +25,6 @@ export async function processAutoRenew(job: Job) {
 
     console.log(`[AutoRenew] Tìm thấy ${proxiesToRenew.length} proxy cần gia hạn.`);
 
-    const ids = proxiesToRenew.map(p => p.id);
     // Group by duration to batch update (though right now we just use renewalDuration from DB)
     // Actually, proxyService.bulkRenew handles a single duration. 
     // I'll loop for now or group them.
@@ -38,8 +36,9 @@ export async function processAutoRenew(job: Job) {
     }
 
     return { count: renewedCount };
-  } catch (error: any) {
-    console.error(`[AutoRenew] LỖI: ${error.message}`);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`[AutoRenew] LỖI: ${message}`);
     throw error;
   }
 }

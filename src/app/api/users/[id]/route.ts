@@ -1,13 +1,14 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { userService } from '@/modules/users/services/user.service';
+import { AuthUser } from '@/types';
 
 export async function DELETE(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth();
-  if (!session || (session.user as any).role !== 'ADMIN') {
+  if (!session || (session.user as AuthUser).role !== 'ADMIN') {
     return NextResponse.json({ success: false, message: 'Forbidden' }, { status: 403 });
   }
 
@@ -15,8 +16,11 @@ export async function DELETE(
     const { id } = await params;
     await userService.deleteUser(id);
     return NextResponse.json({ success: true, message: 'User deleted' });
-  } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 400 });
+  } catch (error) {
+    return NextResponse.json({ 
+      success: false, 
+      message: error instanceof Error ? error.message : 'Có lỗi xảy ra' 
+    }, { status: 400 });
   }
 }
 
@@ -25,7 +29,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth();
-  if (!session || (session.user as any).role !== 'ADMIN') {
+  if (!session || (session.user as AuthUser).role !== 'ADMIN') {
     return NextResponse.json({ success: false, message: 'Forbidden' }, { status: 403 });
   }
 
@@ -34,7 +38,10 @@ export async function PATCH(
     const body = await req.json();
     const user = await userService.updateUser(id, body);
     return NextResponse.json({ success: true, data: user });
-  } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 400 });
+  } catch (error) {
+    return NextResponse.json({ 
+      success: false, 
+      message: error instanceof Error ? error.message : 'Có lỗi xảy ra' 
+    }, { status: 400 });
   }
 }

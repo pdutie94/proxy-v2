@@ -13,6 +13,7 @@ import {
 import { usePathname } from "next/navigation";
 import { useCallback, useState, useEffect } from "react";
 import { signOut, useSession } from "next-auth/react";
+import { AuthUser } from '@/types';
 
 interface DashboardContainerProps {
   children: React.ReactNode;
@@ -25,7 +26,7 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
 
   // Close mobile navigation when pathname changes
   useEffect(() => {
-    setIsMobileOpen(false);
+    setTimeout(() => setIsMobileOpen(false), 0);
   }, [pathname]);
 
   const toggleMobileOpen = useCallback(
@@ -48,7 +49,7 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
         },
       ]}
       name={session?.user?.email?.split("@")[0] || "Admin"}
-      detail={(session?.user as any)?.role || "ADMIN"}
+      detail={(session?.user as AuthUser | undefined)?.role || "ADMIN"}
       initials={session?.user?.email?.slice(0, 2).toUpperCase()}
       open={false}
       onToggle={() => {}}
@@ -63,7 +64,7 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
     />
   );
 
-  const userRole = (session?.user as any)?.role || "USER";
+  const userRole = (session?.user as AuthUser | undefined)?.role || "USER";
   const isAdmin = userRole === "ADMIN";
 
   const navigationMarkup = (

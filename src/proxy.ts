@@ -26,7 +26,7 @@ export default auth((req) => {
   }
 
   // Moderator Role Protection
-  const userRole = (req.auth?.user as any)?.role;
+  const userRole = req.auth?.user?.role;
   if (userRole === 'MODERATOR') {
     const restrictedRoutes = [
       '/dashboard/servers',

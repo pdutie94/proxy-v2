@@ -7,7 +7,6 @@ import {
   Text, 
   Badge, 
   Box,
-  EmptyState,
   Button,
   Modal,
   Scrollable,
@@ -21,12 +20,18 @@ import {
 import { ViewIcon, DeleteIcon } from "@shopify/polaris-icons";
 import { format } from "date-fns";
 import { useLogs } from "@/hooks/use-logs";
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo } from "react";
+import { ServerJob, Server, Proxy } from "@prisma/client";
+
+type LogEntry = ServerJob & {
+  server?: Server | null;
+  proxy?: Proxy | null;
+};
 
 export default function LogsPage() {
   const { logs, isLoading, clearLogs, isClearing } = useLogs(500); 
   const { smDown } = useBreakpoints();
-  const [selectedLog, setSelectedLog] = useState<any>(null);
+  const [selectedLog, setSelectedLog] = useState<LogEntry | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   
   const [selectedTab, setSelectedTab] = useState(0);
@@ -41,7 +46,7 @@ export default function LogsPage() {
   ];
 
   const filteredLogs = useMemo(() => {
-    return logs.filter((log: any) => {
+    return logs.filter((log: LogEntry) => {
       if (selectedTab === 1 && log.status !== 'COMPLETED') return false;
       if (selectedTab === 2 && log.status !== 'FAILED') return false;
       if (selectedTab === 3 && log.status !== 'ACTIVE') return false;
@@ -53,7 +58,7 @@ export default function LogsPage() {
   const startIndex = (page - 1) * itemsPerPage;
   const paginatedLogs = filteredLogs.slice(startIndex, startIndex + itemsPerPage);
 
-  const getJobTitle = (job: any) => {
+  const getJobTitle = (job: LogEntry) => {
     switch (job.type) {
       case 'SETUP_SERVER': return `Thiết lập server ${job.server?.name || ''}`;
       case 'PROVISION_PROXY': return `Tạo Proxy cổng ${job.proxy?.port || ''}`;
@@ -93,7 +98,7 @@ export default function LogsPage() {
     );
   }
 
-  const rowMarkup = paginatedLogs.map((log: any, index: number) => (
+  const rowMarkup = paginatedLogs.map((log: LogEntry, index: number) => (
     <IndexTable.Row id={log.id} key={log.id} position={index}>
       <IndexTable.Cell>
         <Text as="span" variant="bodySm">

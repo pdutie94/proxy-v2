@@ -10,8 +10,8 @@ export async function GET() {
   try {
     const proxies = await proxyService.getAllProxies();
     return NextResponse.json({ success: true, data: proxies });
-  } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+  } catch (error) {
+    return NextResponse.json({ success: false, message: error instanceof Error ? error.message : 'Có lỗi xảy ra' }, { status: 500 });
   }
 }
 
@@ -23,11 +23,11 @@ export async function POST(req: Request) {
     const body = await req.json();
     const validated = proxySchema.parse(body);
     const result = await proxyService.createProxy(validated);
-    return NextResponse.json({ 
-      success: true, 
-      data: { proxy: result.proxy, jobId: result.jobId } 
+    return NextResponse.json({
+      success: true,
+      data: { proxy: result.proxy, jobId: result.jobId }
     });
-  } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 400 });
+  } catch (error) {
+    return NextResponse.json({ success: false, message: error instanceof Error ? error.message : 'Có lỗi xảy ra' }, { status: 400 });
   }
 }

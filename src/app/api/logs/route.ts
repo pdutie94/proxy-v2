@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
+import { AuthUser } from '@/types';
 
 export async function GET(req: Request) {
   const session = await auth();
@@ -26,21 +27,29 @@ export async function GET(req: Request) {
     });
 
     return NextResponse.json({ success: true, data: jobs });
-  } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+  } catch (error) {
+    console.error('Get logs error:', error);
+    return NextResponse.json({ 
+      success: false, 
+      message: error instanceof Error ? error.message : 'Internal Server Error' 
+    }, { status: 500 });
   }
 }
 
 export async function DELETE() {
   const session = await auth();
-  if (!session?.user || (session.user as any).role !== 'ADMIN') {
+  if (!session?.user || (session.user as AuthUser).role !== 'ADMIN') {
     return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
   }
 
   try {
     await prisma.serverJob.deleteMany({});
     return NextResponse.json({ success: true, message: 'Đã dọn dẹp toàn bộ nhật ký' });
-  } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+  } catch (error) {
+    console.error('Clear logs error:', error);
+    return NextResponse.json({ 
+      success: false, 
+      message: error instanceof Error ? error.message : 'Internal Server Error' 
+    }, { status: 500 });
   }
 }

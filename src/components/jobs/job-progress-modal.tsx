@@ -12,12 +12,10 @@ import {
   Banner,
   Scrollable,
   Spinner,
-  Icon,
-  Button
+  Icon
 } from "@shopify/polaris";
 import { 
   CheckCircleIcon, 
-  AlertCircleIcon, 
   ClockIcon,
   PlayIcon,
   SearchIcon
@@ -47,7 +45,7 @@ interface JobProgressModalProps {
 export const JobProgressModal = ({ jobId, open, onClose, onCompleted }: JobProgressModalProps) => {
   const [job, setJob] = useState<JobStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isPolling, setIsPolling] = useState(false);
+  const [isPolling, setIsPolling] = useState(!!(open && jobId));
 
   const fetchJobStatus = useCallback(async () => {
     if (!jobId) return;
@@ -71,24 +69,17 @@ export const JobProgressModal = ({ jobId, open, onClose, onCompleted }: JobProgr
         setError(result.message);
         // Don't stop polling on API error either, could be transient
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error');
     }
   }, [jobId, onCompleted]);
 
-  useEffect(() => {
-    if (open && jobId) {
-      setJob(null);
-      setError(null);
-      setIsPolling(true);
-      fetchJobStatus();
-    }
-  }, [open, jobId, fetchJobStatus]);
 
   useEffect(() => {
-    let intervalId: NodeJS.Timeout;
+    let intervalId: ReturnType<typeof setInterval>;
 
     if (isPolling && open && jobId) {
+      setTimeout(() => fetchJobStatus(), 0);
       intervalId = setInterval(fetchJobStatus, 2000);
     }
 
@@ -231,7 +222,10 @@ export const JobProgressModal = ({ jobId, open, onClose, onCompleted }: JobProgr
                           paddingBottom: '6px',
                           display: 'flex',
                           gap: '16px',
-                          alignItems: 'flex-start'
+                          alignItems: 'flex-start',
+                          borderLeft: `2px solid ${borderColor}`,
+                          paddingLeft: '12px',
+                          marginBottom: '4px'
                         }}
                       >
                         <span style={{ 

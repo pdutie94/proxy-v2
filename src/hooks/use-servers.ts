@@ -24,7 +24,7 @@ export function useServers() {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (newData: any) => {
+    mutationFn: async (newData: unknown) => {
       const res = await fetch('/api/servers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -38,13 +38,13 @@ export function useServers() {
       queryClient.invalidateQueries({ queryKey: ['servers'] });
       toast.success('Đã thêm máy chủ');
     },
-    onError: (error: any) => {
-      toast.error(error.message);
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+    mutationFn: async ({ id, data }: { id: string; data: unknown }) => {
       const res = await fetch(`/api/servers/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -58,8 +58,8 @@ export function useServers() {
       queryClient.invalidateQueries({ queryKey: ['servers'] });
       toast.success('Đã cập nhật máy chủ');
     },
-    onError: (error: any) => {
-      toast.error(error.message);
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
     },
   });
 
@@ -75,8 +75,8 @@ export function useServers() {
       queryClient.invalidateQueries({ queryKey: ['servers'] });
       toast.success('Đã xóa máy chủ');
     },
-    onError: (error: any) => {
-      toast.error(error.message);
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
     },
   });
 
@@ -93,8 +93,8 @@ export function useServers() {
       queryClient.invalidateQueries({ queryKey: ['servers'] });
       toast.success('Đã bắt đầu thiết lập máy chủ');
     },
-    onError: (error: any) => {
-      toast.error(error.message);
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
     },
   });
 
@@ -112,8 +112,8 @@ export function useServers() {
       queryClient.invalidateQueries({ queryKey: ['proxies'] });
       toast.success('Đã bắt đầu Reset máy chủ');
     },
-    onError: (error: any) => {
-      toast.error(error.message);
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
     },
   });
 
@@ -130,8 +130,8 @@ export function useServers() {
       queryClient.invalidateQueries({ queryKey: ['servers'] });
       toast.success('Đã bắt đầu đồng bộ cổng');
     },
-    onError: (error: any) => {
-      toast.error(error.message);
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
     },
   });
 

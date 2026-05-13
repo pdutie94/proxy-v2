@@ -2,6 +2,8 @@ import { userRepository } from '../repositories/user.repository';
 import { UserSchema } from '../schemas/user.schema';
 import bcrypt from 'bcryptjs';
 
+import { Prisma } from '@prisma/client';
+ 
 export class UserService {
   async getAllUsers() {
     return userRepository.findAll();
@@ -23,7 +25,7 @@ export class UserService {
 
   async updateUser(id: string, data: Partial<UserSchema>) {
     const { password, ...rest } = data;
-    const updateData: any = { ...rest };
+    const updateData: Prisma.UserUpdateInput = { ...rest };
     
     if (password) {
       updateData.password = await bcrypt.hash(password, 10);

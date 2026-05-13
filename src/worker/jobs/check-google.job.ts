@@ -77,8 +77,9 @@ export async function processCheckGoogle(job: Job) {
       data: { status: 'COMPLETED', finishedAt: new Date() }
     });
 
-  } catch (error: any) {
-    await addLog(`LỖI: ${error.message}`);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    await addLog(`LỖI: ${message}`);
     await prisma.serverJob.update({
       where: { id: jobId },
       data: { status: 'FAILED', finishedAt: new Date() }

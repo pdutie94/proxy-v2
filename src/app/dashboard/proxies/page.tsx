@@ -77,6 +77,7 @@ export default function ProxiesPage() {
       </Modal>
 
       <JobProgressModal 
+        key={activeJobId || 'none'}
         jobId={activeJobId}
         open={!!activeJobId}
         onClose={() => setActiveJobId(null)}
