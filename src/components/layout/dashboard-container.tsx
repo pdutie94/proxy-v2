@@ -41,6 +41,12 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
     accessibilityLabel: "ProxyV2 Logo",
   };
 
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const toggleUserMenuOpen = useCallback(
+    () => setIsUserMenuOpen((open) => !open),
+    [],
+  );
+
   const userMenuMarkup = (
     <TopBar.UserMenu
       actions={[
@@ -51,8 +57,8 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
       name={session?.user?.email?.split("@")[0] || "Admin"}
       detail={(session?.user as AuthUser | undefined)?.role || "ADMIN"}
       initials={session?.user?.email?.slice(0, 2).toUpperCase()}
-      open={false}
-      onToggle={() => {}}
+      open={isUserMenuOpen}
+      onToggle={toggleUserMenuOpen}
     />
   );
 
@@ -111,19 +117,24 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
           ] : []),
         ]}
       />
-      {isAdmin && (
-        <Navigation.Section
-          separator
-          items={[
+      <Navigation.Section
+        separator
+        items={[
+          ...(isAdmin ? [
             {
               label: "Cài đặt",
               icon: SettingsIcon,
               url: "/dashboard/settings",
               selected: pathname.startsWith("/dashboard/settings"),
             },
-          ]}
-        />
-      )}
+          ] : []),
+          {
+            label: "Đăng xuất",
+            icon: ExitIcon,
+            onClick: () => signOut(),
+          },
+        ]}
+      />
     </Navigation>
   );
 
