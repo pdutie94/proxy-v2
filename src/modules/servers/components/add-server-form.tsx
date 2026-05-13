@@ -13,11 +13,13 @@ import {
   Text,
   Tooltip,
   Icon,
-  InlineStack
+  InlineStack,
+  Select
 } from "@shopify/polaris";
 import { InfoIcon } from "@shopify/polaris-icons";
-import { useCallback, forwardRef, useImperativeHandle, useEffect } from 'react';
+import { useCallback, forwardRef, useImperativeHandle, useEffect, useMemo } from 'react';
 import { Server } from '@prisma/client';
+import { useLocations } from '@/modules/locations/hooks/use-locations';
 
 interface AddServerFormProps {
   onClose: () => void;
@@ -31,6 +33,15 @@ export interface AddServerFormRef {
 export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
   ({ onClose, server }, ref) => {
     const { createMutation, updateMutation } = useServers();
+    const { data: locationsData } = useLocations();
+
+    const locationOptions = useMemo(() => {
+      const options = (locationsData || []).map(loc => ({
+        label: `${getFlagEmoji(loc.countryCode)} ${loc.name}`,
+        value: loc.id
+      }));
+      return [{ label: 'Chọn vị trí...', value: '' }, ...options];
+    }, [locationsData]);
     
     const { control, handleSubmit, formState: { errors }, reset, watch } = useForm<ServerSchema>({
       resolver: zodResolver(serverSchema),
@@ -45,6 +56,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
         startPort: 10000,
         autoRotate: false,
         rotationInterval: 0,
+        locationId: '',
       }
     });
 
@@ -62,6 +74,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
           startPort: server.startPort,
           autoRotate: server.autoRotate,
           rotationInterval: server.rotationInterval,
+          locationId: server.locationId || '',
           password: '',
         });
       }
@@ -193,6 +206,19 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
 
             <FormLayout.Group>
               <Controller
+                name="locationId"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    label="Vị trí máy chủ"
+                    options={locationOptions}
+                    value={field.value || ''}
+                    onChange={field.onChange}
+                    error={errors.locationId?.message}
+                  />
+                )}
+              />
+              <Controller
                 name="maxProxies"
                 control={control}
                 render={({ field }) => (
@@ -207,6 +233,9 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                   />
                 )}
               />
+            </FormLayout.Group>
+
+            <FormLayout.Group>
               <Controller
                 name="startPort"
                 control={control}
@@ -229,21 +258,21 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                   />
                 )}
               />
+              <Controller
+                name="autoRotate"
+                control={control}
+                render={({ field }) => (
+                  <Checkbox
+                    label="Tự động xoay IPv6"
+                    checked={field.value}
+                    onChange={field.onChange}
+                  />
+                )}
+              />
             </FormLayout.Group>
 
-            <FormLayout.Group>
-                <Controller
-                  name="autoRotate"
-                  control={control}
-                  render={({ field }) => (
-                    <Checkbox
-                      label="Tự động xoay IPv6"
-                      checked={field.value}
-                      onChange={field.onChange}
-                    />
-                  )}
-                />
-              {isAutoRotate && (
+            {isAutoRotate && (
+              <FormLayout.Group>
                 <Controller
                   name="rotationInterval"
                   control={control}
@@ -265,13 +294,22 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                     />
                   )}
                 />
-              )}
-            </FormLayout.Group>
+              </FormLayout.Group>
+            )}
           </FormLayout>
         </Box>
       </Form>
     );
   }
 );
+
+function getFlagEmoji(countryCode: string) {
+  if (!countryCode) return '🌐';
+  const codePoints = countryCode
+    .toUpperCase()
+    .split('')
+    .map(char => 127397 + char.charCodeAt(0));
+  return String.fromCodePoint(...codePoints);
+}
 
 AddServerForm.displayName = 'AddServerForm';

@@ -9,13 +9,13 @@ export async function DELETE(
 ) {
   const session = await auth();
   if (!session || (session.user as AuthUser).role !== 'ADMIN') {
-    return NextResponse.json({ success: false, message: 'Forbidden' }, { status: 403 });
+    return NextResponse.json({ success: false, message: 'Bạn không có quyền thực hiện hành động này' }, { status: 403 });
   }
 
   try {
     const { id } = await params;
     await userService.deleteUser(id);
-    return NextResponse.json({ success: true, message: 'User deleted' });
+    return NextResponse.json({ success: true, message: 'Đã xóa người dùng thành công' });
   } catch (error) {
     return NextResponse.json({ 
       success: false, 

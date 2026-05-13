@@ -9,7 +9,13 @@ export default async function UserProxiesPage() {
 
   const proxies = await prisma.proxy.findMany({
     where: { userId: session.user.id },
-    include: { server: true },
+    include: { 
+      server: {
+        include: {
+          location: true
+        }
+      } 
+    },
     orderBy: { createdAt: 'desc' },
   });
 
@@ -38,7 +44,7 @@ export default async function UserProxiesPage() {
          <div className="space-y-1">
             <h4 className="text-sm font-bold text-blue-900">Mẹo nhỏ:</h4>
             <p className="text-xs text-blue-700 leading-relaxed font-medium">
-               Đối với Proxy IPv6, bạn có thể "Xoay IP" không giới hạn để làm mới địa chỉ IP của mình. 
+               Đối với Proxy IPv6, bạn có thể &quot;Xoay IP&quot; không giới hạn để làm mới địa chỉ IP của mình. 
                Hệ thống sẽ tự động cập nhật IP mới vào cổng hiện tại của bạn trong khoảng 2-3 giây.
             </p>
          </div>

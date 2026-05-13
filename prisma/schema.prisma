@@ -118,6 +118,8 @@ model Server {
   passwordEncrypted String?
   privateKey        String?        @db.Text
   provider          String?
+  locationId        String?
+  location          Location?      @relation(fields: [locationId], references: [id])
   ipv6              String?
   status            ServerStatus   @default(PENDING)
   maxProxies        Int            @default(100)
@@ -133,6 +135,16 @@ model Server {
   updatedAt         DateTime       @updatedAt
 
   @@index([status])
+  @@index([locationId])
+}
+
+model Location {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  countryCode String   // Ví dụ: VN, US, UK
+  servers     Server[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model ServerSubnet {
@@ -204,6 +216,7 @@ model Order {
   proxyId     String?
   totalAmount Decimal     @db.Decimal(10, 2)
   status      OrderStatus @default(PENDING)
+  notes       String?     @db.Text
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   transaction Transaction?

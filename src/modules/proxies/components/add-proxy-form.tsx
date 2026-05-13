@@ -32,7 +32,7 @@ import { useUsers } from '@/hooks/use-users';
 
 const EXPIRATION_OPTIONS = [
   { label: 'Vĩnh viễn', value: 'permanent' },
-  { label: '2 phút (Test)', value: '2min' },
+  { label: '2 phút (Thử nghiệm)', value: '2min' },
   { label: '1 ngày', value: '1d' },
   { label: '3 ngày', value: '3d' },
   { label: '1 tuần', value: '1w' },
@@ -440,8 +440,8 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
             {expirationOption !== 'permanent' && expirationOption !== 'custom' && (
               <Box paddingInlineStart="100">
                 <InlineStack gap="100" align="start">
-                  <Text as="span" variant="bodySm" tone="subdued">Sẽ hết hạn vào:</Text>
-                  <Text as="span" variant="bodySm" fontWeight="medium">
+                  <Text as="span" variant="bodyMd" tone="subdued">Sẽ hết hạn vào:</Text>
+                  <Text as="span" variant="bodyMd" fontWeight="medium">
                     {form.watch('expiresAt') ? format(new Date(form.watch('expiresAt') as string), 'dd/MM/yyyy HH:mm') : '---'}
                   </Text>
                 </InlineStack>

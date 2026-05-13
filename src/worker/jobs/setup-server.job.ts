@@ -56,11 +56,11 @@ export async function processSetupServer(job: Job) {
       "rm -rf /root/proxy-state /root/proxy-ipv6.txt /root/proxies.txt || true"
     ];
     for (const cmd of cleanupCmds) {
-      await ssh.execute(cmd);
+      await ssh.execute(server, cmd);
     }
 
     // 3. Dò tìm Interface chính
-    const findIface = await ssh.execute("ip route | grep default | awk '{print $5}' | head -n1");
+    const findIface = await ssh.execute(server, "ip route | grep default | awk '{print $5}' | head -n1");
     const iface = findIface.stdout.trim() || "eth0";
     await addLog(`Phát hiện Interface chính: ${iface}`);
 
@@ -72,9 +72,9 @@ export async function processSetupServer(job: Job) {
     await addLog(`Sử dụng IPv6 Prefix từ Database: ${prefix}`);
 
     // Xóa IP rác theo Prefix
-    await ssh.execute(`ip -6 addr show dev ${iface} | grep "${prefix}" | awk '{print $2}' | xargs -r -n1 ip -6 addr del dev ${iface} || true`);
+    await ssh.execute(server, `ip -6 addr show dev ${iface} | grep "${prefix}" | awk '{print $2}' | xargs -r -n1 ip -6 addr del dev ${iface} || true`);
 
-    const findPrimaryIP = await ssh.execute(`ip -6 addr show dev ${iface} | grep -v "fe80" | grep "inet6 " | awk '{print $2}' | head -n1`);
+    const findPrimaryIP = await ssh.execute(server, `ip -6 addr show dev ${iface} | grep -v "fe80" | grep "inet6 " | awk '{print $2}' | head -n1`);
     let primaryIP = findPrimaryIP.stdout.trim();
     
     if (!primaryIP) {
@@ -82,7 +82,7 @@ export async function processSetupServer(job: Job) {
       await addLog(`CẢNH BÁO: Không tìm thấy IPv6 gốc, sẽ gán IP định danh: ${primaryIP}`);
     }
 
-    const findGW = await ssh.execute(`ip -6 route show default | sed -n 's/.*via \\([^ ]*\\).*/\\1/p' | head -n1`);
+    const findGW = await ssh.execute(server, `ip -6 route show default | sed -n 's/.*via \\([^ ]*\\).*/\\1/p' | head -n1`);
     let gateway = findGW.stdout.trim();
     if (!gateway) {
         gateway = "fe80::fc00:6ff:fe26:c1f1"; // Fallback cho Vultr
@@ -138,17 +138,17 @@ EOF`,
       'sysctl -p'
     ];
     for (const cmd of setupCmds) {
-      await ssh.execute(cmd);
+      await ssh.execute(server, cmd);
     }
 
     // 5. Cài đặt Gost v3.2.6
     await addLog('Đang cài đặt Gost v3.2.6...');
-    await ssh.execute('wget -q https://github.com/go-gost/gost/releases/download/v3.2.6/gost_3.2.6_linux_amd64.tar.gz -O /tmp/gost.tar.gz');
-    await ssh.execute('tar xzf /tmp/gost.tar.gz -C /usr/bin/ gost && chmod +x /usr/bin/gost');
+    await ssh.execute(server, 'wget -q https://github.com/go-gost/gost/releases/download/v3.2.6/gost_3.2.6_linux_amd64.tar.gz -O /tmp/gost.tar.gz');
+    await ssh.execute(server, 'tar xzf /tmp/gost.tar.gz -C /usr/bin/ gost && chmod +x /usr/bin/gost');
 
     // 6. Khởi tạo cấu trúc dữ liệu
-    await ssh.execute('mkdir -p /root/proxy-state');
-    await ssh.execute('touch /root/proxy-ipv6.txt /root/proxies.txt');
+    await ssh.execute(server, 'mkdir -p /root/proxy-state');
+    await ssh.execute(server, 'touch /root/proxy-ipv6.txt /root/proxies.txt');
 
     // 7. Triển khai các Scripts
     
@@ -300,12 +300,12 @@ done < /root/proxy-ipv6.txt
 EOF`;
 
     await addLog('Đang nạp bộ script điều khiển Super-V5.0.0...');
-    await ssh.execute(proxyCreateScript);
-    await ssh.execute(proxyRotateScript);
-    await ssh.execute(proxyDeleteScript);
-    await ssh.execute(proxyResetScript);
-    await ssh.execute(proxyRestoreScript);
-    await ssh.execute('chmod +x /usr/local/bin/proxy-*');
+    await ssh.execute(server, proxyCreateScript);
+    await ssh.execute(server, proxyRotateScript);
+    await ssh.execute(server, proxyDeleteScript);
+    await ssh.execute(server, proxyResetScript);
+    await ssh.execute(server, proxyRestoreScript);
+    await ssh.execute(server, 'chmod +x /usr/local/bin/proxy-*');
 
     // 8. Thiết lập Systemd
     const systemdService = `cat > /etc/systemd/system/proxy.service << 'EOF'
@@ -321,8 +321,8 @@ RemainAfterExit=yes
 WantedBy=multi-user.target
 EOF`;
     
-    await ssh.execute(systemdService);
-    await ssh.execute('systemctl daemon-reload && systemctl enable proxy.service');
+    await ssh.execute(server, systemdService);
+    await ssh.execute(server, 'systemctl daemon-reload && systemctl enable proxy.service');
 
     await prisma.server.update({
       where: { id: serverId },
@@ -348,6 +348,6 @@ EOF`;
     });
     throw error;
   } finally {
-    await ssh.disconnect();
+    await ssh.disconnect(serverId);
   }
 }

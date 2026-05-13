@@ -29,7 +29,9 @@ export default async function WalletPage() {
         transactions={transactions.map(tx => ({
           ...tx,
           amount: Number(tx.amount),
-          type: tx.type as 'DEPOSIT' | 'PAYMENT' | 'REFUND'
+          type: tx.type as 'DEPOSIT' | 'PAYMENT' | 'REFUND',
+          createdAt: tx.createdAt.toISOString(),
+          notes: tx.notes ?? undefined
         }))} 
       />
     </div>

@@ -43,14 +43,14 @@ export async function processCheckGoogle(job: Job) {
     // Kiểm tra Google Search
     const searchCmd = `curl -s -L -o /dev/null -w "%{http_code}" -x socks5h://${proxy.username}:${proxy.password}@${proxy.server.host}:${proxy.port} "${searchUrl}"`;
     await addLog(`[1/2] Check Google Search...`);
-    const searchResult = await ssh.execute(searchCmd);
+    const searchResult = await ssh.execute(proxy.server, searchCmd);
     const searchCode = searchResult.stdout.trim();
     await addLog(`-> Phản hồi Search: ${searchCode}`);
 
     // Kiểm tra Google AI API
     const apiCmd = `curl -s -L -o /dev/null -w "%{http_code}" -X POST -H "Content-Type: application/json" -d '{"appEvents":[]}' -x socks5h://${proxy.username}:${proxy.password}@${proxy.server.host}:${proxy.port} "${apiUrl}"`;
     await addLog(`[2/2] Check Google AI API (batchLog)...`);
-    const apiResult = await ssh.execute(apiCmd);
+    const apiResult = await ssh.execute(proxy.server, apiCmd);
     const apiCode = apiResult.stdout.trim();
     await addLog(`-> Phản hồi API: ${apiCode}`);
 
@@ -86,6 +86,11 @@ export async function processCheckGoogle(job: Job) {
     });
     throw error;
   } finally {
-    await ssh.disconnect();
+    try {
+      const p = await prisma.proxy.findUnique({ where: { id: proxyId } });
+      if (p) await ssh.disconnect(p.serverId);
+    } catch {
+      // Ignore disconnect errors
+    }
   }
 }

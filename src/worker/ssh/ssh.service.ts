@@ -20,7 +20,6 @@ export class SSHService {
       return existingClient;
     }
 
-    const keyHint = (process.env.ENCRYPTION_KEY || 'default').substring(0, 3);
     let password = undefined;
     
     if (server.passwordEncrypted) {
@@ -95,9 +94,7 @@ export class SSHService {
   }
 
   async disconnectAll(): Promise<void> {
-    for (const [id, client] of this.clients) {
-      client.end();
-    }
+    this.clients.forEach(client => client.end());
     this.clients.clear();
   }
 }

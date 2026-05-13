@@ -2,6 +2,7 @@
 @import "@shopify/polaris/build/esm/styles.css";
 
 /* Polaris Base Overrides */
+
 html,
 body {
 	height: 100%;
@@ -12,6 +13,12 @@ body {
 	background-color: #f6f6f7;
 	margin: 0;
 	padding: 0;
+}
+
+:root {
+	--p-font-size-md: 14px;
+	--p-font-size-sm: 12px;
+	--p-font-size-xs: 12px;
 }
 
 /* Ensure Toaster doesn't clash with Polaris */
@@ -49,7 +56,6 @@ body {
 	display: flex !important;
 	align-items: center !important;
 }
-
 
 /* Fix IndexTable cell vertical alignment to top */
 .Polaris-IndexTable__TableCell {

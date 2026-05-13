@@ -1,9 +1,19 @@
 import { auth } from '@/auth';
 import Link from 'next/link';
 import { BuyProxyWidget } from '@/modules/store/components/buy-proxy-widget';
+import prisma from '@/lib/prisma';
 
 export default async function LandingPage() {
   const session = await auth();
+  
+  let userBalance = 0;
+  if (session?.user?.id) {
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { balance: true }
+    });
+    userBalance = Number(user?.balance || 0);
+  }
 
   return (
     <div className="h-screen flex flex-col bg-[#020617] text-white font-sans selection:bg-blue-500/30 overflow-hidden relative">
@@ -24,9 +34,15 @@ export default async function LandingPage() {
 
           <nav className="flex items-center gap-6">
             {session ? (
-              <Link href={session.user?.role === 'ADMIN' ? '/dashboard' : '/user/proxies'} className="text-xs font-bold text-slate-400 hover:text-white transition-colors uppercase tracking-widest">
-                {session.user?.role === 'ADMIN' ? 'Dashboard' : 'Tài khoản'}
-              </Link>
+              <>
+                <div className="flex flex-col items-end mr-2">
+                   <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest leading-none mb-1">Số dư hiện tại</span>
+                   <span className="text-xs font-black text-white leading-none">{userBalance.toLocaleString('vi-VN')}đ</span>
+                </div>
+                <Link href={session.user?.role === 'ADMIN' ? '/dashboard' : '/user/proxies'} className="text-xs font-bold text-slate-400 hover:text-white transition-colors uppercase tracking-widest">
+                  {session.user?.role === 'ADMIN' ? 'Dashboard' : 'Tài khoản'}
+                </Link>
+              </>
             ) : (
               <Link href="/login" className="text-xs font-bold text-slate-400 hover:text-white transition-colors uppercase tracking-widest">
                 Đăng nhập
@@ -38,21 +54,21 @@ export default async function LandingPage() {
           </nav>
         </div>
       </header>
-
-      {/* Main Content - Centered & No Scroll */}
+      
+      {/* ... rest of main content ... */}
       <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 py-4">
         {/* Title Block - Compact */}
         <div className="text-center mb-10 max-w-2xl flex-shrink-0">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[9px] font-black uppercase tracking-[0.2em] mb-4">
             <span className="w-1 h-1 bg-blue-500 rounded-full animate-pulse"></span>
-            Next-Gen Infrastructure
+            Hạ tầng Thế hệ mới
           </div>
           <h1 className="text-4xl md:text-6xl font-black tracking-tight mb-4 leading-tight">
             Mua Proxy <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">Siêu Tốc</span>
           </h1>
           <p className="text-slate-400 text-xs md:text-sm font-medium leading-relaxed max-w-lg mx-auto">
             Hệ thống Proxy riêng biệt, tốc độ 1Gbps, khởi tạo tự động. <br />
-            Phục vụ hoàn hảo cho MMO, Automation và Data Processing.
+            Phục vụ hoàn hảo cho MMO, Tự động hóa và Xử lý dữ liệu.
           </p>
         </div>
 
@@ -70,7 +86,7 @@ export default async function LandingPage() {
            <div className="w-px h-6 bg-white/10"></div>
            <div className="flex items-center gap-3">
               <span className="text-lg font-black tracking-tight">99.9%</span>
-              <span className="text-[8px] font-bold uppercase tracking-widest text-slate-500 leading-none">Uptime<br/>Ổn định</span>
+              <span className="text-[8px] font-bold uppercase tracking-widest text-slate-500 leading-none">Độ ổn định<br/>Cao</span>
            </div>
            <div className="w-px h-6 bg-white/10"></div>
            <div className="flex items-center gap-3">
@@ -82,9 +98,16 @@ export default async function LandingPage() {
 
       {/* Minimal Footer */}
       <footer className="relative z-10 py-6 text-center border-t border-white/5 bg-black/10 flex-shrink-0">
-        <p className="text-[8px] font-bold text-slate-600 uppercase tracking-[0.3em]">
-          © {new Date().getFullYear()} ProxyV2 Global • Enterprise Solutions
-        </p>
+        <div className="flex flex-col items-center gap-2">
+          <p className="text-[8px] font-bold text-slate-600 uppercase tracking-[0.3em]">
+            © {new Date().getFullYear()} ProxyV2 Toàn cầu • Giải pháp Doanh nghiệp
+          </p>
+          {session?.user?.role === 'ADMIN' && (
+            <Link href="/dashboard" className="text-[9px] font-black text-blue-500/60 hover:text-blue-500 transition-colors uppercase tracking-[0.2em]">
+              Quản trị viên
+            </Link>
+          )}
+        </div>
       </footer>
     </div>
   );

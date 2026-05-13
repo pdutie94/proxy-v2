@@ -30,10 +30,19 @@ export default async function AccountPage() {
 
   return (
     <AccountLayout 
-      user={user} 
+      user={{
+        ...user,
+        balance: Number(user.balance)
+      }} 
       proxies={proxies} 
-      orders={orders} 
-      transactions={transactions} 
+      orders={orders.map(o => ({
+        ...o,
+        totalAmount: Number(o.totalAmount)
+      }))} 
+      transactions={transactions.map(t => ({
+        ...t,
+        amount: Number(t.amount)
+      }))} 
     />
   );
 }

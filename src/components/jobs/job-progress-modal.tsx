@@ -157,14 +157,14 @@ export const JobProgressModal = ({ jobId, open, onClose, onCompleted }: JobProgr
               <InlineStack gap="400">
                 <InlineStack gap="100">
                   <Icon source={ClockIcon} tone="subdued" />
-                  <Text as="span" variant="bodySm" tone="subdued">
+                  <Text as="span" variant="bodyMd" tone="subdued">
                     Bắt đầu: {job?.startedAt ? format(new Date(job.startedAt), 'HH:mm:ss') : '--:--:--'}
                   </Text>
                 </InlineStack>
                 {job?.finishedAt && (
                   <InlineStack gap="100">
                     <Icon source={CheckCircleIcon} tone="subdued" />
-                    <Text as="span" variant="bodySm" tone="subdued">
+                    <Text as="span" variant="bodyMd" tone="subdued">
                       Kết thúc: {format(new Date(job.finishedAt), 'HH:mm:ss')}
                     </Text>
                   </InlineStack>

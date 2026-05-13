@@ -39,14 +39,14 @@ export async function processRotateProxy(job: Job) {
     const prefix = proxy.server.ipv6 || "";
     const rotateCmd = `/usr/local/bin/proxy-rotate-one ${proxy.port} "${prefix}"`.trim();
     await addLog(`Thực thi: ${rotateCmd}`);
-    const rotateResult = await ssh.execute(rotateCmd);
+    const rotateResult = await ssh.execute(proxy.server, rotateCmd);
     
     if (rotateResult.code !== 0) {
       throw new Error(`Lỗi script rotate: ${rotateResult.stderr}`);
     }
 
     // 3. Lấy IPv6 mới (lấy dòng cuối cùng nếu có nhiều bản ghi)
-    const getIpResult = await ssh.execute(`grep "^${proxy.port}|" /root/proxy-ipv6.txt | tail -n 1 | cut -d'|' -f2`);
+    const getIpResult = await ssh.execute(proxy.server, `grep "^${proxy.port}|" /root/proxy-ipv6.txt | tail -n 1 | cut -d'|' -f2`);
     const newIpv6 = getIpResult.stdout.trim();
 
     await addLog(`Đã đổi sang IPv6 mới: ${newIpv6}`);
@@ -75,6 +75,11 @@ export async function processRotateProxy(job: Job) {
     });
     throw error;
   } finally {
-    await ssh.disconnect();
+    try {
+      const p = await prisma.proxy.findUnique({ where: { id: proxyId } });
+      if (p) await ssh.disconnect(p.serverId);
+    } catch {
+      // Ignore disconnect errors
+    }
   }
 }

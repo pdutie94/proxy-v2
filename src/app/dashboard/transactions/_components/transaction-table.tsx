@@ -6,8 +6,10 @@ import { approveTransactionAction, rejectTransactionAction } from '@/modules/wal
 import { toast } from 'sonner';
 import { useState } from 'react';
 
+import { TransactionWithUser } from '@/types';
+
 interface TransactionTableProps {
-  transactions: any[];
+  transactions: TransactionWithUser[];
 }
 
 export function TransactionTable({ transactions }: TransactionTableProps) {
@@ -74,7 +76,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
           </Badge>
         </IndexTable.Cell>
         <IndexTable.Cell>
-          <Text variant="bodySm" as="span" tone="subdued">
+          <Text variant="bodyMd" as="span" tone="subdued">
             {format(new Date(createdAt), 'dd/MM/yyyy HH:mm')}
           </Text>
         </IndexTable.Cell>
@@ -99,7 +101,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
               </Button>
             </InlineStack>
           ) : (
-             <Text variant="bodySm" as="span" tone="subdued">{notes || '-'}</Text>
+             <Text variant="bodyMd" as="span" tone="subdued">{notes || '-'}</Text>
           )}
         </IndexTable.Cell>
       </IndexTable.Row>

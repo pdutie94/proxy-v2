@@ -9,7 +9,13 @@ export default async function UserProxiesPage() {
 
   const proxies = await prisma.proxy.findMany({
     where: { userId: session.user.id },
-    include: { server: true },
+    include: { 
+      server: {
+        include: {
+          location: true
+        }
+      } 
+    },
     orderBy: { createdAt: 'desc' },
   });
 

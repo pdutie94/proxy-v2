@@ -1,4 +1,4 @@
-import { Proxy, Server, Role, ServerJob } from '@prisma/client';
+import { Proxy, Server, Role, ServerJob, Transaction, Prisma, Location } from '@prisma/client';
 
 export interface AuthUser {
   id: string;
@@ -7,7 +7,7 @@ export interface AuthUser {
 }
 
 export interface ProxyWithServer extends Proxy {
-  server: Server;
+  server: Server & { location?: Location | null };
   user?: { email: string } | null;
 }
 
@@ -18,4 +18,11 @@ export interface ServerWithJobs extends Server {
 export interface JobWithDetails extends ServerJob {
   server?: { name: string } | null;
   proxy?: { port: number } | null;
+}
+
+export interface TransactionWithUser extends Transaction {
+  user?: {
+    email: string;
+    balance: number | string | Prisma.Decimal;
+  } | null;
 }

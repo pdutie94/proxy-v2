@@ -1,29 +1,26 @@
 'use client';
 
+import Image from 'next/image';
 import { format, differenceInHours } from 'date-fns';
 import { toast } from 'sonner';
-import { rotateUserProxyAction } from '../actions/user-proxy.action';
-import { useState } from 'react';
 import { 
   Copy, 
   Trash2, 
-  RotateCw, 
   StickyNote, 
   Eye, 
-  CheckCircle2, 
   Clock, 
   Hash,
   User,
   Key,
   Globe
 } from 'lucide-react';
+import { ProxyWithServer } from '@/types';
 
 interface UserProxyTableProps {
-  proxies: any[];
+  proxies: ProxyWithServer[];
 }
 
 export function UserProxyTable({ proxies }: UserProxyTableProps) {
-  const [loadingId, setLoadingId] = useState<string | null>(null);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -50,8 +47,22 @@ export function UserProxyTable({ proxies }: UserProxyTableProps) {
               <div className="flex items-center gap-4 w-full lg:w-auto">
                 <input type="checkbox" className="w-4 h-4 accent-blue-600 cursor-pointer" />
                 <div className="flex flex-col items-center gap-1.5 min-w-[50px]">
-                   <span className="text-xl">🇻🇳</span>
-                   <span className="bg-red-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded uppercase leading-none">
+                   {proxy.server.location?.countryCode ? (
+                     <Image 
+                       src={`https://purecatamphetamine.github.io/country-flag-icons/3x2/${proxy.server.location.countryCode.toUpperCase()}.svg`} 
+                       width={18} 
+                       height={12}
+                       alt={proxy.server.location.countryCode}
+                       style={{ 
+                         borderRadius: '1px', 
+                         border: '1px solid #E2E8F0',
+                         display: 'block' 
+                       }}
+                     />
+                   ) : (
+                     <Globe className="w-5 h-5 text-slate-300" />
+                   )}
+                   <span className="bg-red-600 text-white text-xs font-black px-1.5 py-0.5 rounded uppercase leading-none">
                      {proxy.ipType}
                    </span>
                 </div>
@@ -60,10 +71,10 @@ export function UserProxyTable({ proxies }: UserProxyTableProps) {
               {/* Connection Info - Compact Grid */}
               <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
                 <div className="space-y-1">
-                   <div className="flex items-center gap-1.5 text-[9px] font-bold text-slate-400 uppercase tracking-tighter">
+                   <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 uppercase tracking-tighter">
                       <Globe className="w-2.5 h-2.5" /> IP:PORT
                    </div>
-                   <div className="text-[13px] font-bold text-slate-900 font-mono tracking-tight flex items-center gap-2 group/copy">
+                   <div className="text-sm font-bold text-slate-900 font-mono tracking-tight flex items-center gap-2 group/copy">
                       {proxy.server.host}:{proxy.port}
                       <button onClick={() => copyToClipboard(`${proxy.server.host}:${proxy.port}`)} className="opacity-0 group-hover/copy:opacity-100 p-1 hover:bg-slate-200 rounded transition-all">
                         <Copy className="w-3 h-3 text-slate-400" />
@@ -72,36 +83,36 @@ export function UserProxyTable({ proxies }: UserProxyTableProps) {
                 </div>
 
                 <div className="space-y-1">
-                   <div className="flex items-center gap-1.5 text-[9px] font-bold text-slate-400 uppercase tracking-tighter">
-                      <User className="w-2.5 h-2.5" /> Login
+                   <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 uppercase tracking-tighter">
+                      <User className="w-2.5 h-2.5" /> Tài khoản
                    </div>
-                   <div className="text-[13px] font-bold text-slate-900 font-mono">{proxy.username}</div>
+                   <div className="text-sm font-bold text-slate-900 font-mono">{proxy.username}</div>
                 </div>
 
                 <div className="space-y-1">
-                   <div className="flex items-center gap-1.5 text-[9px] font-bold text-slate-400 uppercase tracking-tighter">
-                      <Key className="w-2.5 h-2.5" /> Password
+                   <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 uppercase tracking-tighter">
+                      <Key className="w-2.5 h-2.5" /> Mật khẩu
                    </div>
-                   <div className="text-[13px] font-bold text-slate-900 font-mono">{proxy.password}</div>
+                   <div className="text-sm font-bold text-slate-900 font-mono">{proxy.password}</div>
                 </div>
 
                 <div className="space-y-1">
-                   <div className="flex items-center gap-1.5 text-[9px] font-bold text-slate-400 uppercase tracking-tighter">
-                      <Hash className="w-2.5 h-2.5" /> Protocol
+                   <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 uppercase tracking-tighter">
+                      <Hash className="w-2.5 h-2.5" /> Giao thức
                    </div>
-                   <div className="text-[11px] font-bold text-slate-500 uppercase">HTTP/Socks5</div>
+                   <div className="text-xs font-bold text-slate-500 uppercase">HTTP/Socks5</div>
                 </div>
               </div>
 
               {/* Expiration Info - Tighter */}
               <div className="w-full lg:w-44 flex flex-row lg:flex-col justify-between lg:justify-start gap-2 pt-2 lg:pt-0">
                 <div className="flex lg:flex-col lg:items-end gap-2 lg:gap-1">
-                   <span className="text-[9px] font-bold uppercase text-slate-400">Hết hạn:</span>
-                   <span className="text-[11px] font-bold text-amber-600">{proxy.expiresAt ? format(new Date(proxy.expiresAt), 'dd/MM/yy HH:mm') : 'N/A'}</span>
+                   <span className="text-xs font-bold uppercase text-slate-400">Hết hạn:</span>
+                   <span className="text-xs font-bold text-amber-600">{proxy.expiresAt ? format(new Date(proxy.expiresAt), 'dd/MM/yy HH:mm') : 'N/A'}</span>
                 </div>
                 <div className="flex lg:flex-col lg:items-end gap-2 lg:gap-1">
-                   <span className="text-[9px] font-bold uppercase text-slate-400">Còn lại:</span>
-                   <span className="bg-amber-100 text-amber-700 text-[9px] font-black px-1.5 py-0.5 rounded flex items-center gap-1">
+                   <span className="text-xs font-bold uppercase text-slate-400">Còn lại:</span>
+                   <span className="bg-amber-100 text-amber-700 text-xs font-black px-1.5 py-0.5 rounded flex items-center gap-1">
                      <Clock className="w-2.5 h-2.5" />
                      {proxy.expiresAt ? getRemainingTime(new Date(proxy.expiresAt)) : 'N/A'}
                    </span>

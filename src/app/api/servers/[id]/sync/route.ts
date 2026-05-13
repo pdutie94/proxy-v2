@@ -7,7 +7,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth();
-  if (!session) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
+  if (!session) return NextResponse.json({ success: false, message: 'Không có quyền truy cập' }, { status: 401 });
 
   try {
     const { id } = await params;

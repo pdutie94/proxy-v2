@@ -23,7 +23,7 @@ export async function processSyncServerPort(job: Job) {
 
     // 1. Ưu tiên đọc từ file last_port
     const readCmd = "cat /etc/gost/last_port 2>/dev/null";
-    const readRes = await sshService.execute(readCmd);
+    const readRes = await sshService.execute(server, readCmd);
     
     let lastPort: number | null = null;
     
@@ -32,7 +32,7 @@ export async function processSyncServerPort(job: Job) {
     } else {
       // 2. Fallback: Tìm port lớn nhất từ các file service nếu file last_port không có
       const scanCmd = "find /etc/systemd/system/ -name 'proxy-*.service' 2>/dev/null | grep -oE '[0-9]+' | sort -n | tail -n 1";
-      const scanRes = await sshService.execute(scanCmd);
+      const scanRes = await sshService.execute(server, scanCmd);
       
       if (scanRes.stdout.trim()) {
         lastPort = parseInt(scanRes.stdout.trim());
@@ -62,6 +62,6 @@ export async function processSyncServerPort(job: Job) {
     });
     throw error;
   } finally {
-    await sshService.disconnect();
+    await sshService.disconnect(server.id);
   }
 }

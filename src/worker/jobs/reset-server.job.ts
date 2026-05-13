@@ -43,7 +43,7 @@ export async function processResetServer(job: Job) {
     }
 
     // 2.1. Phát hiện Interface
-    const findIface = await ssh.execute("ip route | grep default | awk '{print $5}' | head -n1");
+    const findIface = await ssh.execute(server, "ip route | grep default | awk '{print $5}' | head -n1");
     const iface = findIface.stdout.trim() || "eth0";
     await addLog(`Phát hiện Interface chính: ${iface}`);
 
@@ -61,7 +61,7 @@ export async function processResetServer(job: Job) {
 
     const finalCmd = `if [ -f /usr/local/bin/proxy-reset ]; then /usr/local/bin/proxy-reset ; else ${rawResetCmd} ; fi`;
     
-    const result = await ssh.execute(finalCmd);
+    const result = await ssh.execute(server, finalCmd);
     
     if (result.code !== 0) {
       await addLog(`[Cảnh báo] Một số lệnh có thể thất bại: ${result.stderr}`);
@@ -70,7 +70,7 @@ export async function processResetServer(job: Job) {
     await addLog('Đã dọn dẹp sạch sẽ cấu hình trên Server.');
 
     // Xóa file lastPort trên server
-    await ssh.execute("rm -f /etc/gost/last_port");
+    await ssh.execute(server, "rm -f /etc/gost/last_port");
     await addLog('Đã xóa file ghi nhớ cổng cuối trên Server.');
 
     // 3. Xóa proxies trong DB
@@ -103,6 +103,6 @@ export async function processResetServer(job: Job) {
     });
     throw error;
   } finally {
-    await ssh.disconnect();
+    await ssh.disconnect(serverId);
   }
 }

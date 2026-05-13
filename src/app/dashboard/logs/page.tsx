@@ -101,7 +101,7 @@ export default function LogsPage() {
   const rowMarkup = paginatedLogs.map((log: LogEntry, index: number) => (
     <IndexTable.Row id={log.id} key={log.id} position={index}>
       <IndexTable.Cell>
-        <Text as="span" variant="bodySm">
+        <Text as="span" variant="bodyMd">
           {format(new Date(log.createdAt), 'dd/MM/yyyy HH:mm:ss')}
         </Text>
       </IndexTable.Cell>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import Image from 'next/image';
 
 interface Option {
   value: string | number;
@@ -11,7 +12,7 @@ interface Option {
 interface CustomSelectProps {
   options: Option[];
   value: string | number;
-  onChange: (value: any) => void;
+  onChange: (value: string | number) => void;
   label?: string;
 }
 
@@ -31,6 +32,24 @@ export function CustomSelect({ options, value, onChange, label }: CustomSelectPr
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const renderIcon = (icon?: string) => {
+    if (!icon) return null;
+    const isUrl = icon.startsWith('http');
+    if (isUrl) {
+      return (
+        <div className="flex-shrink-0 w-5 h-3.5 relative overflow-hidden rounded-[1px] border border-white/10">
+          <Image 
+            src={icon} 
+            alt="Flag" 
+            fill 
+            className="object-cover"
+          />
+        </div>
+      );
+    }
+    return <span className="text-lg leading-none">{icon}</span>;
+  };
+
   return (
     <div className="relative" ref={containerRef}>
       {label && <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2.5">{label}</label>}
@@ -41,7 +60,7 @@ export function CustomSelect({ options, value, onChange, label }: CustomSelectPr
         className="w-full h-12 px-4 bg-white/5 border border-white/10 rounded-xl flex items-center justify-between text-white hover:bg-white/10 transition-all focus:border-blue-600 outline-none"
       >
         <div className="flex items-center gap-2.5 overflow-hidden">
-          {selectedOption?.icon && <span className="text-lg leading-none">{selectedOption.icon}</span>}
+          {renderIcon(selectedOption?.icon)}
           <span className="text-sm font-bold truncate">{selectedOption?.label}</span>
         </div>
         <svg 
@@ -67,7 +86,7 @@ export function CustomSelect({ options, value, onChange, label }: CustomSelectPr
                   value === option.value ? 'bg-blue-600/20 text-blue-400' : 'text-slate-300 hover:text-white'
                 }`}
               >
-                {option.icon && <span className="text-lg leading-none">{option.icon}</span>}
+                {renderIcon(option.icon)}
                 <span className="font-bold">{option.label}</span>
                 {value === option.value && (
                   <svg className="w-4 h-4 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -52,14 +52,20 @@ export function PackageList() {
 
     setLoadingId(pkg.id);
     try {
-      const result = await purchaseProxyAction(pkg.id);
+      const result = await purchaseProxyAction({
+        type: 'ipv6',
+        country: 'VN',
+        count: pkg.proxies,
+        days: 30,
+        totalAmount: pkg.price
+      });
       if (result.success) {
         toast.success(result.message);
         // Maybe redirect to proxies or orders
       } else {
         toast.error(result.message);
       }
-    } catch (error) {
+    } catch {
       toast.error('Có lỗi xảy ra khi thanh toán.');
     } finally {
       setLoadingId(null);

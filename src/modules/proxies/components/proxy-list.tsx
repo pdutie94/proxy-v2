@@ -22,7 +22,7 @@ import {
   BlockStack,
   Icon
 } from "@shopify/polaris";
-import { DeleteIcon, EditIcon, RefreshIcon, ClipboardIcon, SearchIcon, NoteIcon, ExportIcon, CalendarIcon } from "@shopify/polaris-icons";
+import { DeleteIcon, EditIcon, RefreshIcon, ClipboardIcon, SearchIcon, NoteIcon, ExportIcon, CalendarIcon, CheckIcon } from "@shopify/polaris-icons";
 import { format } from "date-fns";
 import { Proxy } from '@prisma/client';
 import React, { useState, useCallback, useMemo } from 'react';
@@ -30,7 +30,7 @@ import { JobProgressModal } from '@/components/jobs/job-progress-modal';
 import { toast } from 'sonner';
 import { useSession } from 'next-auth/react';
 import { copyToClipboard } from '@/utils/clipboard';
-import { getCountdown, getStatusTone } from '@/utils/date';
+import { getCountdown } from '@/utils/date';
 
 import { ProxyWithServer, AuthUser } from '@/types';
 
@@ -293,7 +293,7 @@ export function ProxyList({ onEdit }: ProxyListProps) {
       icon: ClipboardIcon,
     },
     {
-      content: `Export TXT`,
+      content: `Xuất file TXT`,
       onAction: handleExportProxies,
       icon: ExportIcon,
     },
@@ -345,7 +345,7 @@ export function ProxyList({ onEdit }: ProxyListProps) {
       <IndexTable.Cell>
         <BlockStack gap="100">
           <Text as="span" variant="bodyMd" fontWeight="bold">
-            {proxy.server?.name || proxy.server?.host || 'Unknown'}
+            {proxy.server?.name || proxy.server?.host || 'Không xác định'}
           </Text>
           <InlineStack gap="100">
             <Badge tone="info">{proxy.ipType}</Badge>
@@ -356,30 +356,30 @@ export function ProxyList({ onEdit }: ProxyListProps) {
         <div style={{ minWidth: '240px' }}>
           <BlockStack gap="050">
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
-              <Text as="span" variant="bodySm" tone="subdued">Proxy IP:PORT</Text>
+              <Text as="span" variant="bodyMd" tone="subdued">IP:PORT</Text>
               <div style={{ flexGrow: 1, borderBottom: '1px dotted #E2E8F0' }}></div>
-              <Text as="span" variant="bodySm" fontWeight="bold">{proxy.server?.host}:{proxy.port}</Text>
+              <Text as="span" variant="bodyMd" fontWeight="bold">{proxy.server?.host}:{proxy.port}</Text>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
-              <Text as="span" variant="bodySm" tone="subdued">Login</Text>
+              <Text as="span" variant="bodyMd" tone="subdued">Tài khoản</Text>
               <div style={{ flexGrow: 1, borderBottom: '1px dotted #E2E8F0' }}></div>
-              <Text as="span" variant="bodySm" fontWeight="medium">{proxy.username}</Text>
+              <Text as="span" variant="bodyMd" fontWeight="medium">{proxy.username}</Text>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
-              <Text as="span" variant="bodySm" tone="subdued">Pass</Text>
+              <Text as="span" variant="bodyMd" tone="subdued">Mật khẩu</Text>
               <div style={{ flexGrow: 1, borderBottom: '1px dotted #E2E8F0' }}></div>
-              <Text as="span" variant="bodySm" fontWeight="medium">{proxy.password}</Text>
+              <Text as="span" variant="bodyMd" fontWeight="medium">{proxy.password}</Text>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
-              <Text as="span" variant="bodySm" tone="subdued">Type</Text>
+              <Text as="span" variant="bodyMd" tone="subdued">Loại</Text>
               <div style={{ flexGrow: 1, borderBottom: '1px dotted #E2E8F0' }}></div>
               <Badge size="small">HTTPS / SOCKS5</Badge>
             </div>
             {proxy.ipv6 && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
-                <Text as="span" variant="bodySm" tone="subdued">IPv6</Text>
+                <Text as="span" variant="bodyMd" tone="subdued">IPv6</Text>
                 <div style={{ flexGrow: 1, borderBottom: '1px dotted #E2E8F0' }}></div>
-                <Text as="span" variant="bodySm">{proxy.ipv6}</Text>
+                <Text as="span" variant="bodyMd">{proxy.ipv6}</Text>
               </div>
             )}
           </BlockStack>
@@ -389,20 +389,31 @@ export function ProxyList({ onEdit }: ProxyListProps) {
           <div style={{ minWidth: '160px' }}>
             <BlockStack gap="050">
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
-                <Text as="span" variant="bodySm" tone="subdued">Hết hạn</Text>
+                <Text as="span" variant="bodyMd" tone="subdued">Hết hạn</Text>
                 <div style={{ flexGrow: 1, borderBottom: '1px dotted #E2E8F0' }}></div>
-                <Text as="span" variant="bodySm">
+                <Text as="span" variant="bodyMd" tone={proxy.autoRenew ? "success" : "caution"} fontWeight="medium">
                   {proxy.expiresAt ? format(new Date(proxy.expiresAt), 'dd/MM/yyyy HH:mm') : 'Vĩnh viễn'}
                 </Text>
               </div>
               {proxy.expiresAt && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
-                  <Text as="span" variant="bodySm" tone="subdued">Còn lại</Text>
-                  <div style={{ flexGrow: 1, borderBottom: '1px dotted #E2E8F0' }}></div>
-                  <Text as="span" variant="bodySm" fontWeight="medium" tone={getStatusTone(proxy.expiresAt)}>
-                    {getCountdown(proxy.expiresAt)}
-                  </Text>
-                </div>
+                <>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
+                    <Text as="span" variant="bodyMd" tone="subdued">Còn lại</Text>
+                    <div style={{ flexGrow: 1, borderBottom: '1px dotted #E2E8F0' }}></div>
+                    <Text as="span" variant="bodyMd" fontWeight="medium" tone={proxy.autoRenew ? "success" : "caution"}>
+                      {getCountdown(proxy.expiresAt)}
+                    </Text>
+                  </div>
+                  {proxy.autoRenew && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
+                      <Text as="span" variant="bodyMd" tone="subdued">Tự động gia hạn</Text>
+                      <div style={{ flexGrow: 1, borderBottom: '1px dotted #E2E8F0' }}></div>
+                      <div style={{ color: '#008060', display: 'flex' }}>
+                        <Icon source={CheckIcon} tone="success" />
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </BlockStack>
           </div>
@@ -422,7 +433,7 @@ export function ProxyList({ onEdit }: ProxyListProps) {
         {userRole === 'ADMIN' && (
           <IndexTable.Cell>
             <div style={{ maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              <Text as="span" variant="bodySm">
+              <Text as="span" variant="bodyMd">
                 {proxy.user?.email || 'Hệ thống'}
               </Text>
             </div>
@@ -441,7 +452,7 @@ export function ProxyList({ onEdit }: ProxyListProps) {
                   });
                 }} />
               ) : (
-                <Tooltip content="Copy Proxy (host:port:user:pass)">
+                <Tooltip content="Sao chép Proxy (host:port:user:pass)">
                   <Button icon={ClipboardIcon} variant="tertiary" onClick={() => {
                     const host = proxy.server?.host || '0.0.0.0';
                     const text = `${host}:${proxy.port}:${proxy.username}:${proxy.password}`;
@@ -500,7 +511,7 @@ export function ProxyList({ onEdit }: ProxyListProps) {
     { title: 'Hết hạn', width: '160px' },
     { title: 'Trạng thái' },
     { title: 'Ghi chú' },
-    ...(userRole === 'ADMIN' ? [{ title: 'User' }] : []),
+    ...(userRole === 'ADMIN' ? [{ title: 'Người dùng' }] : []),
     { title: 'Thao tác', alignment: 'end' },
   ];
 
@@ -532,7 +543,7 @@ export function ProxyList({ onEdit }: ProxyListProps) {
           sortOptions={sortOptions}
           sortSelected={sortSelected}
           queryValue={queryValue}
-          queryPlaceholder="Searching in all"
+          queryPlaceholder="Tìm kiếm trong tất cả..."
           onQueryChange={onHandleQueryValueChange}
           onQueryClear={() => setQueryValue('')}
           onSort={setSortSelected}
@@ -594,7 +605,7 @@ export function ProxyList({ onEdit }: ProxyListProps) {
         <IndexTable
           resourceName={{
             singular: 'proxy',
-            plural: 'proxies',
+            plural: 'proxy',
           }}
           itemCount={paginatedProxies.length}
           selectedItemsCount={selectedResources.length}

@@ -3,8 +3,17 @@
 import { Page, Layout, Card, IndexTable, Badge, Text, EmptyState } from '@shopify/polaris';
 import { format } from 'date-fns';
 
+interface Transaction {
+  id: string;
+  amount: number | string;
+  type: string;
+  status: string;
+  createdAt: Date | string;
+  notes?: string | null;
+}
+
 interface UserPaymentsClientProps {
-  transactions: any[];
+  transactions: Transaction[];
 }
 
 export function UserPaymentsClient({ transactions }: UserPaymentsClientProps) {
@@ -17,7 +26,7 @@ export function UserPaymentsClient({ transactions }: UserPaymentsClientProps) {
     ({ id, amount, type, status, createdAt }, index) => (
       <IndexTable.Row id={id} key={id} position={index}>
         <IndexTable.Cell>
-          <Text variant="bodySm" as="span" tone="subdued">
+          <Text variant="bodyMd" as="span" tone="subdued">
             #{id.slice(0, 10).toUpperCase()}
           </Text>
         </IndexTable.Cell>
@@ -27,7 +36,7 @@ export function UserPaymentsClient({ transactions }: UserPaymentsClientProps) {
           </Badge>
         </IndexTable.Cell>
         <IndexTable.Cell>
-          <Text variant="bodySm" fontWeight="bold" as="span" tone={type === 'DEPOSIT' ? 'success' : 'critical'}>
+          <Text variant="bodyMd" fontWeight="bold" as="span" tone={type === 'DEPOSIT' ? 'success' : 'critical'}>
             {type === 'DEPOSIT' ? '+' : '-'}{Number(amount).toLocaleString()}đ
           </Text>
         </IndexTable.Cell>

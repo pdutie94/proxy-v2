@@ -12,6 +12,7 @@ export const serverSchema = z.object({
   autoRotate: z.boolean(),
   rotationInterval: z.number(),
   provider: z.string().optional(),
+  locationId: z.string().optional(),
   notes: z.string().optional(),
 });
 

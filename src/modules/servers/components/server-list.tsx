@@ -301,7 +301,7 @@ export function ServerList({ onEdit }: ServerListProps) {
             <Text as="p">
               Hệ thống sẽ thực hiện dọn dẹp (Deep Clean) và cài đặt lại toàn bộ môi trường Super-V5.0.0 trên máy chủ <b>{activeConfirmServer?.host}</b>.
             </Text>
-            <Text as="p" variant="bodySm" tone="subdued">
+            <Text as="p" variant="bodyMd" tone="subdued">
               Quá trình này có thể mất 1-2 phút. Bạn có muốn tiếp tục không?
             </Text>
           </BlockStack>

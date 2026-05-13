@@ -31,7 +31,7 @@ export async function processProvisionProxy(job: Job) {
     await addLog(`Đang khởi tạo Proxy: ${proxy.server.host}:${proxy.port}`);
 
     // 1. Kết nối SSH
-    await ssh.connect(proxy.server);
+    await sshService.connect(proxy.server);
 
     // 2. Chạy lệnh tạo proxy trên server
     const ipType = proxy.ipType.toLowerCase();

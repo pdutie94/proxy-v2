@@ -13,10 +13,10 @@ export async function registerAction(data: RegisterInput) {
       message: 'Đăng ký tài khoản thành công.',
       data: { id: user.id, email: user.email }
     };
-  } catch (error: any) {
+  } catch (error) {
     return { 
       success: false, 
-      message: error.message || 'Có lỗi xảy ra trong quá trình đăng ký.' 
+      message: error instanceof Error ? error.message : 'Có lỗi xảy ra trong quá trình đăng ký.' 
     };
   }
 }

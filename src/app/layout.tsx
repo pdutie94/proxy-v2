@@ -6,8 +6,8 @@ import { SessionProvider } from "next-auth/react";
 import { PolarisProvider } from "@/components/providers/polaris-provider";
 
 export const metadata: Metadata = {
-  title: "ProxyV2 - Professional Proxy Management",
-  description: "Advanced proxy management system for high-scale infrastructure.",
+  title: "ProxyV2 - Hệ thống Quản lý Proxy Chuyên nghiệp",
+  description: "Hệ thống quản lý proxy tiên tiến cho hạ tầng quy mô lớn.",
 };
 
 export default function RootLayout({
@@ -16,7 +16,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="vi">
       <body>
         <SessionProvider>
           <QueryProvider>

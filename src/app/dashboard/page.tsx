@@ -81,7 +81,7 @@ export default function DashboardPage() {
 
   const getJobTitle = (job: LogEntry) => {
     switch (job.type) {
-      case 'SETUP_SERVER': return `Thiết lập server ${job.server?.name || 'Unknown'}`;
+      case 'SETUP_SERVER': return `Thiết lập server ${job.server?.name || 'Không xác định'}`;
       case 'PROVISION_PROXY': return `Tạo Proxy cổng ${job.proxy?.port || ''}`;
       case 'BULK_PROVISION_PROXY': return `Tạo hàng loạt Proxy (${job.server?.name || ''})`;
       case 'ROTATE_PROXY': return `Xoay IP cổng ${job.proxy?.port || ''}`;
@@ -116,7 +116,7 @@ export default function DashboardPage() {
                         <div style={{ color: stat.iconColor, display: 'flex', width: '20px', height: '20px' }}>
                           <Icon source={stat.icon} />
                         </div>
-                        <Text as="h2" variant="bodySm" fontWeight="medium" tone="subdued">
+                        <Text as="h2" variant="bodyMd" fontWeight="medium" tone="subdued">
                           {stat.title}
                         </Text>
                       </InlineStack>
@@ -148,7 +148,7 @@ export default function DashboardPage() {
                   {logs.map((job: LogEntry, index: number) => (
                     <IndexTable.Row id={job.id} key={job.id} position={index}>
                       <IndexTable.Cell>
-                        <Text as="span" variant="bodySm" tone="subdued">
+                        <Text as="span" variant="bodyMd" tone="subdued">
                           {formatDistanceToNow(new Date(job.createdAt), { addSuffix: true, locale: vi })}
                         </Text>
                       </IndexTable.Cell>
@@ -214,7 +214,7 @@ export default function DashboardPage() {
                         return (
                           <BlockStack gap="100" key={server.id}>
                             <InlineStack align="space-between">
-                              <Text as="p" variant="bodySm" fontWeight="medium">{server.name}</Text>
+                              <Text as="p" variant="bodyMd" fontWeight="medium">{server.name}</Text>
                               <Text as="p" variant="bodyXs" tone="subdued">{proxyCount}/{server.maxProxies}</Text>
                             </InlineStack>
                             <ProgressBar progress={percentage} tone={progressTone} size="small" />

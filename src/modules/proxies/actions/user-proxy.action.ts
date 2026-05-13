@@ -34,7 +34,7 @@ export async function rotateUserProxyAction(proxyId: string) {
 
     revalidatePath('/user/proxies');
     return { success: true, message: 'Yêu cầu xoay IP đã được gửi đi.' };
-  } catch (error: any) {
-    return { success: false, message: error.message || 'Có lỗi xảy ra.' };
+  } catch (error) {
+    return { success: false, message: error instanceof Error ? error.message : 'Có lỗi xảy ra.' };
   }
 }

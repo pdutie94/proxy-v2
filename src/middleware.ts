@@ -21,7 +21,7 @@ export default auth((req) => {
       return NextResponse.redirect(new URL('/login', req.nextUrl));
     }
     if (req.nextUrl.pathname.startsWith('/api') && !isApiAuthRoute) {
-      return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ success: false, message: 'Không có quyền truy cập' }, { status: 401 });
     }
   }
 

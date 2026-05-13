@@ -9,7 +9,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth();
-  if (!session) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
+  if (!session) return NextResponse.json({ success: false, message: 'Không có quyền truy cập' }, { status: 401 });
 
   const userRole = (session?.user as AuthUser)?.role || "USER";
   if (userRole !== "ADMIN") {
@@ -19,7 +19,7 @@ export async function DELETE(
   try {
     const { id } = await params;
     await proxyService.deleteProxy(id);
-    return NextResponse.json({ success: true, message: 'Proxy deleted' });
+    return NextResponse.json({ success: true, message: 'Đã xóa Proxy thành công' });
   } catch (error) {
     return NextResponse.json({ 
       success: false, 
@@ -33,7 +33,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth();
-  if (!session) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
+  if (!session) return NextResponse.json({ success: false, message: 'Không có quyền truy cập' }, { status: 401 });
 
   try {
     const { id } = await params;

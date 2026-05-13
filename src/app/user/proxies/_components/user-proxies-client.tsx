@@ -6,8 +6,10 @@ import { UserProxyIndexTable } from './user-proxy-index-table';
 import { useState } from 'react';
 import { BuyProxyModal } from '@/modules/store/components/buy-proxy-modal';
 
+import { ProxyWithServer } from '@/types';
+
 interface UserProxiesClientProps {
-  proxies: any[];
+  proxies: ProxyWithServer[];
 }
 
 export function UserProxiesClient({ proxies }: UserProxiesClientProps) {
@@ -23,7 +25,7 @@ export function UserProxiesClient({ proxies }: UserProxiesClientProps) {
           icon={PlusCircleIcon} 
           onClick={() => setIsBuyModalOpen(true)}
         >
-          Mua Proxy mới
+          Mua Proxy
         </Button>
       }
       secondaryActions={[

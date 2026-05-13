@@ -63,7 +63,7 @@ export function UserProfileClient({ user }: UserProfileClientProps) {
       } else {
         toast.error(result.message);
       }
-    } catch (error) {
+    } catch {
       toast.error('Có lỗi xảy ra khi cập nhật hồ sơ.');
     } finally {
       setLoading(false);
@@ -104,7 +104,7 @@ export function UserProfileClient({ user }: UserProfileClientProps) {
             <Card>
               <BlockStack gap="400">
                 <Text variant="headingMd" as="h2">Đổi mật khẩu</Text>
-                <Text variant="bodySm" tone="subdued" as="p">
+                <Text variant="bodyMd" tone="subdued" as="p">
                   Để trống nếu bạn không muốn thay đổi mật khẩu.
                 </Text>
                 <FormLayout>
@@ -151,7 +151,7 @@ export function UserProfileClient({ user }: UserProfileClientProps) {
            <Card>
               <BlockStack gap="200">
                 <Text variant="headingMd" as="h2">Bảo mật tài khoản</Text>
-                <Text variant="bodySm" as="p">
+                <Text variant="bodyMd" as="p">
                   Đảm bảo mật khẩu của bạn có ít nhất 8 ký tự, bao gồm cả chữ cái và chữ số để an toàn nhất.
                 </Text>
                 <Banner tone="info">

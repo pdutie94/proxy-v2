@@ -1,23 +1,18 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { Modal } from '@/components/ui/modal';
 import { LoginForm } from '@/modules/auth/components/login-form-tw';
 import { RegisterForm } from '@/modules/auth/components/register-form';
 import { toast } from 'sonner';
-import { purchaseProxyAction } from '../actions/purchase.action';
+import { createPendingOrderAction, payOrderAction } from '../actions/purchase.action';
 import { useRouter } from 'next/navigation';
 import { CustomSelect } from '@/components/ui/custom-select';
+import { useLocations } from '@/modules/locations/hooks/use-locations';
+import { format } from 'date-fns';
 
 type ProxyType = 'ipv6' | 'ipv4' | 'ipv4_shared';
-
-const COUNTRIES = [
-  { value: 'VN', label: 'Vietnam', icon: '🇻🇳' },
-  { value: 'US', label: 'United States', icon: '🇺🇸' },
-  { value: 'UK', label: 'United Kingdom', icon: '🇬🇧' },
-  { value: 'RU', label: 'Russia', icon: '🇷🇺' },
-];
 
 const PERIODS = [
   { value: 3, label: '3 ngày' },
@@ -34,13 +29,38 @@ const BASE_PRICES: Record<ProxyType, number> = {
 export function BuyProxyWidget() {
   const router = useRouter();
   const { data: session } = useSession();
+  const { data: locationsData } = useLocations();
+
   const [type, setType] = useState<ProxyType>('ipv6');
   const [country, setCountry] = useState('VN');
   const [count, setCount] = useState(1);
   const [period, setPeriod] = useState(30);
   
   const [modal, setModal] = useState<'login' | 'register' | 'checkout' | 'deposit' | null>(null);
+  const [orderId, setOrderId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const countriesOptions = useMemo(() => {
+    if (!locationsData || locationsData.length === 0) {
+      return [{ 
+        value: 'VN', 
+        label: 'Vietnam', 
+        icon: 'https://purecatamphetamine.github.io/country-flag-icons/3x2/VN.svg' 
+      }];
+    }
+    return locationsData.map(loc => ({
+      value: loc.countryCode,
+      label: loc.name,
+      icon: `https://purecatamphetamine.github.io/country-flag-icons/3x2/${loc.countryCode.toUpperCase()}.svg`
+    }));
+  }, [locationsData]);
+
+  useEffect(() => {
+    if (countriesOptions.length > 0 && !countriesOptions.find(c => c.value === country)) {
+      const timer = setTimeout(() => setCountry(countriesOptions[0].value), 0);
+      return () => clearTimeout(timer);
+    }
+  }, [countriesOptions, country]);
 
   const totalPrice = useMemo(() => {
     const base = BASE_PRICES[type];
@@ -48,18 +68,15 @@ export function BuyProxyWidget() {
     return Math.round(base * count * multiplier);
   }, [type, count, period]);
 
-  const handleBuyClick = () => {
+  const handleBuyClick = async () => {
     if (!session) {
       setModal('login');
       return;
     }
-    setModal('checkout');
-  };
 
-  const handleConfirmPurchase = async () => {
     setLoading(true);
     try {
-      const result = await purchaseProxyAction({
+      const result = await createPendingOrderAction({
         type,
         country,
         count,
@@ -67,21 +84,48 @@ export function BuyProxyWidget() {
         totalAmount: totalPrice
       });
 
+      if (result.success && result.orderId) {
+        setOrderId(result.orderId);
+        setModal('checkout');
+      } else {
+        toast.error(result.message || 'Lỗi khi tạo đơn hàng');
+      }
+    } catch {
+      toast.error('Có lỗi xảy ra.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleConfirmPurchase = async () => {
+    if (!orderId) return;
+
+    setLoading(true);
+    try {
+      const result = await payOrderAction(orderId);
+
       if (result.success) {
         toast.success(result.message);
         setModal(null);
-        router.push('/portal/proxies');
-      } else if (result.errorType === 'INSUFFICIENT_BALANCE') {
-        setModal('deposit');
+        setOrderId(null);
+        router.push('/user/proxies');
+        router.refresh();
       } else {
         toast.error(result.message);
+        if (result.message?.includes('Số dư')) {
+           setModal(null);
+           setOrderId(null);
+           router.push('/user/orders');
+        }
       }
-    } catch (error) {
+    } catch {
       toast.error('Có lỗi xảy ra khi thanh toán.');
     } finally {
       setLoading(false);
     }
   };
+
+  const orderDateStr = format(new Date(), 'yyyy-MM-dd HH:mm:ss');
 
   return (
     <div className="w-full space-y-5">
@@ -107,9 +151,9 @@ export function BuyProxyWidget() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <CustomSelect 
               label="Quốc gia"
-              options={COUNTRIES}
+              options={countriesOptions}
               value={country}
-              onChange={setCountry}
+              onChange={(v) => setCountry(String(v))}
             />
             
             <div className="grid grid-cols-2 gap-6">
@@ -127,7 +171,7 @@ export function BuyProxyWidget() {
                 label="Thời hạn"
                 options={PERIODS}
                 value={period}
-                onChange={setPeriod}
+                onChange={(v) => setPeriod(Number(v))}
               />
             </div>
           </div>
@@ -146,7 +190,7 @@ export function BuyProxyWidget() {
               onClick={handleBuyClick}
               className="w-full md:w-auto px-16 py-5 bg-blue-600 hover:bg-blue-500 text-white font-black uppercase tracking-[0.2em] text-xs rounded-2xl transition-all shadow-2xl shadow-blue-600/20 active:scale-95 hover:-translate-y-1"
             >
-              Mua Ngay
+              Tiến hành thanh toán
             </button>
           </div>
         </div>
@@ -188,35 +232,44 @@ export function BuyProxyWidget() {
       {/* Checkout Modal */}
       <Modal 
         isOpen={modal === 'checkout'} 
-        onClose={() => setModal(null)} 
-        title="Xác nhận thanh toán"
+        onClose={() => { setModal(null); setOrderId(null); }} 
+        title="Xác nhận đơn hàng"
       >
-        <div className="space-y-8 text-slate-900">
-          <div className="bg-slate-50 p-8 rounded-[32px] space-y-4 border border-slate-100">
-            <div className="flex justify-between items-center text-xs">
-              <span className="text-slate-400 font-black uppercase tracking-widest">Dịch vụ:</span>
-              <span className="font-black text-slate-900 text-sm">{type.toUpperCase()} Proxy</span>
+        <div className="space-y-6 text-slate-900">
+          <div className="border border-slate-200 rounded-xl overflow-hidden divide-y divide-slate-100">
+            <div className="grid grid-cols-2 p-4 bg-slate-50/50">
+              <span className="text-sm font-bold text-slate-900">Mã đơn hàng:</span>
+              <span className="text-sm text-slate-600 font-mono">ORD-{orderId?.slice(0, 8).toUpperCase()}</span>
             </div>
-            <div className="flex justify-between items-center text-xs">
-              <span className="text-slate-400 font-black uppercase tracking-widest">Số lượng:</span>
-              <span className="font-black text-slate-900 text-sm">{count} cổng</span>
+            <div className="grid grid-cols-2 p-4">
+              <span className="text-sm font-bold text-slate-900">Ngày tạo:</span>
+              <span className="text-sm text-slate-600">{orderDateStr}</span>
             </div>
-            <div className="flex justify-between items-center text-xs">
-              <span className="text-slate-400 font-black uppercase tracking-widest">Thời hạn:</span>
-              <span className="font-black text-slate-900 text-sm">{period} ngày</span>
+            <div className="grid grid-cols-2 p-4 bg-slate-50/50">
+              <span className="text-sm font-bold text-slate-900">Loại đơn:</span>
+              <span className="text-sm text-slate-600">Mua hàng</span>
             </div>
-            <div className="border-t border-slate-200 pt-8 flex justify-between items-baseline">
-              <span className="font-black text-slate-900 uppercase tracking-widest text-[10px]">Thành tiền:</span>
-              <span className="font-black text-3xl text-blue-600">{totalPrice.toLocaleString()}đ</span>
+            <div className="grid grid-cols-2 p-4">
+              <span className="text-sm font-bold text-slate-900">Số lượng IP:</span>
+              <span className="text-sm text-slate-600 font-bold">{count}</span>
+            </div>
+            <div className="grid grid-cols-2 p-4 bg-slate-50/50">
+              <span className="text-sm font-bold text-slate-900">Số ngày:</span>
+              <span className="text-sm text-slate-600 font-bold">{period}</span>
+            </div>
+            <div className="grid grid-cols-2 p-4 bg-blue-50/30">
+              <span className="text-sm font-bold text-slate-900">Tổng thanh toán:</span>
+              <span className="text-lg font-black text-blue-600">{totalPrice.toLocaleString()}đ</span>
             </div>
           </div>
+
           <button 
             onClick={handleConfirmPurchase}
             disabled={loading}
-            className="w-full py-5 bg-slate-900 hover:bg-black text-white font-black uppercase tracking-widest text-xs rounded-2xl flex items-center justify-center gap-3 transition-all active:scale-95"
+            className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-widest text-xs rounded-xl flex items-center justify-center gap-3 transition-all active:scale-95 shadow-lg shadow-blue-600/20"
           >
             {loading && <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>}
-            Xác nhận & Thanh toán
+            Xác nhận thanh toán
           </button>
         </div>
       </Modal>

@@ -36,8 +36,8 @@ export async function approveTransactionAction(transactionId: string) {
 
     revalidatePath('/dashboard/transactions');
     return { success: true, message: 'Đã phê duyệt giao dịch và cộng tiền thành công.' };
-  } catch (error: any) {
-    return { success: false, message: error.message || 'Có lỗi xảy ra.' };
+  } catch (error) {
+    return { success: false, message: error instanceof Error ? error.message : 'Có lỗi xảy ra.' };
   }
 }
 
@@ -55,7 +55,7 @@ export async function rejectTransactionAction(transactionId: string) {
 
     revalidatePath('/dashboard/transactions');
     return { success: true, message: 'Đã từ chối giao dịch.' };
-  } catch (error: any) {
+  } catch {
     return { success: false, message: 'Có lỗi xảy ra.' };
   }
 }

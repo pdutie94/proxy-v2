@@ -33,7 +33,7 @@ export async function processDeleteProxy(job: Job) {
 
     // 2. Thực thi xóa
     await addLog('Đang thực thi: proxy-delete ' + port);
-    const deleteResult = await ssh.execute(`/usr/local/bin/proxy-delete ${port}`);
+    const deleteResult = await ssh.execute(server, `/usr/local/bin/proxy-delete ${port}`);
     
     if (deleteResult.code !== 0) {
       throw new Error(`Lỗi script delete: ${deleteResult.stderr}`);
@@ -56,6 +56,6 @@ export async function processDeleteProxy(job: Job) {
     });
     throw error;
   } finally {
-    await ssh.disconnect();
+    await ssh.disconnect(serverId);
   }
 }

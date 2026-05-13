@@ -26,17 +26,37 @@ import {
 
 type Tab = 'balance' | 'proxies' | 'orders' | 'payments' | 'profile';
 
+import { ProxyWithServer } from '@/types';
+
+interface AccountLayoutProps {
+  user: {
+    id: string;
+    email: string;
+    balance: number | string;
+    emailVerified?: Date | null;
+  };
+  proxies: ProxyWithServer[];
+  orders: {
+    id: string;
+    totalAmount: number | string;
+    status: string;
+    createdAt: Date | string;
+  }[];
+  transactions: {
+    id: string;
+    amount: number | string;
+    type: string;
+    status: string;
+    createdAt: Date | string;
+  }[];
+}
+
 export default function AccountLayout({ 
   user, 
   proxies, 
   orders, 
   transactions 
-}: { 
-  user: any, 
-  proxies: any[], 
-  orders: any[], 
-  transactions: any[] 
-}) {
+}: AccountLayoutProps) {
   const [activeTab, setActiveTab] = useState<Tab>('proxies');
 
   const menuItems = [

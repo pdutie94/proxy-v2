@@ -11,7 +11,7 @@ export async function POST(
 ) {
   const session = await auth();
   if (!session || (session.user as AuthUser).role !== 'ADMIN') {
-    return NextResponse.json({ success: false, message: 'Forbidden' }, { status: 403 });
+    return NextResponse.json({ success: false, message: 'Bạn không có quyền thực hiện hành động này' }, { status: 403 });
   }
 
   try {
@@ -19,7 +19,7 @@ export async function POST(
     const server = await prisma.server.findUnique({ where: { id } });
     
     if (!server) {
-      return NextResponse.json({ success: false, message: 'Server not found' }, { status: 404 });
+      return NextResponse.json({ success: false, message: 'Không tìm thấy máy chủ' }, { status: 404 });
     }
 
     // Update server status to SETTING_UP
@@ -45,7 +45,7 @@ export async function POST(
 
     return NextResponse.json({ 
       success: true, 
-      message: 'Setup job enqueued',
+      message: 'Đã đưa tác vụ cài đặt vào hàng chờ',
       data: { jobId: job.id }
     });
   } catch (error) {

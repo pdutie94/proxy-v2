@@ -6,7 +6,7 @@ import { AuthUser } from '@/types';
 
 export async function POST(req: Request) {
   const session = await auth();
-  if (!session) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
+  if (!session) return NextResponse.json({ success: false, message: 'Không có quyền truy cập' }, { status: 401 });
 
   const userRole = (session?.user as AuthUser)?.role || "USER";
   if (userRole !== "ADMIN") {
