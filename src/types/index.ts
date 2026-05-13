@@ -8,6 +8,7 @@ export interface AuthUser {
 
 export interface ProxyWithServer extends Proxy {
   server: Server;
+  user?: { email: string } | null;
 }
 
 export interface ServerWithJobs extends Server {
