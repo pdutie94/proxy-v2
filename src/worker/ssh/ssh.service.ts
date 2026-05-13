@@ -9,13 +9,17 @@ export interface SSHCommandResponse {
 }
 
 export class SSHService {
-  private client: Client;
+  private clients: Map<string, Client> = new Map();
 
-  constructor() {
-    this.client = new Client();
-  }
+  async connect(server: Server): Promise<Client> {
+    // Check if we already have a connected client for this server
+    if (this.clients.has(server.id)) {
+      const existingClient = this.clients.get(server.id)!;
+      // Note: In a real scenario, we might want to check if the connection is still alive
+      // ssh2 clients don't have a simple .isConnected property, but we can rely on error/end listeners
+      return existingClient;
+    }
 
-  async connect(server: Server): Promise<void> {
     const keyHint = (process.env.ENCRYPTION_KEY || 'default').substring(0, 3);
     let password = undefined;
     
@@ -27,58 +31,43 @@ export class SSHService {
       }
     }
 
-    const maxAttempts = 3;
-    let lastError: Error | null = null;
-
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      try {
-        if (attempt > 1) {
-          console.log(`[SSH] Thử lại kết nối lần ${attempt}/${maxAttempts} tới ${server.host}...`);
-          await new Promise(resolve => setTimeout(resolve, 2000)); // Chờ 2s trước khi thử lại
-        } else {
-          console.log(`[SSH] Đang kết nối tới ${server.host}. KeyHint: ${keyHint}`);
-        }
-
-        await new Promise<void>((resolve, reject) => {
-          const conn = this.client;
-          const onReady = () => {
-            conn.removeListener('error', onError);
-            resolve();
-          };
-          const onError = (err: Error) => {
-            conn.removeListener('ready', onReady);
-            reject(err);
-          };
-
-          conn.once('ready', onReady);
-          conn.once('error', onError);
-
-          conn.connect({
-            host: server.host,
-            port: server.port,
-            username: server.username,
-            password: password,
-            readyTimeout: 30000, // 30s mỗi lần thử
-            keepaliveInterval: 10000,
-            keepaliveCountMax: 3,
-          });
+    const client = new Client();
+    
+    await new Promise<void>((resolve, reject) => {
+      client
+        .on('ready', () => {
+          this.clients.set(server.id, client);
+          resolve();
+        })
+        .on('error', (err) => {
+          this.clients.delete(server.id);
+          reject(err);
+        })
+        .on('end', () => {
+          this.clients.delete(server.id);
+        })
+        .on('close', () => {
+          this.clients.delete(server.id);
+        })
+        .connect({
+          host: server.host,
+          port: server.port,
+          username: server.username,
+          password: password,
+          readyTimeout: 30000,
+          keepaliveInterval: 10000,
+          keepaliveCountMax: 3,
         });
-        
-        return; // Kết nối thành công
-      } catch (err: unknown) {
-        lastError = err instanceof Error ? err : new Error(String(err));
-        this.client.end(); // Đảm bảo đóng socket trước khi thử lại
-        this.client = new Client(); // Tạo client mới cho lần thử sau
-        if (attempt === maxAttempts) break;
-      }
-    }
+    });
 
-    throw new Error(`Không thể kết nối SSH sau ${maxAttempts} lần thử: ${lastError?.message}`);
+    return client;
   }
 
-  async execute(command: string): Promise<SSHCommandResponse> {
+  async execute(server: Server, command: string): Promise<SSHCommandResponse> {
+    const client = await this.connect(server);
+
     return new Promise((resolve, reject) => {
-      this.client.exec(command, (err, stream) => {
+      client.exec(command, (err, stream) => {
         if (err) return reject(err);
 
         let stdout = '';
@@ -98,8 +87,18 @@ export class SSHService {
     });
   }
 
-  async disconnect(): Promise<void> {
-    this.client.end();
+  async disconnect(serverId: string): Promise<void> {
+    if (this.clients.has(serverId)) {
+      this.clients.get(serverId)?.end();
+      this.clients.delete(serverId);
+    }
+  }
+
+  async disconnectAll(): Promise<void> {
+    for (const [id, client] of this.clients) {
+      client.end();
+    }
+    this.clients.clear();
   }
 }
 

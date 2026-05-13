@@ -1,10 +1,9 @@
 import { Job } from 'bullmq';
 import prisma from '../../lib/prisma';
-import { SSHService } from '../ssh/ssh.service';
+import { sshService } from '../ssh/ssh.service';
 
 export async function processProvisionProxy(job: Job) {
   const { proxyId, jobId } = job.data;
-  const ssh = new SSHService();
   let logs = '';
 
   const addLog = async (message: string) => {
@@ -40,12 +39,12 @@ export async function processProvisionProxy(job: Job) {
     const prefix = proxy.server.ipv6 || "";
     const cmd = `/usr/local/bin/proxy-create ${proxy.port} ${proxy.username} ${proxy.password} "${prefix}" ${ipType} ${protocol}`.trim();
     await addLog(`Thực thi: ${cmd}`);
-    await ssh.execute(cmd);
+    await sshService.execute(proxy.server, cmd);
 
     // 3. Lấy thông tin IP đã gán (Nếu là IPv6)
     let ipv6 = null;
     if (proxy.ipType === 'IPv6') {
-      const checkIp = await ssh.execute(`grep "^${proxy.port}|" /root/proxy-ipv6.txt | tail -n 1 | cut -d'|' -f2`);
+      const checkIp = await sshService.execute(proxy.server, `grep "^${proxy.port}|" /root/proxy-ipv6.txt | tail -n 1 | cut -d'|' -f2`);
       ipv6 = checkIp.stdout.trim();
       if (!ipv6) throw new Error('Không lấy được IPv6 từ server sau khi tạo');
       await addLog(`IPv6 đã gán: ${ipv6}`);
@@ -54,13 +53,13 @@ export async function processProvisionProxy(job: Job) {
     }
 
     // Lưu lastPort vào file trên server
-    await ssh.execute(`echo ${proxy.port} > /etc/gost/last_port`);
+    await sshService.execute(proxy.server, `echo ${proxy.port} > /etc/gost/last_port`);
 
     // 4. KIỂM TRA KẾT NỐI (DIAGNOSTIC)
     await addLog('Đang kiểm tra Outbound qua Proxy...');
     // Thử curl qua chính proxy này tới một trang check ipv6
     const testCmd = `curl -s -x socks5h://${proxy.username}:${proxy.password}@127.0.0.1:${proxy.port} https://api64.ipify.org`;
-    const testResult = await ssh.execute(testCmd);
+    const testResult = await sshService.execute(proxy.server, testCmd);
     const exitIp = testResult.stdout.trim();
     
     if (exitIp) {
@@ -97,6 +96,6 @@ export async function processProvisionProxy(job: Job) {
     });
     throw error;
   } finally {
-    await ssh.disconnect();
+    // Không ngắt kết nối SSH để giữ pool
   }
 }

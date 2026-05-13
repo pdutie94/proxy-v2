@@ -13,6 +13,12 @@ export class UserRepository {
       where: { id },
     });
   }
+
+  async create(data: any): Promise<User> {
+    return prisma.user.create({
+      data,
+    });
+  }
 }
 
 export const userRepository = new UserRepository();

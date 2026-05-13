@@ -1,10 +1,9 @@
 import { Job } from 'bullmq';
 import prisma from '../../lib/prisma';
-import { SSHService } from '../ssh/ssh.service';
+import { sshService } from '../ssh/ssh.service';
 
 export async function processBulkProvisionProxy(job: Job) {
   const { proxyIds, serverId, jobId } = job.data;
-  const ssh = new SSHService();
   let logs = '';
 
   const addLog = async (message: string) => {
@@ -27,9 +26,9 @@ export async function processBulkProvisionProxy(job: Job) {
 
     await addLog(`Bắt đầu khởi tạo hàng loạt ${proxyIds.length} proxy trên server ${server.host}`);
 
-    // 1. Kết nối SSH (Kết nối 1 lần duy nhất)
-    await ssh.connect(server);
-    await addLog('Kết nối SSH thành công.');
+    // 1. Đảm bảo kết nối SSH (Sẽ tự động dùng pool nếu đã có)
+    await sshService.connect(server);
+    await addLog('Kết nối SSH sẵn sàng.');
 
     // 2. Lặp qua danh sách proxy và tạo trên server
     for (const [index, proxyId] of proxyIds.entries()) {
@@ -44,12 +43,12 @@ export async function processBulkProvisionProxy(job: Job) {
         const protocol = proxy.proxyType.toLowerCase();
         const prefix = server.ipv6 || "";
         const cmd = `/usr/local/bin/proxy-create ${proxy.port} ${proxy.username} ${proxy.password} "${prefix}" ${ipType} ${protocol}`;
-        await ssh.execute(cmd);
+        await sshService.execute(server, cmd);
 
         // Lấy IPv6 nếu cần
         let ipv6 = null;
         if (proxy.ipType === 'IPv6') {
-          const checkIp = await ssh.execute(`grep "^${proxy.port}|" /root/proxy-ipv6.txt | cut -d'|' -f2`);
+          const checkIp = await sshService.execute(server, `grep "^${proxy.port}|" /root/proxy-ipv6.txt | cut -d'|' -f2`);
           ipv6 = checkIp.stdout.trim();
         }
 
@@ -71,7 +70,7 @@ export async function processBulkProvisionProxy(job: Job) {
         select: { port: true }
       });
       if (lastProxy) {
-        await ssh.execute(`echo ${lastProxy.port} > /etc/gost/last_port`);
+        await sshService.execute(server, `echo ${lastProxy.port} > /etc/gost/last_port`);
       }
     }
 
@@ -90,6 +89,6 @@ export async function processBulkProvisionProxy(job: Job) {
     });
     throw error;
   } finally {
-    await ssh.disconnect();
+    // Không ngắt kết nối SSH để giữ pool
   }
 }

@@ -1,3 +1,4 @@
+@import "tailwindcss";
 @import "@shopify/polaris/build/esm/styles.css";
 
 /* Polaris Base Overrides */

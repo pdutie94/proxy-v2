@@ -1,8 +1,8 @@
-import { LoginForm } from '@/modules/auth/components/login-form-tw';
+import { RegisterForm } from '@/modules/auth/components/register-form';
 import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
 
-export default async function LoginPage() {
+export default async function RegisterPage() {
   const session = await auth();
 
   if (session) {
@@ -15,7 +15,7 @@ export default async function LoginPage() {
 
   return (
     <main className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-      <LoginForm />
+      <RegisterForm />
     </main>
   );
 }

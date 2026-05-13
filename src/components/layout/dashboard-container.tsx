@@ -8,7 +8,8 @@ import {
   PersonIcon,
   SettingsIcon,
   NoteIcon,
-  ExitIcon
+  ExitIcon,
+  CashDollarIcon
 } from "@shopify/polaris-icons";
 import { usePathname } from "next/navigation";
 import { useCallback, useState, useEffect } from "react";
@@ -105,6 +106,12 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
               icon: PersonIcon,
               url: "/dashboard/users",
               selected: pathname.startsWith("/dashboard/users"),
+            },
+            {
+              label: "Giao dịch",
+              icon: CashDollarIcon,
+              url: "/dashboard/transactions",
+              selected: pathname.startsWith("/dashboard/transactions"),
             },
           ] : []),
           ...(isAdmin || userRole === "MODERATOR" ? [
