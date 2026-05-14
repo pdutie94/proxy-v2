@@ -21,6 +21,29 @@ export async function createPendingOrderAction(input: PurchaseInput) {
   }
 
   try {
+    // Validate: phải có server ONLINE tại location này trước khi tạo đơn
+    const location = await prisma.location.findFirst({
+      where: { countryCode: input.country },
+    });
+
+    if (!location) {
+      return { success: false, message: 'Vị trí không hợp lệ.' };
+    }
+
+    const availableServer = await prisma.server.findFirst({
+      where: {
+        locationId: location.id,
+        status: 'ONLINE',
+      },
+    });
+
+    if (!availableServer) {
+      return {
+        success: false,
+        message: `Hiện tại không có máy chủ nào sẵn sàng tại vị trí "${location.name}". Vui lòng chọn vị trí khác.`,
+      };
+    }
+
     const order = await prisma.order.create({
       data: {
         userId: session.user.id,
@@ -182,13 +205,22 @@ export async function payOrderAction(orderId: string) {
         throw new Error('INSUFFICIENT_BALANCE');
       }
 
-      // Tìm server phù hợp
+      // Tìm server theo location của đơn hàng
+      const orderLocation = await tx.location.findFirst({
+        where: { countryCode: details.country },
+      });
+
+      if (!orderLocation) throw new Error(`Vị trí "${details.country}" không tồn tại trong hệ thống.`);
+
       const server = await tx.server.findFirst({
-        where: { status: 'ONLINE' },
+        where: {
+          locationId: orderLocation.id,
+          status: 'ONLINE',
+        },
         orderBy: { updatedAt: 'desc' },
       });
 
-      if (!server) throw new Error('Hiện tại không có máy chủ nào sẵn sàng.');
+      if (!server) throw new Error(`Hiện tại không có máy chủ nào sẵn sàng tại "${orderLocation.name}". Vui lòng liên hệ hỗ trợ.`);
 
       // Trừ tiền
       await tx.user.update({

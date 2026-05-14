@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import { createPendingOrderAction, payOrderAction } from '../actions/purchase.action';
 import { useRouter } from 'next/navigation';
 import { CustomSelect } from '@/components/ui/custom-select';
-import { useLocations } from '@/modules/locations/hooks/use-locations';
+import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 
 type ProxyType = 'ipv6' | 'ipv4' | 'ipv4_shared';
@@ -29,10 +29,22 @@ const BASE_PRICES: Record<ProxyType, number> = {
 export function BuyProxyWidget() {
   const router = useRouter();
   const { data: session } = useSession();
-  const { data: locationsData } = useLocations();
+
+  // Fetch từ API route (force-dynamic, không bị cache)
+  const { data: availableLocations, isLoading: locationsLoading } = useQuery({
+    queryKey: ['available-locations'],
+    queryFn: async () => {
+      const res = await fetch('/api/locations/available', { cache: 'no-store' });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.message);
+      return json.data as { id: string; name: string; countryCode: string }[];
+    },
+    staleTime: 0,
+    gcTime: 0,
+  });
 
   const [type, setType] = useState<ProxyType>('ipv6');
-  const [country, setCountry] = useState('VN');
+  const [country, setCountry] = useState('');
   const [count, setCount] = useState(1);
   const [period, setPeriod] = useState(30);
   
@@ -41,20 +53,15 @@ export function BuyProxyWidget() {
   const [loading, setLoading] = useState(false);
 
   const countriesOptions = useMemo(() => {
-    if (!locationsData || locationsData.length === 0) {
-      return [{ 
-        value: 'VN', 
-        label: 'Vietnam', 
-        icon: 'https://purecatamphetamine.github.io/country-flag-icons/3x2/VN.svg' 
-      }];
-    }
-    return locationsData.map(loc => ({
+    if (!availableLocations || availableLocations.length === 0) return [];
+    return availableLocations.map(loc => ({
       value: loc.countryCode,
       label: loc.name,
       icon: `https://purecatamphetamine.github.io/country-flag-icons/3x2/${loc.countryCode.toUpperCase()}.svg`
     }));
-  }, [locationsData]);
+  }, [availableLocations]);
 
+  // Tự chọn location đầu tiên khi load xong
   useEffect(() => {
     if (countriesOptions.length > 0 && !countriesOptions.find(c => c.value === country)) {
       const timer = setTimeout(() => setCountry(countriesOptions[0].value), 0);
@@ -149,12 +156,26 @@ export function BuyProxyWidget() {
         <div className="p-8 lg:p-12 space-y-10">
           {/* Inputs Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <CustomSelect 
-              label="Quốc gia"
-              options={countriesOptions}
-              value={country}
-              onChange={(v) => setCountry(String(v))}
-            />
+            {locationsLoading ? (
+              <div className="space-y-2.5">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Quốc gia</label>
+                <div className="h-12 bg-white/5 border border-white/10 rounded-xl animate-pulse" />
+              </div>
+            ) : countriesOptions.length === 0 ? (
+              <div className="space-y-2.5">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Quốc gia</label>
+                <div className="h-12 px-5 bg-red-900/20 border border-red-500/30 rounded-xl flex items-center">
+                  <span className="text-red-400 text-xs font-bold">Hiện không có vị trí nào khả dụng</span>
+                </div>
+              </div>
+            ) : (
+              <CustomSelect 
+                label="Quốc gia"
+                options={countriesOptions}
+                value={country}
+                onChange={(v) => setCountry(String(v))}
+              />
+            )}
             
             <div className="grid grid-cols-2 gap-6">
               <div className="space-y-2.5">
@@ -188,7 +209,8 @@ export function BuyProxyWidget() {
             
             <button 
               onClick={handleBuyClick}
-              className="w-full md:w-auto px-16 py-5 bg-blue-600 hover:bg-blue-500 text-white font-black uppercase tracking-[0.2em] text-xs rounded-2xl transition-all shadow-2xl shadow-blue-600/20 active:scale-95 hover:-translate-y-1"
+              disabled={loading || locationsLoading || countriesOptions.length === 0 || !country}
+              className="w-full md:w-auto px-16 py-5 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50 text-white font-black uppercase tracking-[0.2em] text-xs rounded-2xl transition-all shadow-2xl shadow-blue-600/20 active:scale-95 hover:-translate-y-1"
             >
               Tiến hành thanh toán
             </button>

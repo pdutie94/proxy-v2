@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Proxy, Server } from '@prisma/client';
 import { toast } from 'sonner';
+import { ProxyWithServer } from '@/types';
 
 export function useProxies() {
   const queryClient = useQueryClient();
@@ -11,10 +11,10 @@ export function useProxies() {
       const res = await fetch('/api/proxies');
       const data = await res.json();
       if (!data.success) throw new Error(data.message);
-      return data.data as (Proxy & { server: Server })[];
+      return data.data as ProxyWithServer[];
     },
     refetchInterval: (query) => {
-      const proxies = query.state.data as (Proxy & { server: Server })[] | undefined;
+      const proxies = query.state.data as ProxyWithServer[] | undefined;
       const hasProcessing = proxies?.some(p => p.status === 'CREATING');
       return hasProcessing ? 3000 : false;
     }

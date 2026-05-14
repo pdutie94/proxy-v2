@@ -20,7 +20,7 @@ import { createPendingOrderAction, payOrderAction } from '../actions/purchase.ac
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 
-import { useLocations } from '@/modules/locations/hooks/use-locations';
+import { useQuery } from '@tanstack/react-query';
 
 interface BuyProxyModalProps { open: boolean; onClose: () => void; }
 
@@ -30,14 +30,22 @@ const PERIODS = [ { value: '3', label: '3 ngày' }, { value: '7', label: '1 tu�
 
 export function BuyProxyModal({ open, onClose }: BuyProxyModalProps) {
   const router = useRouter();
-  const { data: locationsData } = useLocations();
+  const { data: locationsData, isLoading: locationsLoading } = useQuery({
+    queryKey: ['available-locations'],
+    queryFn: async () => {
+      const res = await fetch('/api/locations/available', { cache: 'no-store' });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.message);
+      return json.data as { id: string; name: string; countryCode: string }[];
+    },
+    staleTime: 0,
+    gcTime: 0,
+  });
   const [step, setStep] = useState(0); // 0: Selection, 1: Confirmation
   const [orderId, setOrderId] = useState<string | null>(null);
 
   const countriesOptions = useMemo(() => {
-    if (!locationsData || locationsData.length === 0) {
-      return [{ value: 'VN', label: 'Việt Nam' }];
-    }
+    if (!locationsData || locationsData.length === 0) return [];
     return locationsData.map(loc => ({
       value: loc.countryCode,
       label: loc.name
@@ -125,7 +133,8 @@ export function BuyProxyModal({ open, onClose }: BuyProxyModalProps) {
       primaryAction={{ 
         content: step === 0 ? "Tiến hành thanh toán" : `Thanh toán ${totalPrice.toLocaleString()}đ`, 
         onAction: handlePurchase, 
-        loading: loading 
+        loading: loading,
+        disabled: step === 0 && (locationsLoading || countriesOptions.length === 0 || !country),
       }}
       secondaryActions={
         step === 0 
@@ -147,7 +156,13 @@ export function BuyProxyModal({ open, onClose }: BuyProxyModalProps) {
 
             <InlineStack gap="400">
               <div className="flex-1">
-                <Select label="Quốc gia" options={countriesOptions} value={country} onChange={setCountry} />
+                {locationsLoading ? (
+                  <Select label="Quốc gia" options={[{ value: '', label: 'Đang tải...' }]} value="" onChange={() => {}} disabled />
+                ) : countriesOptions.length === 0 ? (
+                  <Select label="Quốc gia" options={[{ value: '', label: 'Không có vị trí khả dụng' }]} value="" onChange={() => {}} disabled />
+                ) : (
+                  <Select label="Quốc gia" options={countriesOptions} value={country} onChange={setCountry} />
+                )}
               </div>
               <div className="flex-1">
                 <Select label="Thời hạn" options={PERIODS} value={period} onChange={setPeriod} />

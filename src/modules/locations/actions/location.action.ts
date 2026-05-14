@@ -3,6 +3,7 @@
 import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+import { unstable_noStore as noStore } from 'next/cache';
 import { locationSchema, LocationInput } from '../schemas/location.schema';
 
 export async function getLocationsAction() {
@@ -13,6 +14,19 @@ export async function getLocationsAction() {
       }
     },
     orderBy: { createdAt: 'desc' }
+  });
+}
+
+/** Chỉ trả về locations có ít nhất 1 server đang ONLINE — dùng cho trang mua proxy */
+export async function getAvailableLocationsAction() {
+  noStore(); // Không cache — luôn query DB mới nhất
+  return await prisma.location.findMany({
+    where: {
+      servers: {
+        some: { status: 'ONLINE' },
+      },
+    },
+    orderBy: { name: 'asc' },
   });
 }
 

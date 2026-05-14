@@ -15,7 +15,8 @@ import {
   IndexFiltersProps,
   BlockStack,
   Icon,
-  EmptyState
+  EmptyState,
+  TextField,
 } from "@shopify/polaris";
 import { DuplicateIcon, RefreshIcon, SearchIcon, NoteIcon, ExportIcon, CheckIcon } from "@shopify/polaris-icons";
 import { format } from "date-fns";
@@ -25,7 +26,7 @@ import { copyToClipboard } from '@/utils/clipboard';
 import { getCountdown } from '@/utils/date';
 import { ProxyWithServer } from '@/types';
 import { useProxies } from '@/hooks/use-proxies';
-import { useServers } from '@/hooks/use-servers';
+import { useLocations } from '@/modules/locations/hooks/use-locations';
 
 interface UserProxyIndexTableProps {
   proxies: ProxyWithServer[];
@@ -42,15 +43,23 @@ export function UserProxyIndexTable({ proxies: initialProxies }: UserProxyIndexT
   // Use live data if available, fallback to initial data from server
   const displayProxies = liveProxies.length > 0 ? liveProxies : initialProxies;
 
-  const { servers } = useServers();
+  const { data: locationsData } = useLocations();
+  const locations = locationsData ?? [];
+
   const [selectedResources, setSelectedResources] = useState<string[]>([]);
 
   // Filters State
   const { mode, setMode } = useSetIndexFiltersMode();
   const [queryValue, setQueryValue] = useState('');
-  const [status, setStatus] = useState<string[]>([]);
-  const [selectedServerId, setSelectedServerId] = useState<string[]>([]);
-  const [itemStrings] = useState(['Tất cả', 'Hoạt động', 'Đang tạo', 'Lỗi']);
+
+  // Filter values
+  const [filterUsername, setFilterUsername] = useState('');
+  const [filterPassword, setFilterPassword] = useState('');
+  const [filterStatus, setFilterStatus] = useState<string[]>([]);
+  const [filterLocationId, setFilterLocationId] = useState<string[]>([]);
+
+  // Tabs: Tất cả / Còn hạn / Hết hạn
+  const [itemStrings] = useState(['Tất cả', 'Còn hạn', 'Hết hạn']);
   const [selectedTab, setSelectedTab] = useState(0);
   const [page, setPage] = useState(1);
   const itemsPerPage = 20;
@@ -58,86 +67,88 @@ export function UserProxyIndexTable({ proxies: initialProxies }: UserProxyIndexT
   const tabs: TabProps[] = useMemo(() => itemStrings.map((item, index) => ({
     content: item,
     index,
-    id: `${item}-${index}`,
-    isLocked: index <= 3,
+    id: `user-proxy-tab-${index}`,
+    isLocked: true,
   })), [itemStrings]);
 
-  const onHandleStatusChange = useCallback((value: string[]) => {
-    setStatus(value);
+  const resetPage = useCallback(() => {
     setPage(1);
     setSelectedResources([]);
   }, []);
-  const onHandleServerChange = useCallback((value: string[]) => {
-    setSelectedServerId(value);
-    setPage(1);
-    setSelectedResources([]);
-  }, []);
-  const onHandleQueryValueChange = useCallback((value: string) => {
-    setQueryValue(value);
-    setPage(1);
-    setSelectedResources([]);
-  }, []);
+
   const onHandleFiltersClearAll = useCallback(() => {
-    setStatus([]);
-    setSelectedServerId([]);
+    setFilterUsername('');
+    setFilterPassword('');
+    setFilterStatus([]);
+    setFilterLocationId([]);
     setQueryValue('');
     setPage(1);
   }, []);
 
+  // Sort: chỉ Cũ nhất / Mới nhất
   const [sortSelected, setSortSelected] = useState(['id desc']);
   const sortOptions: IndexFiltersProps['sortOptions'] = [
-    { label: 'ID', value: 'id asc', directionLabel: 'Cũ nhất' },
-    { label: 'ID', value: 'id desc', directionLabel: 'Mới nhất' },
-    { label: 'Port', value: 'port asc', directionLabel: 'Tăng dần' },
-    { label: 'Port', value: 'port desc', directionLabel: 'Giảm dần' },
-    { label: 'Hết hạn', value: 'expiresAt asc', directionLabel: 'Gần nhất' },
-    { label: 'Hết hạn', value: 'expiresAt desc', directionLabel: 'Xa nhất' },
+    { label: 'Ngày tạo', value: 'id asc', directionLabel: 'Cũ nhất' },
+    { label: 'Ngày tạo', value: 'id desc', directionLabel: 'Mới nhất' },
   ];
 
   const filteredProxies = useMemo(() => {
+    const now = new Date();
     const result = (displayProxies as ProxyWithServer[]).filter((proxy) => {
-      const currentTabName = itemStrings[selectedTab];
-      if (currentTabName === 'Hoạt động' && proxy.status !== 'ACTIVE') return false;
-      if (currentTabName === 'Đang tạo' && proxy.status !== 'CREATING') return false;
-      if (currentTabName === 'Lỗi' && proxy.status !== 'ERROR') return false;
+      // Tab filter
+      const tabName = itemStrings[selectedTab];
+      if (tabName === 'Còn hạn') {
+        if (!proxy.expiresAt || new Date(proxy.expiresAt) <= now) return false;
+      }
+      if (tabName === 'Hết hạn') {
+        if (!proxy.expiresAt || new Date(proxy.expiresAt) > now) return false;
+      }
 
-      const queryLower = queryValue.toLowerCase();
-      if (queryValue && !proxy.port.toString().includes(queryValue) && !proxy.username.toLowerCase().includes(queryLower)) {
+      // Search bar: port hoặc username
+      if (queryValue) {
+        const q = queryValue.toLowerCase();
+        if (
+          !proxy.port.toString().includes(queryValue) &&
+          !proxy.username.toLowerCase().includes(q)
+        ) return false;
+      }
+
+      // Filter: tài khoản
+      if (filterUsername && !proxy.username.toLowerCase().includes(filterUsername.toLowerCase())) {
         return false;
       }
 
-      if (status.length > 0 && !status.includes(proxy.status)) {
+      // Filter: mật khẩu
+      if (filterPassword && !proxy.password.toLowerCase().includes(filterPassword.toLowerCase())) {
         return false;
       }
 
-      if (selectedServerId.length > 0 && !selectedServerId.includes(proxy.serverId)) {
+      // Filter: trạng thái
+      if (filterStatus.length > 0 && !filterStatus.includes(proxy.status)) {
         return false;
+      }
+
+      // Filter: vị trí (location)
+      if (filterLocationId.length > 0) {
+        const serverLocationId = proxy.server?.locationId ?? null;
+        if (!serverLocationId || !filterLocationId.includes(serverLocationId)) return false;
       }
 
       return true;
     });
 
+    // Sort
     if (sortSelected.length > 0) {
-      const [key, direction] = sortSelected[0].split(' ');
+      const [, direction] = sortSelected[0].split(' ');
       result.sort((a, b) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        let valA: any = a[key as keyof ProxyWithServer];
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        let valB: any = b[key as keyof ProxyWithServer];
-
-        if (key === 'port') {
-          valA = parseInt(a.port.toString());
-          valB = parseInt(b.port.toString());
-        }
-
-        if (valA < valB) return direction === 'asc' ? -1 : 1;
-        if (valA > valB) return direction === 'asc' ? 1 : -1;
-        return 0;
+        const valA = new Date(a.createdAt).getTime();
+        const valB = new Date(b.createdAt).getTime();
+        return direction === 'asc' ? valA - valB : valB - valA;
       });
     }
 
     return result;
-  }, [displayProxies, selectedTab, queryValue, status, selectedServerId, sortSelected, itemStrings]);
+  }, [displayProxies, selectedTab, queryValue, filterUsername, filterPassword, filterStatus, filterLocationId, sortSelected, itemStrings]);
 
   const totalPages = Math.ceil(filteredProxies.length / itemsPerPage);
   const startIndex = (page - 1) * itemsPerPage;
@@ -153,7 +164,7 @@ export function UserProxyIndexTable({ proxies: initialProxies }: UserProxyIndexT
         isSelected ? [...prev, id] : prev.filter(item => item !== id)
       );
     }
-  }, [paginatedProxies, setSelectedResources]);
+  }, [paginatedProxies]);
 
   const handleCopyProxies = useCallback(() => {
     const selectedProxies = filteredProxies.filter(p => selectedResources.includes(p.id));
@@ -216,6 +227,42 @@ export function UserProxyIndexTable({ proxies: initialProxies }: UserProxyIndexT
       onAction: () => bulkUpdateAutoRenewMutation.mutate({ ids: selectedResources, autoRenew: false }, { onSuccess: () => setSelectedResources([]) }),
     },
   ];
+
+  // Applied filters (tags shown below search bar)
+  const appliedFilters: IndexFiltersProps['appliedFilters'] = [];
+  if (filterUsername) {
+    appliedFilters.push({
+      key: 'username',
+      label: `Tài khoản: ${filterUsername}`,
+      onRemove: () => { setFilterUsername(''); resetPage(); },
+    });
+  }
+  if (filterPassword) {
+    appliedFilters.push({
+      key: 'password',
+      label: `Mật khẩu: ${filterPassword}`,
+      onRemove: () => { setFilterPassword(''); resetPage(); },
+    });
+  }
+  if (filterStatus.length > 0) {
+    const labels: Record<string, string> = { ACTIVE: 'Hoạt động', CREATING: 'Đang tạo', ERROR: 'Lỗi', EXPIRED: 'Hết hạn' };
+    appliedFilters.push({
+      key: 'status',
+      label: `Trạng thái: ${filterStatus.map(s => labels[s] ?? s).join(', ')}`,
+      onRemove: () => { setFilterStatus([]); resetPage(); },
+    });
+  }
+  if (filterLocationId.length > 0) {
+    const names = locations
+      .filter(l => filterLocationId.includes(l.id))
+      .map(l => l.name)
+      .join(', ');
+    appliedFilters.push({
+      key: 'locationId',
+      label: `Vị trí: ${names}`,
+      onRemove: () => { setFilterLocationId([]); resetPage(); },
+    });
+  }
 
   const rowMarkup = paginatedProxies.map(
     (proxy, index) => (
@@ -337,26 +384,6 @@ export function UserProxyIndexTable({ proxies: initialProxies }: UserProxyIndexT
     ),
   );
 
-  const appliedFilters: IndexFiltersProps['appliedFilters'] = [];
-  if (status.length > 0) {
-    appliedFilters.push({
-      key: 'status',
-      label: `Trạng thái: ${status.join(', ')}`,
-      onRemove: () => setStatus([]),
-    });
-  }
-  if (selectedServerId.length > 0) {
-    const serverNames = servers
-      .filter(s => selectedServerId.includes(s.id))
-      .map(s => s.name)
-      .join(', ');
-    appliedFilters.push({
-      key: 'serverId',
-      label: `Máy chủ: ${serverNames}`,
-      onRemove: () => setSelectedServerId([]),
-    });
-  }
-
   const emptyStateMarkup = (
     <EmptyState
       heading="Không tìm thấy proxy nào"
@@ -373,13 +400,47 @@ export function UserProxyIndexTable({ proxies: initialProxies }: UserProxyIndexT
         sortSelected={sortSelected}
         queryValue={queryValue}
         queryPlaceholder="Tìm kiếm proxy..."
-        onQueryChange={onHandleQueryValueChange}
-        onQueryClear={() => setQueryValue('')}
+        onQueryChange={(value) => { setQueryValue(value); resetPage(); }}
+        onQueryClear={() => { setQueryValue(''); resetPage(); }}
         onSort={setSortSelected}
         tabs={tabs}
         selected={selectedTab}
-        onSelect={setSelectedTab}
+        onSelect={(index) => { setSelectedTab(index); resetPage(); }}
         filters={[
+          {
+            key: 'username',
+            label: 'Tài khoản',
+            filter: (
+              <TextField
+                label="Tài khoản"
+                labelHidden
+                value={filterUsername}
+                onChange={(value) => { setFilterUsername(value); resetPage(); }}
+                placeholder="Nhập tài khoản..."
+                autoComplete="off"
+                clearButton
+                onClearButtonClick={() => { setFilterUsername(''); resetPage(); }}
+              />
+            ),
+            shortcut: true,
+          },
+          {
+            key: 'password',
+            label: 'Mật khẩu',
+            filter: (
+              <TextField
+                label="Mật khẩu"
+                labelHidden
+                value={filterPassword}
+                onChange={(value) => { setFilterPassword(value); resetPage(); }}
+                placeholder="Nhập mật khẩu..."
+                autoComplete="off"
+                clearButton
+                onClearButtonClick={() => { setFilterPassword(''); resetPage(); }}
+              />
+            ),
+            shortcut: false,
+          },
           {
             key: 'status',
             label: 'Trạng thái',
@@ -391,22 +452,22 @@ export function UserProxyIndexTable({ proxies: initialProxies }: UserProxyIndexT
                   { label: 'Đang tạo', value: 'CREATING' },
                   { label: 'Lỗi', value: 'ERROR' },
                 ]}
-                selected={status}
-                onChange={onHandleStatusChange}
+                selected={filterStatus}
+                onChange={(value) => { setFilterStatus(value); resetPage(); }}
                 allowMultiple
               />
             ),
             shortcut: true,
           },
           {
-            key: 'serverId',
-            label: 'Máy chủ',
+            key: 'locationId',
+            label: 'Vị trí',
             filter: (
               <ChoiceList
-                title="Máy chủ"
-                choices={servers.map(s => ({ label: s.name, value: s.id }))}
-                selected={selectedServerId}
-                onChange={onHandleServerChange}
+                title="Vị trí"
+                choices={locations.map(l => ({ label: l.name, value: l.id }))}
+                selected={filterLocationId}
+                onChange={(value) => { setFilterLocationId(value); resetPage(); }}
                 allowMultiple
               />
             ),

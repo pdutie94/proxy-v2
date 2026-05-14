@@ -2,17 +2,17 @@ import prisma from '@/lib/prisma';
 import { Proxy, Prisma } from '@prisma/client';
 
 export class ProxyRepository {
-  async findAll(): Promise<Proxy[]> {
+  async findAll() {
     return prisma.proxy.findMany({
-      include: { server: true },
+      include: { server: { include: { location: true } } },
       orderBy: { createdAt: 'desc' },
     });
   }
 
-  async findById(id: string): Promise<Proxy | null> {
+  async findById(id: string) {
     return prisma.proxy.findUnique({
       where: { id },
-      include: { server: true },
+      include: { server: { include: { location: true } } },
     });
   }
 
