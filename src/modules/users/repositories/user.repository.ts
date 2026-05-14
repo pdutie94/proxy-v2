@@ -4,7 +4,11 @@ import { User, Prisma } from '@prisma/client';
 export class UserRepository {
   async findAll(): Promise<User[]> {
     return prisma.user.findMany({
-      orderBy: { createdAt: 'desc' },
+      orderBy: [
+        { isActive: 'desc' }, // Active users first
+        { role: 'asc' },      // Admins first
+        { createdAt: 'desc' }
+      ],
     });
   }
 
@@ -28,8 +32,16 @@ export class UserRepository {
   }
 
   async delete(id: string): Promise<User> {
-    return prisma.user.delete({
+    return prisma.user.update({
       where: { id },
+      data: { isActive: false },
+    });
+  }
+
+  async restore(id: string): Promise<User> {
+    return prisma.user.update({
+      where: { id },
+      data: { isActive: true },
     });
   }
 }

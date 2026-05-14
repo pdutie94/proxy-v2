@@ -65,7 +65,24 @@ export function useUsers() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
-      toast.success('Đã xóa người dùng');
+      toast.success('Đã khóa tài khoản người dùng');
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
+    },
+  });
+
+  const restoreMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/users/${id}/restore`, {
+        method: 'POST',
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast.success('Đã khôi phục tài khoản người dùng');
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
@@ -78,5 +95,6 @@ export function useUsers() {
     createMutation,
     updateMutation,
     deleteMutation,
+    restoreMutation,
   };
 }

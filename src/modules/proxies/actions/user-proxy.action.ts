@@ -12,6 +12,10 @@ export async function rotateUserProxyAction(proxyId: string) {
     return { success: false, message: 'Vui lòng đăng nhập.' };
   }
 
+  const user = await prisma.user.findUnique({ where: { id: session.user.id } });
+  if (!user) return { success: false, message: 'Người dùng không tồn tại' };
+  if (user.isActive === false) return { success: false, message: 'Tài khoản của bạn đã bị khóa.' };
+
   try {
     const proxy = await prisma.proxy.findUnique({
       where: { id: proxyId, userId: session.user.id },

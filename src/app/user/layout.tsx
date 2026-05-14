@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useState, useEffect, useRef } from "react";
-import { Frame, TopBar, Navigation } from "@shopify/polaris";
+import { Frame, TopBar, Navigation, Banner } from "@shopify/polaris";
 import { 
   HomeIcon, 
   ShieldCheckMarkIcon, 
@@ -15,6 +15,7 @@ import {
 import { usePathname, useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { getUserHeaderInfoAction } from "@/modules/auth/actions/balance.action";
 import { RealtimeProvider } from "@/components/providers/realtime-provider";
 
@@ -28,7 +29,7 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
     queryKey: ['user-header-info'],
     queryFn: () => getUserHeaderInfoAction(),
     enabled: !!session?.user?.id,
-    refetchInterval: 60000,
+    refetchInterval: 10000,
   });
 
   // Close mobile navigation when pathname changes
@@ -36,6 +37,14 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
     const timer = setTimeout(() => setIsMobileOpen(false), 0);
     return () => clearTimeout(timer);
   }, [pathname]);
+
+  // Handle inactive user
+  useEffect(() => {
+    if (userData && userData.isActive === false) {
+      toast.error("Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.");
+      signOut({ callbackUrl: '/login' });
+    }
+  }, [userData]);
 
   const toggleMobileOpen = useCallback(
     () => setIsMobileOpen((open) => !open),
@@ -45,6 +54,7 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
   const logo = {
     width: 32,
     topBarSource: "/logo.png",
+    source: "/logo.png",
     url: "/",
     accessibilityLabel: "ProxyV2 Logo",
   };
@@ -105,7 +115,7 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
         ]}
         name={userData?.displayName || session?.user?.name || session?.user?.email || "Thành viên"}
         avatar="data:image/svg+xml,%3Csvg viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill='white' d='M10 11c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E"
-        initials=""
+        initials={(userData?.displayName || session?.user?.name || session?.user?.email || "T").charAt(0).toUpperCase()}
         open={isUserMenuOpen}
         onToggle={toggleUserMenuOpen}
       />
@@ -307,6 +317,20 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
         onNavigationDismiss={toggleMobileOpen}
       >
         <RealtimeProvider>
+          {userData !== undefined && userData !== null && !userData.emailVerified && (
+            <div style={{ padding: '16px 16px 0 16px' }}>
+              <Banner
+                title="Vui lòng xác thực tài khoản Email"
+                tone="warning"
+                action={{
+                  content: 'Xác thực ngay',
+                  onAction: () => router.push('/verify-email')
+                }}
+              >
+                <p>Bạn chưa xác thực địa chỉ email. Vui lòng xác thực để có thể sử dụng đầy đủ các tính năng như nạp tiền và mua Proxy.</p>
+              </Banner>
+            </div>
+          )}
           {children}
         </RealtimeProvider>
       </Frame>

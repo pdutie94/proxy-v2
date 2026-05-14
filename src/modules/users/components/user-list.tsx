@@ -14,7 +14,7 @@ import {
   Tooltip,
   useBreakpoints
 } from "@shopify/polaris";
-import { DeleteIcon, EditIcon } from "@shopify/polaris-icons";
+import { EditIcon, LockIcon } from "@shopify/polaris-icons";
 import { format } from "date-fns";
 import { User } from '@prisma/client';
 import { useState, useCallback } from 'react';
@@ -24,9 +24,10 @@ interface UserListProps {
 }
 
 export function UserList({ onEdit }: UserListProps) {
-  const { users, isLoading, deleteMutation } = useUsers();
+  const { users, isLoading, deleteMutation, restoreMutation } = useUsers();
   const { smDown } = useBreakpoints();
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [restoreId, setRestoreId] = useState<string | null>(null);
   
   const [page, setPage] = useState(1);
   const itemsPerPage = 20;
@@ -42,6 +43,14 @@ export function UserList({ onEdit }: UserListProps) {
       });
     }
   }, [deleteId, deleteMutation]);
+
+  const handleRestore = useCallback(() => {
+    if (restoreId) {
+      restoreMutation.mutate(restoreId, {
+        onSuccess: () => setRestoreId(null),
+      });
+    }
+  }, [restoreId, restoreMutation]);
 
   if (isLoading) {
     return (
@@ -78,6 +87,11 @@ export function UserList({ onEdit }: UserListProps) {
           </Badge>
         </IndexTable.Cell>
         <IndexTable.Cell>
+          <Badge tone={user.isActive ? 'success' : 'critical'}>
+            {user.isActive ? 'Hoạt động' : 'Bị khóa'}
+          </Badge>
+        </IndexTable.Cell>
+        <IndexTable.Cell>
           {format(new Date(user.createdAt), 'dd/MM/yyyy')}
         </IndexTable.Cell>
         <IndexTable.Cell>
@@ -100,18 +114,18 @@ export function UserList({ onEdit }: UserListProps) {
 
             {smDown ? (
               <Button 
-                icon={DeleteIcon} 
+                icon={LockIcon} 
                 variant="tertiary" 
-                tone="critical"
-                onClick={() => setDeleteId(user.id)}
+                tone={user.isActive ? "critical" : "success"}
+                onClick={() => user.isActive ? setDeleteId(user.id) : setRestoreId(user.id)}
               />
             ) : (
-              <Tooltip content="Xóa người dùng">
+              <Tooltip content={user.isActive ? "Khóa người dùng" : "Mở khóa người dùng"}>
                 <Button 
-                  icon={DeleteIcon} 
+                  icon={LockIcon} 
                   variant="tertiary" 
-                  tone="critical"
-                  onClick={() => setDeleteId(user.id)}
+                  tone={user.isActive ? "critical" : "success"}
+                  onClick={() => user.isActive ? setDeleteId(user.id) : setRestoreId(user.id)}
                 />
               </Tooltip>
             )}
@@ -131,6 +145,7 @@ export function UserList({ onEdit }: UserListProps) {
           headings={[
             { title: 'Email', id: 'email' },
             { title: 'Vai trò', id: 'role' },
+            { title: 'Trạng thái', id: 'status' },
             { title: 'Ngày tạo', id: 'createdAt' },
             { title: 'Thao tác', alignment: 'end' },
           ]}
@@ -150,9 +165,9 @@ export function UserList({ onEdit }: UserListProps) {
       <Modal
         open={!!deleteId}
         onClose={() => setDeleteId(null)}
-        title="Xác nhận xóa người dùng?"
+        title="Xác nhận khóa người dùng?"
         primaryAction={{
-          content: 'Xóa người dùng',
+          content: 'Khóa người dùng',
           onAction: handleDelete,
           destructive: true,
           loading: deleteMutation.isPending,
@@ -166,7 +181,30 @@ export function UserList({ onEdit }: UserListProps) {
       >
         <Modal.Section>
           <Text as="p">
-            Bạn có chắc chắn muốn xóa người dùng này? Hành động này không thể hoàn tác và người dùng sẽ mất quyền truy cập vào hệ thống ngay lập tức.
+            Bạn có chắc chắn muốn khóa người dùng này? Người dùng sẽ bị mất quyền đăng nhập và truy cập vào hệ thống ngay lập tức.
+          </Text>
+        </Modal.Section>
+      </Modal>
+
+      <Modal
+        open={!!restoreId}
+        onClose={() => setRestoreId(null)}
+        title="Xác nhận khôi phục người dùng?"
+        primaryAction={{
+          content: 'Mở khóa',
+          onAction: handleRestore,
+          loading: restoreMutation.isPending,
+        }}
+        secondaryActions={[
+          {
+            content: 'Hủy bỏ',
+            onAction: () => setRestoreId(null),
+          },
+        ]}
+      >
+        <Modal.Section>
+          <Text as="p">
+            Bạn có chắc chắn muốn mở khóa người dùng này? Người dùng sẽ có thể đăng nhập lại vào hệ thống.
           </Text>
         </Modal.Section>
       </Modal>

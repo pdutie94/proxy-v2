@@ -19,6 +19,21 @@ export function LoginForm() {
   const onSubmit = async (data: LoginInput) => {
     setLoading(true);
     try {
+      // 1. Pre-check user status to show custom errors without NextAuth swallowing them
+      const res = await fetch('/api/auth/check-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: data.email })
+      });
+      const statusData = await res.json();
+      
+      if (!statusData.success && statusData.error === 'AccountLocked') {
+        toast.error('Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.');
+        setLoading(false);
+        return;
+      }
+
+      // 2. Proceed with NextAuth signin
       const result = await signIn('credentials', {
         email: data.email,
         password: data.password,

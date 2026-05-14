@@ -23,6 +23,10 @@ export class UserService {
     return userRepository.delete(id);
   }
 
+  async restoreUser(id: string) {
+    return userRepository.restore(id);
+  }
+
   async updateUser(id: string, data: Partial<UserSchema>) {
     const { password, ...rest } = data;
     const updateData: Prisma.UserUpdateInput = { ...rest };

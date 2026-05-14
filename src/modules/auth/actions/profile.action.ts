@@ -28,6 +28,10 @@ export async function updateProfileAction(data: UpdateProfileData) {
       return { success: false, message: 'Người dùng không tồn tại.' };
     }
 
+    if (user.isActive === false) {
+      return { success: false, message: 'Tài khoản của bạn đã bị khóa.' };
+    }
+
     interface UpdatePayload {
       name?: string | null;
       notificationsEnabled?: boolean;

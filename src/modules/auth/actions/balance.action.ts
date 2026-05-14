@@ -13,7 +13,9 @@ export async function getUserHeaderInfoAction() {
       balance: true,
       name: true,
       email: true,
-      role: true
+      role: true,
+      emailVerified: true,
+      isActive: true,
     }
   });
 
@@ -22,6 +24,8 @@ export async function getUserHeaderInfoAction() {
   return { 
     balance: Number(user.balance || 0),
     displayName: user.name || user.email || 'Người dùng',
-    role: user.role
+    role: user.role,
+    emailVerified: user.emailVerified,
+    isActive: user.isActive,
   };
 }

@@ -19,6 +19,20 @@ export async function createPendingOrderAction(input: PurchaseInput) {
   if (!session?.user?.id) {
     return { success: false, message: 'Vui lòng đăng nhập để tiếp tục.' };
   }
+  
+  const user = await prisma.user.findUnique({ where: { id: session.user.id } });
+  
+  if (!user) {
+    return { success: false, message: 'Không tìm thấy người dùng.' };
+  }
+
+  if (user.isActive === false) {
+    return { success: false, message: 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.' };
+  }
+
+  if (!user.emailVerified) {
+    return { success: false, message: 'Vui lòng xác thực email để thực hiện mua hàng.' };
+  }
 
   try {
     // Validate: phải có server ONLINE tại location này trước khi tạo đơn
@@ -67,6 +81,20 @@ export async function purchaseProxyAction(input: PurchaseInput) {
   const session = await auth();
   if (!session?.user?.id) {
     return { success: false, message: 'Vui lòng đăng nhập để tiếp tục.' };
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: session.user.id } });
+  
+  if (!user) {
+    return { success: false, message: 'Không tìm thấy người dùng.' };
+  }
+
+  if (user.isActive === false) {
+    return { success: false, message: 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.' };
+  }
+
+  if (!user.emailVerified) {
+    return { success: false, message: 'Vui lòng xác thực email để thực hiện mua hàng.' };
   }
 
   try {
@@ -180,6 +208,20 @@ export async function payOrderAction(orderId: string) {
   const session = await auth();
   if (!session?.user?.id) {
     return { success: false, message: 'Vui lòng đăng nhập để tiếp tục.' };
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: session.user.id } });
+  
+  if (!user) {
+    return { success: false, message: 'Không tìm thấy người dùng.' };
+  }
+
+  if (user.isActive === false) {
+    return { success: false, message: 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.' };
+  }
+
+  if (!user.emailVerified) {
+    return { success: false, message: 'Vui lòng xác thực email để thực hiện thanh toán.' };
   }
 
   try {

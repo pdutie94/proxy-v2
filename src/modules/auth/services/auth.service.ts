@@ -2,6 +2,9 @@ import { userRepository } from '../repositories/user.repository';
 import { hash } from 'bcryptjs';
 import { RegisterInput } from '../types';
 
+import { settingsService } from '@/modules/settings/services/settings.service';
+import { sendVerificationEmail } from '@/lib/email';
+
 export class AuthService {
   async register(input: RegisterInput) {
     const existingUser = await userRepository.findByEmail(input.email);
@@ -10,7 +13,20 @@ export class AuthService {
     }
 
     const hashedPassword = await hash(input.password, 12);
-    const verificationToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    
+    // Kiểm tra cấu hình có bắt buộc xác thực email không
+    const requireVerification = await settingsService.getSetting('REQUIRE_EMAIL_VERIFICATION', 'false');
+    
+    let verificationToken = null;
+    let emailVerified = null;
+
+    if (requireVerification === 'true') {
+      // Mã OTP 6 số ngẫu nhiên
+      verificationToken = Math.floor(100000 + Math.random() * 900000).toString();
+    } else {
+      // Nếu không bắt buộc, tự động đánh dấu là đã xác thực
+      emailVerified = new Date();
+    }
 
     const user = await userRepository.create({
       email: input.email,
@@ -18,10 +34,16 @@ export class AuthService {
       role: 'USER',
       balance: 0,
       verificationToken,
+      emailVerified,
     });
 
-    // TODO: Send real email here
-    console.log(`[AuthService] Đã đăng ký User ${user.email}. Verification Token: ${verificationToken}`);
+    if (requireVerification === 'true' && verificationToken) {
+      try {
+        await sendVerificationEmail(user.email, verificationToken);
+      } catch (e) {
+        console.error("Lỗi gửi email xác nhận:", e);
+      }
+    }
     
     return user;
   }

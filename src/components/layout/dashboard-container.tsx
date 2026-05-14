@@ -50,6 +50,7 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
   const logo = {
     width: 32,
     topBarSource: "/logo.png",
+    source: "/logo.png",
     url: "/dashboard",
     accessibilityLabel: "ProxyV2 Logo",
   };
@@ -109,7 +110,7 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
         ]}
         name={userData?.displayName || session?.user?.name || session?.user?.email || "Quản trị viên"}
         avatar="data:image/svg+xml,%3Csvg viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill='white' d='M10 11c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E"
-        initials=""
+        initials={(userData?.displayName || session?.user?.name || session?.user?.email || "A").charAt(0).toUpperCase()}
         open={isUserMenuOpen}
         onToggle={toggleUserMenuOpen}
       />

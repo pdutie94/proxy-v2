@@ -101,6 +101,7 @@ model User {
   notificationsEnabled Boolean @default(true)
   emailVerified DateTime?
   verificationToken String?
+  isActive     Boolean       @default(true)
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   proxies      Proxy[]
@@ -237,4 +238,11 @@ model Transaction {
   createdAt DateTime        @default(now())
 
   @@index([userId])
+}
+
+model SystemSetting {
+  key       String   @id
+  value     String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
