@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
     cpus: 1,
     workerThreads: false,
     staticGenerationMaxConcurrency: 1,
+    turbopackMemoryLimit: 1024 * 1024 * 1024, // Giới hạn 1GB RAM cho Turbopack
   },
   images: {
     remotePatterns: [
