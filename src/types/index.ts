@@ -4,6 +4,7 @@ export interface AuthUser {
   id: string;
   email: string;
   role: Role;
+  emailVerified?: Date | null;
 }
 
 export interface ProxyWithServer extends Proxy {
