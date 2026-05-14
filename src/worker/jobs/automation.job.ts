@@ -140,28 +140,42 @@ export async function processAutomation(_job: Job) {
   for (const server of serversToRotate) {
     // Tìm lần xoay cuối cùng của server này
     const lastRotation = await prisma.proxy.findFirst({
-      where: { serverId: server.id },
+      where: { serverId: server.id, lastRotatedAt: { not: null } },
       orderBy: { lastRotatedAt: 'desc' }
     });
 
+    // Hoặc lấy thời điểm proxy cũ nhất được tạo nếu chưa từng xoay
+    const oldestProxy = await prisma.proxy.findFirst({
+      where: { serverId: server.id },
+      orderBy: { createdAt: 'asc' }
+    });
+
     const intervalMs = server.rotationInterval * 60 * 1000;
+    const lastTime = lastRotation?.lastRotatedAt || oldestProxy?.createdAt || now;
     
-    // Nếu chưa từng xoay hoặc đã quá interval
-    if (!lastRotation?.lastRotatedAt || (now.getTime() - lastRotation.lastRotatedAt.getTime() > intervalMs)) {
+    // Nếu đã quá interval kể từ lần xoay cuối (hoặc từ lúc tạo proxy đầu tiên)
+    if (now.getTime() - lastTime.getTime() >= intervalMs) {
       console.log(`[Automation] Kích hoạt xoay IP cho server ${server.name} (${server.proxies.length} proxy)`);
       
-      for (const proxy of server.proxies) {
+      // Chia danh sách proxy thành các nhóm (chunk) 50 proxy mỗi job để tránh quá tải
+      const rotateChunkSize = 50;
+      for (let i = 0; i < server.proxies.length; i += rotateChunkSize) {
+        const chunk = server.proxies.slice(i, i + rotateChunkSize);
+        const proxyIds = chunk.map(p => p.id);
+
         const serverJob = await prisma.serverJob.create({
           data: {
             type: JobType.ROTATE_PROXY,
             serverId: server.id,
-            proxyId: proxy.id,
+            proxyId: null, // Null vì xử lý hàng loạt
             status: 'WAITING',
+            logs: `Bắt đầu xoay hàng loạt ${proxyIds.length} IP...`
           }
         });
 
         await addJob(JobType.ROTATE_PROXY, {
-          proxyId: proxy.id,
+          proxyIds: proxyIds,
+          serverId: server.id,
           jobId: serverJob.id,
         });
       }

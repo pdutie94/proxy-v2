@@ -1,6 +1,7 @@
 import { Job } from 'bullmq';
 import prisma from '../../lib/prisma';
 import { SSHService } from '../ssh/ssh.service';
+import { publishJobEvent } from '../utils/notifier';
 
 export async function processCheckGoogle(job: Job) {
   const { proxyId, jobId } = job.data;
@@ -77,6 +78,13 @@ export async function processCheckGoogle(job: Job) {
       data: { status: 'COMPLETED', finishedAt: new Date() }
     });
 
+    await publishJobEvent({
+      userId: proxy.userId,
+      jobType: 'CHECK_GOOGLE',
+      status: 'COMPLETED',
+      message: finalResult,
+    });
+
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     await addLog(`LỖI: ${message}`);
@@ -84,6 +92,17 @@ export async function processCheckGoogle(job: Job) {
       where: { id: jobId },
       data: { status: 'FAILED', finishedAt: new Date() }
     });
+
+    try {
+      const p = await prisma.proxy.findUnique({ where: { id: proxyId } });
+      await publishJobEvent({
+        userId: p?.userId || null,
+        jobType: 'CHECK_GOOGLE',
+        status: 'FAILED',
+        message: `Lỗi kiểm tra Google: ${message}`,
+      });
+    } catch { }
+
     throw error;
   } finally {
     try {

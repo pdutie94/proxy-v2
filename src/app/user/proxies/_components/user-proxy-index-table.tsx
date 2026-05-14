@@ -17,8 +17,10 @@ import {
   Icon,
   EmptyState,
   TextField,
+  Modal,
+  TextContainer,
 } from "@shopify/polaris";
-import { DuplicateIcon, RefreshIcon, SearchIcon, NoteIcon, ExportIcon, CheckIcon } from "@shopify/polaris-icons";
+import { DuplicateIcon, RefreshIcon, SearchIcon, NoteIcon, ExportIcon, CheckIcon, DeleteIcon } from "@shopify/polaris-icons";
 import { format } from "date-fns";
 import React, { useState, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
@@ -37,11 +39,10 @@ export function UserProxyIndexTable({ proxies: initialProxies }: UserProxyIndexT
     rotateProxyMutation, 
     checkGoogleMutation,
     bulkUpdateAutoRenewMutation,
-    proxies: liveProxies
-  } = useProxies();
-  
-  // Use live data if available, fallback to initial data from server
-  const displayProxies = liveProxies.length > 0 ? liveProxies : initialProxies;
+    deleteMutation,
+    bulkDeleteMutation,
+    proxies: displayProxies
+  } = useProxies(initialProxies);
 
   const { data: locationsData } = useLocations();
   const locations = locationsData ?? [];
@@ -57,6 +58,27 @@ export function UserProxyIndexTable({ proxies: initialProxies }: UserProxyIndexT
   const [filterPassword, setFilterPassword] = useState('');
   const [filterStatus, setFilterStatus] = useState<string[]>([]);
   const [filterLocationId, setFilterLocationId] = useState<string[]>([]);
+
+  // Delete Modal State
+  const [deleteConfirmState, setDeleteConfirmState] = useState<{ isOpen: boolean; id: string | null }>({
+    isOpen: false,
+    id: null,
+  });
+
+  const handleDeleteConfirm = useCallback(() => {
+    if (deleteConfirmState.id) {
+      deleteMutation.mutate(deleteConfirmState.id, {
+        onSuccess: () => setDeleteConfirmState({ isOpen: false, id: null })
+      });
+    } else {
+      bulkDeleteMutation.mutate(selectedResources, {
+        onSuccess: () => {
+          setSelectedResources([]);
+          setDeleteConfirmState({ isOpen: false, id: null });
+        }
+      });
+    }
+  }, [deleteConfirmState.id, selectedResources, deleteMutation, bulkDeleteMutation]);
 
   // Tabs: Tất cả / Còn hạn / Hết hạn
   const [itemStrings] = useState(['Tất cả', 'Còn hạn', 'Hết hạn']);
@@ -226,6 +248,11 @@ export function UserProxyIndexTable({ proxies: initialProxies }: UserProxyIndexT
       content: 'Tắt tự động gia hạn',
       onAction: () => bulkUpdateAutoRenewMutation.mutate({ ids: selectedResources, autoRenew: false }, { onSuccess: () => setSelectedResources([]) }),
     },
+    {
+      content: 'Xóa proxy',
+      destructive: true,
+      onAction: () => setDeleteConfirmState({ isOpen: true, id: null }),
+    },
   ];
 
   // Applied filters (tags shown below search bar)
@@ -378,6 +405,10 @@ export function UserProxyIndexTable({ proxies: initialProxies }: UserProxyIndexT
             <Tooltip content="Đổi IP (Rotate)">
               <Button icon={RefreshIcon} variant="tertiary" onClick={() => rotateProxyMutation.mutate(proxy.id)} loading={rotateProxyMutation.isPending && rotateProxyMutation.variables === proxy.id} disabled={proxy.status !== 'ACTIVE' || proxy.ipType !== 'IPv6'} />
             </Tooltip>
+            
+            <Tooltip content="Xóa Proxy">
+              <Button icon={DeleteIcon} variant="tertiary" tone="critical" onClick={() => setDeleteConfirmState({ isOpen: true, id: proxy.id })} loading={deleteMutation.isPending && deleteMutation.variables === proxy.id} />
+            </Tooltip>
           </InlineStack>
         </IndexTable.Cell>
       </IndexTable.Row>
@@ -508,6 +539,32 @@ export function UserProxyIndexTable({ proxies: initialProxies }: UserProxyIndexT
       >
         {rowMarkup}
       </IndexTable>
+
+      <Modal
+        open={deleteConfirmState.isOpen}
+        onClose={() => setDeleteConfirmState({ isOpen: false, id: null })}
+        title="Xác nhận xóa Proxy"
+        primaryAction={{
+          content: 'Xóa ngay',
+          destructive: true,
+          onAction: handleDeleteConfirm,
+          loading: deleteConfirmState.id ? deleteMutation.isPending : bulkDeleteMutation.isPending
+        }}
+        secondaryActions={[
+          {
+            content: 'Hủy',
+            onAction: () => setDeleteConfirmState({ isOpen: false, id: null }),
+          },
+        ]}
+      >
+        <Modal.Section>
+          <TextContainer>
+            <p>
+              Bạn có chắc chắn muốn xóa {deleteConfirmState.id ? 'proxy này' : `${selectedResources.length} proxy đã chọn`}? Thao tác này không thể hoàn tác và cấu hình proxy trên máy chủ sẽ bị xóa vĩnh viễn.
+            </p>
+          </TextContainer>
+        </Modal.Section>
+      </Modal>
     </Card>
   );
 }

@@ -18,6 +18,7 @@ import { signOut, useSession } from "next-auth/react";
 import { AuthUser } from '@/types';
 import { useQuery } from "@tanstack/react-query";
 import { getUserHeaderInfoAction } from "@/modules/auth/actions/balance.action";
+import { RealtimeProvider } from "@/components/providers/realtime-provider";
 
 interface DashboardContainerProps {
   children: React.ReactNode;
@@ -251,7 +252,9 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
         showMobileNavigation={isMobileOpen}
         onNavigationDismiss={toggleMobileOpen}
       >
-        {children}
+        <RealtimeProvider>
+          {children}
+        </RealtimeProvider>
       </Frame>
     </div>
   );

@@ -1,6 +1,7 @@
 import { Job } from 'bullmq';
 import prisma from '../../lib/prisma';
 import { SSHService } from '../ssh/ssh.service';
+import { publishJobEvent } from '../utils/notifier';
 
 export async function processSetupServer(job: Job) {
   const { serverId, jobId } = job.data;
@@ -334,7 +335,14 @@ EOF`;
       data: { status: 'COMPLETED', finishedAt: new Date() }
     });
 
-    await addLog('Hệ thống Super-V5.0.0 (Deep Clean) đã sẵn sàng.');
+    await publishJobEvent({
+      userId: null,
+      jobType: 'SETUP_SERVER',
+      status: 'COMPLETED',
+      message: `Cài đặt máy chủ thành công: ${server.host}`,
+    });
+
+    await addLog('Hoàn tất toàn bộ quá trình cài đặt Server.');
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     await addLog(`LỖI: ${message}`);
@@ -346,6 +354,14 @@ EOF`;
       where: { id: jobId },
       data: { status: 'FAILED', finishedAt: new Date() }
     });
+
+    await publishJobEvent({
+      userId: null,
+      jobType: 'SETUP_SERVER',
+      status: 'FAILED',
+      message: `Cài đặt máy chủ thất bại: ${message}`,
+    });
+
     throw error;
   } finally {
     await ssh.disconnect(serverId);

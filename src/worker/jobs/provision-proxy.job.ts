@@ -1,6 +1,7 @@
 import { Job } from 'bullmq';
 import prisma from '../../lib/prisma';
 import { sshService } from '../ssh/ssh.service';
+import { publishJobEvent } from '../utils/notifier';
 
 export async function processProvisionProxy(job: Job) {
   const { proxyId, jobId } = job.data;
@@ -82,6 +83,13 @@ export async function processProvisionProxy(job: Job) {
       data: { status: 'COMPLETED', finishedAt: new Date() }
     });
 
+    await publishJobEvent({
+      userId: proxy.userId,
+      jobType: 'PROVISION_PROXY',
+      status: 'COMPLETED',
+      message: `Khởi tạo Proxy thành công: ${proxy.server.host}:${proxy.port}`,
+    });
+
     await addLog(`Proxy đã sẵn sàng hoạt động.`);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
@@ -94,6 +102,18 @@ export async function processProvisionProxy(job: Job) {
       where: { id: jobId },
       data: { status: 'FAILED', finishedAt: new Date() }
     });
+    
+    // Fallback if proxy was found
+    try {
+      const p = await prisma.proxy.findUnique({ where: { id: proxyId } });
+      await publishJobEvent({
+        userId: p?.userId || null,
+        jobType: 'PROVISION_PROXY',
+        status: 'FAILED',
+        message: `Khởi tạo Proxy thất bại: ${message}`,
+      });
+    } catch { }
+    
     throw error;
   } finally {
     // Không ngắt kết nối SSH để giữ pool

@@ -13,9 +13,10 @@ import {
   SettingsIcon
 } from "@shopify/polaris-icons";
 import { usePathname, useRouter } from "next/navigation";
-import { signOut, useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
 import { getUserHeaderInfoAction } from "@/modules/auth/actions/balance.action";
+import { RealtimeProvider } from "@/components/providers/realtime-provider";
 
 export default function UserLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -305,7 +306,9 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
         showMobileNavigation={isMobileOpen}
         onNavigationDismiss={toggleMobileOpen}
       >
-        {children}
+        <RealtimeProvider>
+          {children}
+        </RealtimeProvider>
       </Frame>
     </div>
   );

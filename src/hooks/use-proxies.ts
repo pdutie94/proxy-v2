@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { ProxyWithServer } from '@/types';
 
-export function useProxies() {
+export function useProxies(initialData?: ProxyWithServer[]) {
   const queryClient = useQueryClient();
 
   const proxiesQuery = useQuery({
@@ -17,7 +17,8 @@ export function useProxies() {
       const proxies = query.state.data as ProxyWithServer[] | undefined;
       const hasProcessing = proxies?.some(p => p.status === 'CREATING');
       return hasProcessing ? 3000 : false;
-    }
+    },
+    initialData: initialData,
   });
 
   const createMutation = useMutation({
