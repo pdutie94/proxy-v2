@@ -13,7 +13,10 @@ import {
   Modal,
   Tooltip,
   BlockStack,
-  useBreakpoints
+  useBreakpoints,
+  IndexFilters,
+  useSetIndexFiltersMode,
+  ChoiceList
 } from "@shopify/polaris";
 import { 
   DeleteIcon, 
@@ -30,9 +33,10 @@ import { toast } from 'sonner';
 
 interface ServerListProps {
   onEdit: (server: Server) => void;
+  onAdd?: () => void;
 }
 
-export function ServerList({ onEdit }: ServerListProps) {
+export function ServerList({ onEdit, onAdd }: ServerListProps) {
   const { servers, isLoading, deleteMutation, setupMutation, resetMutation, syncMutation } = useServers();
   const queryClient = useQueryClient();
   const { smDown } = useBreakpoints();
@@ -41,6 +45,47 @@ export function ServerList({ onEdit }: ServerListProps) {
   const [activeConfirmServer, setActiveConfirmServer] = useState<Server | null>(null);
   const [page, setPage] = useState(1);
   const itemsPerPage = 10;
+
+  // Filters state
+  const [queryValue, setQueryValue] = useState('');
+  const [status, setStatus] = useState<string[]>([]);
+  const { mode, setMode } = useSetIndexFiltersMode();
+
+  const onHandleStatusChange = useCallback(
+    (value: string[]) => setStatus(value),
+    [],
+  );
+
+
+  const onHandleStatusRemove = useCallback(() => setStatus([]), []);
+  const onHandleQueryValueRemove = useCallback(() => setQueryValue(''), []);
+  const onHandleFiltersClearAll = useCallback(() => {
+    onHandleStatusRemove();
+    onHandleQueryValueRemove();
+  }, [onHandleStatusRemove, onHandleQueryValueRemove]);
+
+  const [itemStrings] = useState([
+    'Tất cả',
+    'Trực tuyến',
+    'Đang cài đặt',
+    'Lỗi',
+  ]);
+
+  const [selected, setSelected] = useState(0);
+
+  const filteredServers = servers.filter((server) => {
+    const matchesQuery = server.name.toLowerCase().includes(queryValue.toLowerCase()) || 
+                        server.host.toLowerCase().includes(queryValue.toLowerCase());
+    
+    const matchesTab = selected === 0 || 
+                      (selected === 1 && server.status === 'ONLINE') ||
+                      (selected === 2 && server.status === 'SETTING_UP') ||
+                      (selected === 3 && server.status === 'ERROR');
+
+    const matchesStatus = status.length === 0 || status.includes(server.status);
+
+    return matchesQuery && matchesTab && matchesStatus;
+  });
 
 
   const handleDelete = useCallback(() => {
@@ -66,9 +111,9 @@ export function ServerList({ onEdit }: ServerListProps) {
     plural: 'máy chủ',
   };
 
-  const totalPages = Math.ceil(servers.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredServers.length / itemsPerPage);
   const startIndex = (page - 1) * itemsPerPage;
-  const paginatedServers = servers.slice(startIndex, startIndex + itemsPerPage);
+  const paginatedServers = filteredServers.slice(startIndex, startIndex + itemsPerPage);
 
   const rowMarkup = paginatedServers.map(
     (server, index) => (
@@ -78,7 +123,11 @@ export function ServerList({ onEdit }: ServerListProps) {
             {server.name}
           </Text>
         </IndexTable.Cell>
-        <IndexTable.Cell>{server.host}</IndexTable.Cell>
+        <IndexTable.Cell>
+          <Text as="span" variant="bodyMd">
+            <span style={{ fontFamily: 'monospace' }}>{server.host}</span>
+          </Text>
+        </IndexTable.Cell>
         <IndexTable.Cell>
           <Badge tone={
             server.status === 'ONLINE' ? 'success' : 
@@ -95,7 +144,7 @@ export function ServerList({ onEdit }: ServerListProps) {
         <IndexTable.Cell>{server.maxProxies}</IndexTable.Cell>
         <IndexTable.Cell>
           <Text as="span" variant="bodyMd" fontWeight="medium">
-            {server.lastPort || '---'}
+            <span style={{ fontFamily: 'monospace' }}>{server.lastPort || '---'}</span>
           </Text>
         </IndexTable.Cell>
         <IndexTable.Cell>
@@ -214,9 +263,65 @@ export function ServerList({ onEdit }: ServerListProps) {
     <>
     <Box paddingInline={{ xs: '400', sm: '0' }}>
       <Card padding="0">
+        <IndexFilters
+          queryValue={queryValue}
+          queryPlaceholder="Tìm kiếm máy chủ..."
+          onQueryChange={(val) => setQueryValue(val)}
+          onQueryClear={() => setQueryValue('')}
+          cancelAction={{
+            onAction: onHandleFiltersClearAll,
+            disabled: false,
+            loading: false,
+          }}
+          tabs={itemStrings.map((item, index) => ({
+            content: item,
+            index,
+            id: item,
+            isLocked: index === 0,
+          }))}
+          selected={selected}
+          onSelect={setSelected}
+          mode={mode}
+          setMode={setMode}
+          filters={[
+            {
+              key: 'status',
+              label: 'Trạng thái',
+              filter: (
+                <ChoiceList
+                  title="Trạng thái"
+                  titleHidden
+                  choices={[
+                    { label: 'Trực tuyến', value: 'ONLINE' },
+                    { label: 'Đang cài đặt', value: 'SETTING_UP' },
+                    { label: 'Đang chờ', value: 'PENDING' },
+                    { label: 'Lỗi', value: 'ERROR' },
+                  ]}
+                  selected={status}
+                  onChange={onHandleStatusChange}
+                  allowMultiple
+                />
+              ),
+              shortcut: true,
+            },
+          ]}
+          onClearAll={onHandleFiltersClearAll}
+        />
         <IndexTable
           resourceName={resourceName}
-          itemCount={servers.length}
+          itemCount={filteredServers.length}
+          emptyState={(
+            <EmptyState
+              heading="Chưa có máy chủ nào"
+              action={onAdd ? {
+                content: 'Thêm máy chủ đầu tiên',
+                onAction: onAdd,
+              } : undefined}
+              image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png"
+            >
+              <p>Hãy thêm máy chủ để bắt đầu khởi tạo hệ thống Proxy của bạn.</p>
+            </EmptyState>
+          )}
           headings={[
             { title: 'Tên Máy chủ', id: 'name' },
             { title: 'Địa chỉ IP', id: 'host' },
@@ -231,7 +336,7 @@ export function ServerList({ onEdit }: ServerListProps) {
             hasPrevious: page > 1,
             onNext: () => setPage(page + 1),
             onPrevious: () => setPage(page - 1),
-            label: "",
+            label: `Trang ${page} / ${totalPages || 1}`,
           }}
         >
           {rowMarkup}

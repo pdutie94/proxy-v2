@@ -1,6 +1,6 @@
 'use client';
 
-import { Card, IndexTable, Badge, Button, Text, InlineStack } from '@shopify/polaris';
+import { Card, IndexTable, Badge, Button, Text, InlineStack, EmptyState } from '@shopify/polaris';
 import { format } from 'date-fns';
 import { approveTransactionAction, rejectTransactionAction } from '@/modules/wallet/actions/admin-transaction.action';
 import { toast } from 'sonner';
@@ -113,6 +113,14 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
       <IndexTable
         resourceName={resourceName}
         itemCount={transactions.length}
+        emptyState={(
+          <EmptyState
+            heading="Chưa có giao dịch nào"
+            image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png"
+          >
+            <p>Lịch sử nạp tiền và thanh toán của toàn bộ hệ thống sẽ hiển thị tại đây.</p>
+          </EmptyState>
+        )}
         headings={[
           { title: 'Người dùng' },
           { title: 'Số tiền' },

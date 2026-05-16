@@ -12,7 +12,8 @@ import {
   InlineStack,
   Modal,
   Tooltip,
-  useBreakpoints
+  useBreakpoints,
+  EmptyState
 } from "@shopify/polaris";
 import { EditIcon, LockIcon } from "@shopify/polaris-icons";
 import { format } from "date-fns";
@@ -142,6 +143,14 @@ export function UserList({ onEdit }: UserListProps) {
         <IndexTable
           resourceName={resourceName}
           itemCount={users.length}
+          emptyState={(
+            <EmptyState
+              heading="Chưa có người dùng nào"
+              image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png"
+            >
+              <p>Danh sách người dùng hiện đang trống. Người dùng mới sẽ hiển thị tại đây sau khi đăng ký.</p>
+            </EmptyState>
+          )}
           headings={[
             { title: 'Email', id: 'email' },
             { title: 'Vai trò', id: 'role' },

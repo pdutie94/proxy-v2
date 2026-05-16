@@ -8,6 +8,7 @@ import {
   Badge,
   Text,
   Button,
+  EmptyState,
   Box,
   SkeletonBodyText,
   InlineStack,
@@ -35,10 +36,11 @@ import { getCountdown } from '@/utils/date';
 import { ProxyWithServer, AuthUser } from '@/types';
 
 interface ProxyListProps {
-  onEdit: (proxy: Proxy) => void;
+  onEdit: (proxy: any) => void;
+  onAdd?: () => void;
 }
 
-export function ProxyList({ onEdit }: ProxyListProps) {
+export function ProxyList({ onEdit, onAdd }: ProxyListProps) {
   const { smDown } = useBreakpoints();
   const { 
     proxies, 
@@ -358,17 +360,23 @@ export function ProxyList({ onEdit }: ProxyListProps) {
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
               <Text as="span" variant="bodyMd" tone="subdued">IP:PORT</Text>
               <div style={{ flexGrow: 1, borderBottom: '1px dotted #E2E8F0' }}></div>
-              <Text as="span" variant="bodyMd" fontWeight="bold">{proxy.server?.host}:{proxy.port}</Text>
+              <Text as="span" variant="bodyMd" fontWeight="bold">
+                <span style={{ fontFamily: 'monospace' }}>{proxy.server?.host}:{proxy.port}</span>
+              </Text>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
               <Text as="span" variant="bodyMd" tone="subdued">Tài khoản</Text>
               <div style={{ flexGrow: 1, borderBottom: '1px dotted #E2E8F0' }}></div>
-              <Text as="span" variant="bodyMd" fontWeight="medium">{proxy.username}</Text>
+              <Text as="span" variant="bodyMd" fontWeight="medium">
+                <span style={{ fontFamily: 'monospace' }}>{proxy.username}</span>
+              </Text>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
               <Text as="span" variant="bodyMd" tone="subdued">Mật khẩu</Text>
               <div style={{ flexGrow: 1, borderBottom: '1px dotted #E2E8F0' }}></div>
-              <Text as="span" variant="bodyMd" fontWeight="medium">{proxy.password}</Text>
+              <Text as="span" variant="bodyMd" fontWeight="medium">
+                <span style={{ fontFamily: 'monospace' }}>{proxy.password}</span>
+              </Text>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
               <Text as="span" variant="bodyMd" tone="subdued">Loại</Text>
@@ -379,7 +387,9 @@ export function ProxyList({ onEdit }: ProxyListProps) {
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
                 <Text as="span" variant="bodyMd" tone="subdued">IPv6</Text>
                 <div style={{ flexGrow: 1, borderBottom: '1px dotted #E2E8F0' }}></div>
-                <Text as="span" variant="bodyMd">{proxy.ipv6}</Text>
+                <Text as="span" variant="bodyMd">
+                  <span style={{ fontFamily: 'monospace' }}>{proxy.ipv6}</span>
+                </Text>
               </div>
             )}
           </BlockStack>
@@ -608,6 +618,18 @@ export function ProxyList({ onEdit }: ProxyListProps) {
             plural: 'proxy',
           }}
           itemCount={paginatedProxies.length}
+          emptyState={(
+            <EmptyState
+              heading="Không tìm thấy proxy nào"
+              action={onAdd ? {
+                content: 'Tạo proxy mới',
+                onAction: onAdd,
+              } : undefined}
+              image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png"
+            >
+              <p>Hãy thử thay đổi bộ lọc hoặc tạo proxy mới để bắt đầu.</p>
+            </EmptyState>
+          )}
           selectedItemsCount={selectedResources.length}
           headings={headings}
           onSelectionChange={handleSelectionChange}
@@ -618,7 +640,7 @@ export function ProxyList({ onEdit }: ProxyListProps) {
             hasPrevious: page > 1,
             onNext: () => setPage(page + 1),
             onPrevious: () => setPage(page - 1),
-            label: "",
+            label: `Trang ${page} / ${totalPages || 1}`,
           }}
         >
           {rowMarkup}

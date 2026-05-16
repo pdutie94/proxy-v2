@@ -50,7 +50,7 @@ export default function ProxiesPage() {
         onAction: toggleModal,
       }}
     >
-      <ProxyList onEdit={handleEdit} />
+      <ProxyList onEdit={handleEdit} onAdd={toggleModal} />
 
       <Modal
         open={isModalOpen}

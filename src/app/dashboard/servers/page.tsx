@@ -42,7 +42,7 @@ export default function ServersPage() {
         onAction: toggleModal,
       }}
     >
-      <ServerList onEdit={handleEdit} />
+      <ServerList onEdit={handleEdit} onAdd={toggleModal} />
 
       <Modal
         open={isModalOpen}

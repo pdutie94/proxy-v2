@@ -1,20 +1,27 @@
 'use client';
 
-import Image from 'next/image';
-import { format, differenceInHours } from 'date-fns';
-import { toast } from 'sonner';
 import { 
-  Copy, 
-  Trash2, 
-  StickyNote, 
-  Eye, 
-  Clock, 
-  Hash,
-  User,
-  Key,
-  Globe
-} from 'lucide-react';
+  IndexTable, 
+  Card, 
+  Text, 
+  Badge, 
+  InlineStack, 
+  Tooltip, 
+  Button, 
+  BlockStack,
+  EmptyState
+} from '@shopify/polaris';
+import { 
+  ClipboardIcon, 
+  NoteIcon, 
+  ViewIcon
+} from '@shopify/polaris-icons';
+import { format } from 'date-fns';
+import { toast } from 'sonner';
 import { ProxyWithServer } from '@/types';
+import { copyToClipboard } from '@/utils/clipboard';
+import { getCountdown } from '@/utils/date';
+import Image from 'next/image';
 
 interface UserProxyTableProps {
   proxies: ProxyWithServer[];
@@ -22,126 +29,124 @@ interface UserProxyTableProps {
 
 export function UserProxyTable({ proxies }: UserProxyTableProps) {
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast.success('Đã sao chép!');
+  const handleCopy = (proxy: ProxyWithServer) => {
+    const text = `${proxy.server.host}:${proxy.port}:${proxy.username}:${proxy.password}`;
+    copyToClipboard(text).then(success => {
+      if (success) toast.success('Đã sao chép Proxy!');
+      else toast.error('Lỗi khi sao chép');
+    });
   };
 
-  const getRemainingTime = (date: Date) => {
-    const hours = differenceInHours(new Date(date), new Date());
-    if (hours < 0) return 'Hết hạn';
-    const days = Math.floor(hours / 24);
-    const remHours = hours % 24;
-    return `${days}d ${remHours}h`;
+  const resourceName = {
+    singular: 'proxy',
+    plural: 'proxy',
   };
+
+  const rowMarkup = proxies.map((proxy, index) => (
+    <IndexTable.Row id={proxy.id} key={proxy.id} position={index}>
+      <IndexTable.Cell>
+        <InlineStack gap="200" align="start" wrap={false}>
+          {proxy.server.location?.countryCode && (
+            <div style={{ marginTop: '4px' }}>
+              <Image 
+                src={`https://purecatamphetamine.github.io/country-flag-icons/3x2/${proxy.server.location.countryCode.toUpperCase()}.svg`} 
+                width={20} 
+                height={14}
+                alt={proxy.server.location.countryCode}
+                style={{ borderRadius: '2px', border: '1px solid #E2E8F0' }}
+              />
+            </div>
+          )}
+          <BlockStack gap="050">
+            <Text as="span" variant="bodyMd" fontWeight="bold">
+              {proxy.server.location?.name || 'Việt Nam'}
+            </Text>
+            <Badge size="small" tone="info">{proxy.ipType}</Badge>
+          </BlockStack>
+        </InlineStack>
+      </IndexTable.Cell>
+      
+      <IndexTable.Cell>
+        <Text as="span" variant="bodyMd">
+          <span style={{ fontFamily: 'monospace' }}>{proxy.server.host}:{proxy.port}</span>
+        </Text>
+      </IndexTable.Cell>
+
+      <IndexTable.Cell>
+        <BlockStack gap="050">
+          <Text as="span" variant="bodySm" tone="subdued">
+            <span style={{ fontFamily: 'monospace' }}>User: {proxy.username}</span>
+          </Text>
+          <Text as="span" variant="bodySm" tone="subdued">
+            <span style={{ fontFamily: 'monospace' }}>Pass: {proxy.password}</span>
+          </Text>
+        </BlockStack>
+      </IndexTable.Cell>
+
+      <IndexTable.Cell>
+        <BlockStack gap="050">
+          <Text as="span" variant="bodySm">
+            {proxy.expiresAt ? format(new Date(proxy.expiresAt), 'dd/MM/yy HH:mm') : 'Vĩnh viễn'}
+          </Text>
+          {proxy.expiresAt && (
+            <Text as="span" variant="bodyXs" tone="caution">
+              Còn {getCountdown(proxy.expiresAt)}
+            </Text>
+          )}
+        </BlockStack>
+      </IndexTable.Cell>
+
+      <IndexTable.Cell>
+        <Badge tone={proxy.status === 'ACTIVE' ? 'success' : 'attention'}>
+          {proxy.status === 'ACTIVE' ? 'Hoạt động' : 'Đang xử lý'}
+        </Badge>
+      </IndexTable.Cell>
+
+      <IndexTable.Cell>
+        <InlineStack align="end" gap="100">
+          <Tooltip content="Sao chép">
+            <Button icon={ClipboardIcon} variant="tertiary" onClick={() => handleCopy(proxy)} />
+          </Tooltip>
+          {proxy.comment && (
+            <Tooltip content={proxy.comment}>
+              <Button icon={NoteIcon} variant="tertiary" />
+            </Tooltip>
+          )}
+          <Button icon={ViewIcon} variant="tertiary" url={`/user/proxies/${proxy.id}`} />
+        </InlineStack>
+      </IndexTable.Cell>
+    </IndexTable.Row>
+  ));
 
   return (
-    <div className="w-full border border-slate-200 rounded-lg overflow-hidden bg-white">
-      {proxies.length === 0 ? (
-        <div className="py-16 text-center text-slate-400 text-sm font-medium">Bạn chưa thuê proxy nào</div>
-      ) : (
-        <div className="divide-y divide-slate-100">
-          {proxies.map((proxy) => (
-            <div key={proxy.id} className="p-4 flex flex-col lg:flex-row items-start gap-6 hover:bg-slate-50/50 transition-colors group">
-              {/* Status & Type */}
-              <div className="flex items-center gap-4 w-full lg:w-auto">
-                <input type="checkbox" className="w-4 h-4 accent-blue-600 cursor-pointer" />
-                <div className="flex flex-col items-center gap-1.5 min-w-[50px]">
-                   {proxy.server.location?.countryCode ? (
-                     <Image 
-                       src={`https://purecatamphetamine.github.io/country-flag-icons/3x2/${proxy.server.location.countryCode.toUpperCase()}.svg`} 
-                       width={18} 
-                       height={12}
-                       alt={proxy.server.location.countryCode}
-                       style={{ 
-                         borderRadius: '1px', 
-                         border: '1px solid #E2E8F0',
-                         display: 'block' 
-                       }}
-                     />
-                   ) : (
-                     <Globe className="w-5 h-5 text-slate-300" />
-                   )}
-                   <span className="bg-red-600 text-white text-xs font-black px-1.5 py-0.5 rounded uppercase leading-none">
-                     {proxy.ipType}
-                   </span>
-                </div>
-              </div>
-
-              {/* Connection Info - Compact Grid */}
-              <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
-                <div className="space-y-1">
-                   <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 uppercase tracking-tighter">
-                      <Globe className="w-2.5 h-2.5" /> IP:PORT
-                   </div>
-                   <div className="text-sm font-bold text-slate-900 font-mono tracking-tight flex items-center gap-2 group/copy">
-                      {proxy.server.host}:{proxy.port}
-                      <button onClick={() => copyToClipboard(`${proxy.server.host}:${proxy.port}`)} className="opacity-0 group-hover/copy:opacity-100 p-1 hover:bg-slate-200 rounded transition-all">
-                        <Copy className="w-3 h-3 text-slate-400" />
-                      </button>
-                   </div>
-                </div>
-
-                <div className="space-y-1">
-                   <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 uppercase tracking-tighter">
-                      <User className="w-2.5 h-2.5" /> Tài khoản
-                   </div>
-                   <div className="text-sm font-bold text-slate-900 font-mono">{proxy.username}</div>
-                </div>
-
-                <div className="space-y-1">
-                   <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 uppercase tracking-tighter">
-                      <Key className="w-2.5 h-2.5" /> Mật khẩu
-                   </div>
-                   <div className="text-sm font-bold text-slate-900 font-mono">{proxy.password}</div>
-                </div>
-
-                <div className="space-y-1">
-                   <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 uppercase tracking-tighter">
-                      <Hash className="w-2.5 h-2.5" /> Giao thức
-                   </div>
-                   <div className="text-xs font-bold text-slate-500 uppercase">HTTP/Socks5</div>
-                </div>
-              </div>
-
-              {/* Expiration Info - Tighter */}
-              <div className="w-full lg:w-44 flex flex-row lg:flex-col justify-between lg:justify-start gap-2 pt-2 lg:pt-0">
-                <div className="flex lg:flex-col lg:items-end gap-2 lg:gap-1">
-                   <span className="text-xs font-bold uppercase text-slate-400">Hết hạn:</span>
-                   <span className="text-xs font-bold text-amber-600">{proxy.expiresAt ? format(new Date(proxy.expiresAt), 'dd/MM/yy HH:mm') : 'N/A'}</span>
-                </div>
-                <div className="flex lg:flex-col lg:items-end gap-2 lg:gap-1">
-                   <span className="text-xs font-bold uppercase text-slate-400">Còn lại:</span>
-                   <span className="bg-amber-100 text-amber-700 text-xs font-black px-1.5 py-0.5 rounded flex items-center gap-1">
-                     <Clock className="w-2.5 h-2.5" />
-                     {proxy.expiresAt ? getRemainingTime(new Date(proxy.expiresAt)) : 'N/A'}
-                   </span>
-                </div>
-              </div>
-
-              {/* Action Buttons - Compact */}
-              <div className="w-full lg:w-auto flex items-center justify-end gap-1 pt-4 lg:pt-0 border-t lg:border-t-0 border-slate-100">
-                 <button className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-md transition-all" title="Ghi chú">
-                    <StickyNote className="w-4 h-4" />
-                 </button>
-                 <button 
-                  onClick={() => copyToClipboard(`${proxy.server.host}:${proxy.port}:${proxy.username}:${proxy.password}`)}
-                  className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-all"
-                  title="Sao chép tất cả"
-                 >
-                    <Copy className="w-4 h-4" />
-                 </button>
-                 <button className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-all" title="Xem">
-                    <Eye className="w-4 h-4" />
-                 </button>
-                 <button className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-all" title="Xóa">
-                    <Trash2 className="w-4 h-4" />
-                 </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+    <Card padding="0">
+      <IndexTable
+        resourceName={resourceName}
+        itemCount={proxies.length}
+        emptyState={(
+          <EmptyState
+            heading="Bạn chưa có Proxy nào"
+            action={{
+              content: 'Mua Proxy đầu tiên',
+              url: '/',
+            }}
+            image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png"
+          >
+            <p>Hãy thuê proxy để bắt đầu trải nghiệm dịch vụ của chúng tôi.</p>
+          </EmptyState>
+        )}
+        headings={[
+          { title: 'Quốc gia' },
+          { title: 'IP:Port' },
+          { title: 'Thông tin đăng nhập' },
+          { title: 'Hạn dùng' },
+          { title: 'Trạng thái' },
+          { title: 'Thao tác', alignment: 'end' },
+        ]}
+        selectable={false}
+      >
+        {rowMarkup}
+      </IndexTable>
+    </Card>
   );
 }
