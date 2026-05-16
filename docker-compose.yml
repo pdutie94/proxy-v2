@@ -1,4 +1,14 @@
 services:
+  app:
+    build: .
+    container_name: proxy-v2-app
+    restart: always
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mysql
+      - redis
+
   mysql:
     image: mysql:8.0
     container_name: proxy-v2-mysql
