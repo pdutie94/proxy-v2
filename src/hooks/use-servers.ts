@@ -1,6 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Server } from '@prisma/client';
+import { Server, Location } from '@prisma/client';
 import { toast } from 'sonner';
+
+export type ServerWithLocation = Server & {
+  location?: Location | null;
+};
 
 export function useServers() {
   const queryClient = useQueryClient();
@@ -11,10 +15,10 @@ export function useServers() {
       const res = await fetch('/api/servers');
       const data = await res.json();
       if (!data.success) throw new Error(data.message);
-      return data.data as Server[];
+      return data.data as ServerWithLocation[];
     },
     refetchInterval: (query) => {
-      const servers = query.state.data as Server[];
+      const servers = query.state.data as ServerWithLocation[];
       // Poll nếu có bất kỳ server nào đang cài đặt hoặc vừa mới reset (PENDING)
       if (servers?.some(s => s.status === 'SETTING_UP' || s.status === 'PENDING')) {
         return 3000; 

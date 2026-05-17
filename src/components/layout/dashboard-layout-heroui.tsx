@@ -1,5 +1,6 @@
 "use client";
 
+import { Icon } from '@iconify/react';
 import React, { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
@@ -7,22 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getUserHeaderInfoAction } from "@/modules/auth/actions/balance.action";
 import { RealtimeProvider } from "@/components/providers/realtime-provider";
 import { AuthUser } from "@/types";
-import { 
-  Home, 
-  Server, 
-  MapPin, 
-  ShieldCheck, 
-  Users, 
-  Receipt, 
-  History, 
-  Settings, 
-  LogOut, 
-  Menu, 
-  X, 
-  Bell, 
-  Plus,
-  ChevronDown
-} from "lucide-react";
+
 import { 
   Avatar, 
   Button, 
@@ -62,20 +48,20 @@ export function DashboardLayoutHeroUI({ children }: DashboardLayoutHeroUIProps) 
   const navigationItems = [
     {
       label: "Bảng điều khiển",
-      icon: Home,
+      icon: "lucide:home",
       url: "/dashboard",
       active: pathname === "/dashboard",
     },
     ...(isAdmin ? [
       {
         label: "Máy chủ",
-        icon: Server,
+        icon: "lucide:server",
         url: "/dashboard/servers",
         active: pathname.startsWith("/dashboard/servers"),
       },
       {
         label: "Vị trí",
-        icon: MapPin,
+        icon: "lucide:map-pin",
         url: "/dashboard/locations",
         active: pathname.startsWith("/dashboard/locations"),
       },
@@ -83,7 +69,7 @@ export function DashboardLayoutHeroUI({ children }: DashboardLayoutHeroUIProps) 
     ...(isAdmin || isModerator ? [
       {
         label: "Proxy",
-        icon: ShieldCheck,
+        icon: "lucide:shield-check",
         url: "/dashboard/proxies",
         active: pathname.startsWith("/dashboard/proxies"),
       },
@@ -91,13 +77,13 @@ export function DashboardLayoutHeroUI({ children }: DashboardLayoutHeroUIProps) 
     ...(isAdmin ? [
       {
         label: "Người dùng",
-        icon: Users,
+        icon: "lucide:users",
         url: "/dashboard/users",
         active: pathname.startsWith("/dashboard/users"),
       },
       {
         label: "Giao dịch",
-        icon: Receipt,
+        icon: "lucide:receipt",
         url: "/dashboard/transactions",
         active: pathname.startsWith("/dashboard/transactions"),
       },
@@ -105,7 +91,7 @@ export function DashboardLayoutHeroUI({ children }: DashboardLayoutHeroUIProps) 
     ...(isAdmin || isModerator ? [
       {
         label: "Nhật ký hệ thống",
-        icon: History,
+        icon: "lucide:history",
         url: "/dashboard/logs",
         active: pathname.startsWith("/dashboard/logs"),
       },
@@ -113,7 +99,7 @@ export function DashboardLayoutHeroUI({ children }: DashboardLayoutHeroUIProps) 
     ...(isAdmin ? [
       {
         label: "Cài đặt",
-        icon: Settings,
+        icon: "lucide:settings",
         url: "/dashboard/settings",
         active: pathname.startsWith("/dashboard/settings"),
       },
@@ -136,7 +122,7 @@ export function DashboardLayoutHeroUI({ children }: DashboardLayoutHeroUIProps) 
 
   return (
     <RealtimeProvider>
-      <div className="flex min-h-screen bg-slate-50 text-slate-800 antialiased font-sans">
+      <div className="flex min-h-screen bg-slate-50 text-slate-800 antialiased">
         {/* DESKTOP SIDEBAR */}
         <aside className="hidden lg:flex flex-col w-60 border-r border-slate-200 bg-white sticky top-0 h-screen shrink-0 z-30">
           {/* User profile header card */}
@@ -157,7 +143,7 @@ export function DashboardLayoutHeroUI({ children }: DashboardLayoutHeroUIProps) 
           {/* Navigation Links */}
           <nav className="flex-1 px-3 py-1 space-y-1 overflow-y-auto">
             {navigationItems.map((item, idx) => {
-              const Icon = item.icon;
+              
               return (
                 <button
                   key={idx}
@@ -168,7 +154,7 @@ export function DashboardLayoutHeroUI({ children }: DashboardLayoutHeroUIProps) 
                       : "text-slate-500 hover:bg-slate-100/70 hover:text-slate-900"
                   }`}
                 >
-                  <Icon className={`w-4 h-4 shrink-0 transition-colors ${
+                  <Icon icon={item.icon} className={`w-4 h-4 shrink-0 transition-colors ${
                     item.active ? "text-slate-900" : "text-slate-400 group-hover:text-slate-700"
                   }`} />
                   <span className="truncate">{item.label}</span>
@@ -183,7 +169,7 @@ export function DashboardLayoutHeroUI({ children }: DashboardLayoutHeroUIProps) 
               onClick={() => signOut()}
               className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-all duration-150"
             >
-              <LogOut className="w-4 h-4 text-red-400" />
+              <Icon icon="lucide:log-out" className="w-4 h-4 text-red-400"  />
               <span>Đăng xuất</span>
             </button>
           </div>
@@ -213,14 +199,14 @@ export function DashboardLayoutHeroUI({ children }: DashboardLayoutHeroUIProps) 
                   onClick={() => setIsMobileSidebarOpen(false)}
                   className="p-1 rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-900"
                 >
-                  <X className="w-4 h-4" />
+                  <Icon icon="lucide:x" className="w-4 h-4"  />
                 </button>
               </div>
 
               {/* Navigation Links */}
               <nav className="flex-1 px-3 py-1 space-y-1 overflow-y-auto">
                 {navigationItems.map((item, idx) => {
-                  const Icon = item.icon;
+                  
                   return (
                     <button
                       key={idx}
@@ -231,7 +217,7 @@ export function DashboardLayoutHeroUI({ children }: DashboardLayoutHeroUIProps) 
                           : "text-slate-500 hover:bg-slate-100/70 hover:text-slate-900"
                       }`}
                     >
-                      <Icon className={`w-4 h-4 shrink-0 transition-colors ${
+                      <Icon icon={item.icon} className={`w-4 h-4 shrink-0 transition-colors ${
                         item.active ? "text-slate-900" : "text-slate-400"
                       }`} />
                       <span className="truncate">{item.label}</span>
@@ -246,7 +232,7 @@ export function DashboardLayoutHeroUI({ children }: DashboardLayoutHeroUIProps) 
                   onClick={() => signOut()}
                   className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-all duration-150"
                 >
-                  <LogOut className="w-4 h-4 text-red-400" />
+                  <Icon icon="lucide:log-out" className="w-4 h-4 text-red-400"  />
                   <span>Đăng xuất</span>
                 </button>
               </div>
@@ -264,7 +250,7 @@ export function DashboardLayoutHeroUI({ children }: DashboardLayoutHeroUIProps) 
                 onClick={() => setIsMobileSidebarOpen(true)}
                 className="lg:hidden p-1.5 rounded-md text-slate-500 hover:bg-slate-50 hover:text-slate-800"
               >
-                <Menu className="w-5 h-5" />
+                <Icon icon="lucide:menu" className="w-5 h-5"  />
               </button>
               <h1 className="text-base font-semibold text-slate-900 tracking-tight">
                 {getPageTitle()}
@@ -293,7 +279,7 @@ export function DashboardLayoutHeroUI({ children }: DashboardLayoutHeroUIProps) 
                     className="text-slate-500 hover:text-slate-800 border-none hover:bg-slate-100 rounded-full w-8 h-8 flex items-center justify-center"
                   >
                     <div className="relative">
-                      <Bell className="w-4 h-4" />
+                      <Icon icon="lucide:bell" className="w-4 h-4"  />
                       <span className="absolute top-0 right-0 w-1.5 h-1.5 bg-red-500 rounded-full" />
                     </div>
                   </Button>
@@ -313,7 +299,7 @@ export function DashboardLayoutHeroUI({ children }: DashboardLayoutHeroUIProps) 
                       className="font-medium h-9 text-xs gap-1 shadow-sm hidden md:flex rounded-md"
                       onClick={() => router.push("/dashboard/servers?add=true")}
                     >
-                      <Plus className="w-3.5 h-3.5" />
+                      <Icon icon="lucide:plus" className="w-3.5 h-3.5"  />
                       <span>Thêm Server</span>
                     </Button>
                   </Tooltip.Trigger>
@@ -333,7 +319,7 @@ export function DashboardLayoutHeroUI({ children }: DashboardLayoutHeroUIProps) 
                     <Avatar className="text-white font-bold bg-gradient-to-tr from-blue-500 to-sky-400 cursor-pointer w-7 h-7 flex items-center justify-center text-[10px] rounded-full">
                       <Avatar.Fallback>{initials}</Avatar.Fallback>
                     </Avatar>
-                    <ChevronDown className="w-3.5 h-3.5 text-slate-400 hidden sm:block" />
+                    <Icon icon="lucide:chevron-down" className="w-3.5 h-3.5 text-slate-400 hidden sm:block"  />
                   </div>
                 </DropdownTrigger>
                 <Dropdown.Popover placement="bottom end" className="p-1 bg-white border border-slate-200 rounded-lg shadow-sm outline-none">

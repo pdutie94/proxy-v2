@@ -1,14 +1,9 @@
 "use client";
 
+import { Icon } from '@iconify/react';
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from "@heroui/react";
-import { 
-  CheckCircle2, 
-  Clock, 
-  Terminal, 
-  X,
-  AlertTriangle
-} from "lucide-react";
+
 import { format } from 'date-fns';
 
 interface JobStatus {
@@ -145,14 +140,14 @@ export const JobProgressModal = ({ jobId, open, onClose, onCompleted }: JobProgr
         {/* Modal Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50/50">
           <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
-            <Terminal className="w-4 h-4 shrink-0 text-slate-500" />
+            <Icon icon="lucide:terminal" className="w-4 h-4 shrink-0 text-slate-500"  />
             {getJobTypeLabel(job?.type || '')}
           </h3>
           <button 
             onClick={onClose}
             className="text-slate-400 hover:text-slate-600 cursor-pointer p-1 rounded-lg hover:bg-slate-100 transition-colors"
           >
-            <X className="w-4 h-4" />
+            <Icon icon="lucide:x" className="w-4 h-4"  />
           </button>
         </div>
 
@@ -178,12 +173,12 @@ export const JobProgressModal = ({ jobId, open, onClose, onCompleted }: JobProgr
             {/* Timestamps */}
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-slate-400 text-[10px]">
               <div className="flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5" />
+                <Icon icon="lucide:clock" className="w-3.5 h-3.5"  />
                 <span>Bắt đầu: {job?.startedAt ? format(new Date(job.startedAt), 'HH:mm:ss') : '--:--:--'}</span>
               </div>
               {job?.finishedAt && (
                 <div className="flex items-center gap-1">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <Icon icon="lucide:check-circle2" className="w-3.5 h-3.5"  />
                   <span>Kết thúc: {format(new Date(job.finishedAt), 'HH:mm:ss')}</span>
                 </div>
               )}
@@ -192,7 +187,7 @@ export const JobProgressModal = ({ jobId, open, onClose, onCompleted }: JobProgr
 
           {error && (
             <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-lg text-rose-600 font-semibold flex gap-1.5 items-start">
-              <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+              <Icon icon="lucide:alert-triangle" className="w-4 h-4 shrink-0 mt-0.5"  />
               <span>{error}</span>
             </div>
           )}
@@ -244,7 +239,7 @@ export const JobProgressModal = ({ jobId, open, onClose, onCompleted }: JobProgr
 
           {job?.status === 'COMPLETED' && (
             <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-700 font-semibold flex gap-1.5 items-start">
-              <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-emerald-600" />
+              <Icon icon="lucide:check-circle2" className="w-4 h-4 shrink-0 mt-0.5 text-emerald-600"  />
               <div>
                 <p className="font-bold">Hoàn tất thành công</p>
                 <p className="text-[10px] font-normal text-emerald-600/90 mt-0.5">Máy chủ đã được thiết lập và sẵn sàng hoạt động.</p>
@@ -254,7 +249,7 @@ export const JobProgressModal = ({ jobId, open, onClose, onCompleted }: JobProgr
 
           {job?.status === 'FAILED' && (
             <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-lg text-rose-700 font-semibold flex gap-1.5 items-start">
-              <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600" />
+              <Icon icon="lucide:alert-triangle" className="w-4 h-4 shrink-0 mt-0.5 text-rose-600"  />
               <div>
                 <p className="font-bold">{isPolling ? "Đang thử lại..." : "Lỗi thực hiện"}</p>
                 <p className="text-[10px] font-normal text-rose-600/90 mt-0.5">

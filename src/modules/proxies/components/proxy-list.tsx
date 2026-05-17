@@ -46,6 +46,7 @@ export function ProxyList({ onEdit }: ProxyListProps) {
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const itemsPerPage = 20;
+  const [openPopoverId, setOpenPopoverId] = useState<string | null>(null);
 
   // Extract unique IP types and user emails dynamically
   const uniqueIpTypes = useMemo(() => {
@@ -338,7 +339,7 @@ export function ProxyList({ onEdit }: ProxyListProps) {
     <div className="w-full">
       {/* Sleek Floating Batch Actions Bar */}
       {selectedIds.length > 0 && (
-        <div className="flex flex-wrap items-center justify-between gap-3 px-3 py-2 mb-3 bg-blue-50/50 border border-blue-200/50 rounded-lg animate-fade-in text-[13px] font-medium text-blue-700 shadow-none">
+        <div className="flex flex-wrap items-center justify-between gap-3 px-3 py-2 mb-3 bg-blue-50/50 border border-blue-200/50 rounded-lg animate-fade-in  font-medium text-blue-700 shadow-none">
           <div className="flex items-center gap-2">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
@@ -721,7 +722,7 @@ export function ProxyList({ onEdit }: ProxyListProps) {
                       </Checkbox>
                     </Table.Cell>
                     {isColumnVisible('server') && (
-                      <Table.Cell className="align-top text-[13px]">
+                      <Table.Cell className="align-top ">
                         <div className="flex flex-col gap-0.5">
                           <span className="font-medium text-slate-800">
                             {proxy.server?.name || proxy.server?.host || 'Không xác định'}
@@ -735,33 +736,33 @@ export function ProxyList({ onEdit }: ProxyListProps) {
                       </Table.Cell>
                     )}
                     {isColumnVisible('info') && (
-                      <Table.Cell className="align-top text-[13px]">
+                      <Table.Cell className="align-top ">
                         <div className="space-y-1 max-w-[350px]">
                           <div className="flex items-center gap-2 whitespace-nowrap">
-                            <span className="text-slate-700 select-none">IP:PORT</span>
+                            <span className="text-slate-500 select-none">IP:PORT</span>
                             <div className="flex-1 border-b border-dotted border-slate-300"></div>
-                            <span className="font-semibold text-slate-800">{proxy.server?.host}:{proxy.port}</span>
+                            <span className="font-medium text-slate-700">{proxy.server?.host}:{proxy.port}</span>
                           </div>
                           <div className="flex items-center gap-2 whitespace-nowrap">
-                            <span className="text-slate-700 select-none">Tài khoản</span>
+                            <span className="text-slate-500 select-none">Tài khoản</span>
                             <div className="flex-1 border-b border-dotted border-slate-300"></div>
-                            <span className="font-semibold text-slate-800">{proxy.username}</span>
+                            <span className="font-medium text-slate-700">{proxy.username}</span>
                           </div>
                           <div className="flex items-center gap-2 whitespace-nowrap">
-                            <span className="text-slate-700 select-none">Mật khẩu</span>
+                            <span className="text-slate-500 select-none">Mật khẩu</span>
                             <div className="flex-1 border-b border-dotted border-slate-300"></div>
-                            <span className="font-semibold text-slate-800">{proxy.password}</span>
+                            <span className="font-medium text-slate-700">{proxy.password}</span>
                           </div>
                           <div className="flex items-center gap-2 whitespace-nowrap">
-                            <span className="text-slate-700 select-none">Loại</span>
+                            <span className="text-slate-500 select-none">Loại</span>
                             <div className="flex-1 border-b border-dotted border-slate-300"></div>
-                            <span className="font-semibold text-slate-800 uppercase bg-slate-100 px-1 rounded">HTTPS/SOCKS5</span>
+                            <span className="text-slate-700 uppercase bg-slate-100 px-1 rounded">HTTPS/SOCKS5</span>
                           </div>
                           {proxy.ipv6 && (
                             <div className="flex items-center gap-2 whitespace-nowrap">
-                              <span className="text-slate-700 select-none">IPv6</span>
+                              <span className="text-slate-500 select-none">IPv6</span>
                               <div className="flex-1 border-b border-dotted border-slate-300"></div>
-                              <span className="text-slate-800 overflow-hidden text-ellipsis max-w-[200px]" title={proxy.ipv6}>
+                              <span className="text-slate-700 overflow-hidden text-ellipsis max-w-[200px]" title={proxy.ipv6}>
                                 {proxy.ipv6}
                               </span>
                             </div>
@@ -770,36 +771,44 @@ export function ProxyList({ onEdit }: ProxyListProps) {
                       </Table.Cell>
                     )}
                     {isColumnVisible('expiration') && (
-                      <Table.Cell className="align-top text-[13px]">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2 whitespace-nowrap">
-                            <span className="text-slate-700 select-none">Hết hạn</span>
-                            <div className="flex-1 border-b border-dotted border-slate-300"></div>
-                            <span className={`font-medium ${proxy.autoRenew ? "text-emerald-600" : "text-amber-600"}`}>
-                              {proxy.expiresAt ? format(new Date(proxy.expiresAt), 'dd/MM/yyyy HH:mm') : 'Vĩnh viễn'}
-                            </span>
-                          </div>
-                          {proxy.expiresAt && (
-                            <>
+                      <Table.Cell className="align-top ">
+                        {(() => {
+                          const isExpired = proxy.expiresAt ? new Date(proxy.expiresAt) <= new Date() : false;
+                          const valueColorClass = isExpired 
+                            ? "text-slate-400" 
+                            : (proxy.autoRenew ? "text-emerald-600" : "text-amber-600");
+                          return (
+                            <div className="space-y-1">
                               <div className="flex items-center gap-2 whitespace-nowrap">
-                                <span className="text-slate-700 select-none">Còn lại</span>
+                                <span className="text-slate-700 select-none">Hết hạn</span>
                                 <div className="flex-1 border-b border-dotted border-slate-300"></div>
-                                <span className={`font-medium ${proxy.autoRenew ? "text-emerald-600" : "text-amber-600"}`}>
-                                  {getCountdown(proxy.expiresAt)}
+                                <span className={`font-medium ${valueColorClass}`}>
+                                  {proxy.expiresAt ? format(new Date(proxy.expiresAt), 'dd/MM/yyyy HH:mm') : 'Vĩnh viễn'}
                                 </span>
                               </div>
-                              {proxy.autoRenew && (
-                                <div className="flex items-center gap-2 whitespace-nowrap">
-                                  <span className="text-slate-700 select-none">Gia hạn tự động</span>
-                                  <div className="flex-1 border-b border-dotted border-slate-300"></div>
-                                  <span className="text-emerald-600 font-medium flex items-center gap-0.5">
-                                    <Icon icon="lucide:check" width={14} height={14} className="shrink-0" />
-                                  </span>
-                                </div>
+                              {proxy.expiresAt && (
+                                <>
+                                  <div className="flex items-center gap-2 whitespace-nowrap">
+                                    <span className="text-slate-700 select-none">Còn lại</span>
+                                    <div className="flex-1 border-b border-dotted border-slate-300"></div>
+                                    <span className={`font-medium ${valueColorClass}`}>
+                                      {getCountdown(proxy.expiresAt)}
+                                    </span>
+                                  </div>
+                                  {proxy.autoRenew && !isExpired && (
+                                    <div className="flex items-center gap-2 whitespace-nowrap">
+                                      <span className="text-slate-700 select-none">Gia hạn tự động</span>
+                                      <div className="flex-1 border-b border-dotted border-slate-300"></div>
+                                      <span className="text-emerald-600 font-medium flex items-center gap-0.5">
+                                        <Icon icon="lucide:check" width={14} height={14} className="shrink-0" />
+                                      </span>
+                                    </div>
+                                  )}
+                                </>
                               )}
-                            </>
-                          )}
-                        </div>
+                            </div>
+                          );
+                        })()}
                       </Table.Cell>
                     )}
                     {isColumnVisible('status') && (
@@ -856,8 +865,10 @@ export function ProxyList({ onEdit }: ProxyListProps) {
                           )}
                         </button>
 
-                        {/* More Actions Popover */}
-                        <Popover>
+                        <Popover
+                          isOpen={openPopoverId === proxy.id}
+                          onOpenChange={(open) => setOpenPopoverId(open ? proxy.id : null)}
+                        >
                           <PopoverTrigger>
                             <button
                               className="w-7 h-7 rounded-md bg-transparent hover:bg-slate-100 text-slate-500 hover:text-slate-800 border-none flex items-center justify-center cursor-pointer transition-colors"
@@ -868,7 +879,10 @@ export function ProxyList({ onEdit }: ProxyListProps) {
                           </PopoverTrigger>
                           <PopoverContent placement="bottom end" offset={4} className="p-2.5 w-40 bg-white border border-slate-200 rounded-lg shadow-md flex flex-col gap-2 z-50">
                             <button
-                              onClick={() => checkGoogleMutation.mutate(proxy.id, { onSuccess: (job) => setActiveJobId(job.id) })}
+                              onClick={() => {
+                                setOpenPopoverId(null);
+                                checkGoogleMutation.mutate(proxy.id, { onSuccess: (job) => setActiveJobId(job.id) });
+                              }}
                               disabled={proxy.status !== 'ACTIVE' || checkGoogleMutation.isPending}
                               className="w-full text-left text-xs font-medium text-slate-600 hover:text-slate-900 flex items-center gap-2 cursor-pointer border-none bg-transparent p-0 m-0 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
@@ -881,7 +895,10 @@ export function ProxyList({ onEdit }: ProxyListProps) {
                             </button>
 
                             <button
-                              onClick={() => onEdit(proxy)}
+                              onClick={() => {
+                                setOpenPopoverId(null);
+                                onEdit(proxy);
+                              }}
                               className="w-full text-left text-xs font-medium text-slate-600 hover:text-slate-900 flex items-center gap-2 cursor-pointer border-none bg-transparent p-0 m-0"
                             >
                               <Icon icon="lucide:edit-2" width={13} height={13} className="text-slate-400 shrink-0" />
@@ -890,7 +907,10 @@ export function ProxyList({ onEdit }: ProxyListProps) {
 
                             {canDelete && (
                               <button
-                                onClick={() => handleDeleteClick(proxy.id)}
+                                onClick={() => {
+                                  setOpenPopoverId(null);
+                                  handleDeleteClick(proxy.id);
+                                }}
                                 className="w-full text-left text-xs font-medium text-red-600 hover:text-red-700 flex items-center gap-2 cursor-pointer border-none bg-transparent p-0 m-0"
                               >
                                 <Icon icon="lucide:trash-2" width={13} height={13} className="text-red-400 shrink-0" />

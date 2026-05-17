@@ -2,8 +2,9 @@ import prisma from '@/lib/prisma';
 import { Server, Prisma } from '@prisma/client';
 
 export class ServerRepository {
-  async findAll(): Promise<Server[]> {
+  async findAll() {
     return prisma.server.findMany({
+      include: { location: true },
       orderBy: { createdAt: 'desc' },
     });
   }

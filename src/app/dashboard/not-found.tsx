@@ -1,9 +1,10 @@
 "use client";
 
+import { Icon } from '@iconify/react';
 import { Button } from "@heroui/react";
 import { useRouter } from "next/navigation";
 import { useCallback } from "react";
-import { HelpCircle } from "lucide-react";
+
 
 export default function DashboardNotFound() {
   const router = useRouter();
@@ -19,7 +20,7 @@ export default function DashboardNotFound() {
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] p-6 text-center space-y-5 bg-white border border-slate-200 rounded-xl max-w-md mx-auto my-12 shadow-sm">
       <div className="p-4 bg-slate-50 rounded-full border border-slate-100">
-        <HelpCircle className="w-12 h-12 text-slate-400" />
+        <Icon icon="lucide:help-circle" className="w-12 h-12 text-slate-400"  />
       </div>
       
       <div className="space-y-2">

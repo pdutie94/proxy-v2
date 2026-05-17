@@ -1,7 +1,8 @@
 'use client';
 
+import { Icon } from '@iconify/react';
 import { Button, Card } from '@heroui/react';
-import { User as UserIcon, Lock, ShieldCheck, Info } from 'lucide-react';
+
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { updateProfileAction } from '@/modules/auth/actions/profile.action';
@@ -73,7 +74,7 @@ export function UserProfileClient({ user }: UserProfileClientProps) {
           {/* Basic Info Card */}
           <Card className="border border-slate-200 bg-white p-4 shadow-sm space-y-4">
             <h2 className="text-sm font-semibold text-slate-800 flex items-center gap-1.5 border-b border-slate-100 pb-2">
-              <UserIcon className="w-4 h-4 text-slate-500" />
+              <Icon icon="lucide:user" className="w-4 h-4 text-slate-500"  />
               Thông tin cơ bản
             </h2>
             
@@ -117,7 +118,7 @@ export function UserProfileClient({ user }: UserProfileClientProps) {
           <Card className="border border-slate-200 bg-white p-4 shadow-sm space-y-4">
             <div>
               <h2 className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
-                <Lock className="w-4 h-4 text-slate-500" />
+                <Icon icon="lucide:lock" className="w-4 h-4 text-slate-500"  />
                 Đổi mật khẩu
               </h2>
               <p className="text-[10px] text-slate-400 mt-0.5">
@@ -183,14 +184,14 @@ export function UserProfileClient({ user }: UserProfileClientProps) {
         <div className="space-y-4">
           <Card className="border border-slate-200 bg-white p-4 shadow-sm space-y-3">
             <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-              <ShieldCheck className="w-4 h-4 text-slate-500" />
+              <Icon icon="lucide:shield-check" className="w-4 h-4 text-slate-500"  />
               Bảo mật tài khoản
             </h2>
             <p className="text-xs text-slate-600 font-medium leading-relaxed">
               Đảm bảo mật khẩu của bạn có ít nhất 8 ký tự, bao gồm cả chữ cái và chữ số để an toàn nhất.
             </p>
             <div className="p-2.5 bg-blue-50 border border-blue-100 rounded-lg text-[10px] text-blue-700 font-semibold flex items-center gap-1.5">
-              <Info className="w-3.5 h-3.5 shrink-0 text-blue-500" />
+              <Icon icon="lucide:info" className="w-3.5 h-3.5 shrink-0 text-blue-500"  />
               <span>Lần cập nhật cuối: {new Date(user.updatedAt).toLocaleDateString('vi-VN')}</span>
             </div>
           </Card>

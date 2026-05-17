@@ -1,5 +1,6 @@
 'use client';
 
+import { Icon } from '@iconify/react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { registerSchema, RegisterInput } from '../types';
@@ -9,7 +10,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { Input, Button } from "@heroui/react";
-import { CheckCircle2 } from "lucide-react";
+
 
 export function RegisterForm() {
   const router = useRouter();
@@ -36,7 +37,7 @@ export function RegisterForm() {
     return (
       <div className="w-full max-w-[360px] p-6 bg-white border border-slate-200 rounded-xl shadow-sm text-center">
         <div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
-          <CheckCircle2 className="w-6 h-6 shrink-0" />
+          <Icon icon="lucide:check-circle2" className="w-6 h-6 shrink-0"  />
         </div>
         <h2 className="text-xl font-bold text-slate-900 mb-1">Đăng ký thành công!</h2>
         <p className="text-slate-500 mb-6 leading-relaxed text-xs font-medium">

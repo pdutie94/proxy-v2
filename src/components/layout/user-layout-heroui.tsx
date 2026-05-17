@@ -1,5 +1,6 @@
 "use client";
 
+import { Icon } from '@iconify/react';
 import React, { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
@@ -7,21 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { getUserHeaderInfoAction } from "@/modules/auth/actions/balance.action";
 import { RealtimeProvider } from "@/components/providers/realtime-provider";
-import { 
-  Home, 
-  ShieldCheck, 
-  Wallet, 
-  ShoppingCart, 
-  Receipt, 
-  User, 
-  LogOut, 
-  Menu, 
-  X, 
-  Bell, 
-  Settings,
-  ChevronDown,
-  AlertTriangle
-} from "lucide-react";
+
 import { 
   Avatar, 
   Button, 
@@ -67,14 +54,14 @@ export function UserLayoutHeroUI({ children }: UserLayoutHeroUIProps) {
   const mainNavItems = [
     {
       label: "Trang chủ",
-      icon: Home,
+      icon: "lucide:home",
       url: "/",
       active: pathname === "/",
     },
     ...(isAdmin ? [
       {
         label: "Quản trị viên",
-        icon: Settings,
+        icon: "lucide:settings",
         url: "/dashboard",
         active: pathname.startsWith("/dashboard"),
       }
@@ -84,13 +71,13 @@ export function UserLayoutHeroUI({ children }: UserLayoutHeroUIProps) {
   const serviceNavItems = [
     {
       label: "Proxy của tôi",
-      icon: ShieldCheck,
+      icon: "lucide:shield-check",
       url: "/user/proxies",
       active: pathname === "/user/proxies",
     },
     {
       label: "Nạp tiền",
-      icon: Wallet,
+      icon: "lucide:wallet",
       url: "/user/balance",
       active: pathname === "/user/balance",
     },
@@ -99,13 +86,13 @@ export function UserLayoutHeroUI({ children }: UserLayoutHeroUIProps) {
   const historyNavItems = [
     {
       label: "Đơn hàng",
-      icon: ShoppingCart,
+      icon: "lucide:shopping-cart",
       url: "/user/orders",
       active: pathname === "/user/orders",
     },
     {
       label: "Lịch sử giao dịch",
-      icon: Receipt,
+      icon: "lucide:receipt",
       url: "/user/payments",
       active: pathname === "/user/payments",
     },
@@ -114,7 +101,7 @@ export function UserLayoutHeroUI({ children }: UserLayoutHeroUIProps) {
   const accountNavItems = [
     {
       label: "Hồ sơ cá nhân",
-      icon: User,
+      icon: "lucide:user",
       url: "/user/profile",
       active: pathname === "/user/profile",
     },
@@ -137,7 +124,7 @@ export function UserLayoutHeroUI({ children }: UserLayoutHeroUIProps) {
 
   return (
     <RealtimeProvider>
-      <div className="flex min-h-screen bg-slate-50 text-slate-800 antialiased font-sans">
+      <div className="flex min-h-screen bg-slate-50 text-slate-800 antialiased">
         {/* DESKTOP SIDEBAR */}
         <aside className="hidden lg:flex flex-col w-60 border-r border-slate-200 bg-white sticky top-0 h-screen shrink-0 z-30">
           {/* User profile header card */}
@@ -170,7 +157,7 @@ export function UserLayoutHeroUI({ children }: UserLayoutHeroUIProps) {
                 className="w-full text-xs font-semibold h-8 gap-1.5 rounded-md"
                 onClick={() => handleNavigation("/user/balance")}
               >
-                <Wallet className="w-3.5 h-3.5" />
+                <Icon icon="lucide:wallet" className="w-3.5 h-3.5"  />
                 <span>Nạp tiền ngay</span>
               </Button>
             </div>
@@ -181,7 +168,7 @@ export function UserLayoutHeroUI({ children }: UserLayoutHeroUIProps) {
             {/* Core Section */}
             <div className="space-y-1">
               {mainNavItems.map((item, idx) => {
-                const Icon = item.icon;
+                
                 return (
                   <button
                     key={idx}
@@ -192,7 +179,7 @@ export function UserLayoutHeroUI({ children }: UserLayoutHeroUIProps) {
                         : "text-slate-500 hover:bg-slate-100/70 hover:text-slate-900"
                     }`}
                   >
-                    <Icon className={`w-4 h-4 shrink-0 transition-colors ${
+                    <Icon icon={item.icon} className={`w-4 h-4 shrink-0 transition-colors ${
                       item.active ? "text-slate-900" : "text-slate-400 group-hover:text-slate-700"
                     }`} />
                     <span className="truncate">{item.label}</span>
@@ -207,7 +194,7 @@ export function UserLayoutHeroUI({ children }: UserLayoutHeroUIProps) {
                 Dịch vụ của tôi
               </span>
               {serviceNavItems.map((item, idx) => {
-                const Icon = item.icon;
+                
                 return (
                   <button
                     key={idx}
@@ -218,7 +205,7 @@ export function UserLayoutHeroUI({ children }: UserLayoutHeroUIProps) {
                         : "text-slate-500 hover:bg-slate-100/70 hover:text-slate-900"
                     }`}
                   >
-                    <Icon className={`w-4 h-4 shrink-0 transition-colors ${
+                    <Icon icon={item.icon} className={`w-4 h-4 shrink-0 transition-colors ${
                       item.active ? "text-slate-900" : "text-slate-400 group-hover:text-slate-700"
                     }`} />
                     <span className="truncate">{item.label}</span>
@@ -233,7 +220,7 @@ export function UserLayoutHeroUI({ children }: UserLayoutHeroUIProps) {
                 Lịch sử
               </span>
               {historyNavItems.map((item, idx) => {
-                const Icon = item.icon;
+                
                 return (
                   <button
                     key={idx}
@@ -244,7 +231,7 @@ export function UserLayoutHeroUI({ children }: UserLayoutHeroUIProps) {
                         : "text-slate-500 hover:bg-slate-100/70 hover:text-slate-900"
                     }`}
                   >
-                    <Icon className={`w-4 h-4 shrink-0 transition-colors ${
+                    <Icon icon={item.icon} className={`w-4 h-4 shrink-0 transition-colors ${
                       item.active ? "text-slate-900" : "text-slate-400 group-hover:text-slate-700"
                     }`} />
                     <span className="truncate">{item.label}</span>
@@ -259,7 +246,7 @@ export function UserLayoutHeroUI({ children }: UserLayoutHeroUIProps) {
                 Tài khoản
               </span>
               {accountNavItems.map((item, idx) => {
-                const Icon = item.icon;
+                
                 return (
                   <button
                     key={idx}
@@ -270,7 +257,7 @@ export function UserLayoutHeroUI({ children }: UserLayoutHeroUIProps) {
                         : "text-slate-500 hover:bg-slate-100/70 hover:text-slate-900"
                     }`}
                   >
-                    <Icon className={`w-4 h-4 shrink-0 transition-colors ${
+                    <Icon icon={item.icon} className={`w-4 h-4 shrink-0 transition-colors ${
                       item.active ? "text-slate-900" : "text-slate-400 group-hover:text-slate-700"
                     }`} />
                     <span className="truncate">{item.label}</span>
@@ -286,7 +273,7 @@ export function UserLayoutHeroUI({ children }: UserLayoutHeroUIProps) {
               onClick={() => signOut()}
               className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-all duration-150"
             >
-              <LogOut className="w-4 h-4 text-red-400" />
+              <Icon icon="lucide:log-out" className="w-4 h-4 text-red-400"  />
               <span>Đăng xuất</span>
             </button>
           </div>
@@ -316,7 +303,7 @@ export function UserLayoutHeroUI({ children }: UserLayoutHeroUIProps) {
                   onClick={() => setIsMobileSidebarOpen(false)}
                   className="p-1 rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-95"
                 >
-                  <X className="w-4 h-4" />
+                  <Icon icon="lucide:x" className="w-4 h-4"  />
                 </button>
               </div>
 
@@ -344,7 +331,7 @@ export function UserLayoutHeroUI({ children }: UserLayoutHeroUIProps) {
               <nav className="flex-1 px-3 py-1 space-y-3 overflow-y-auto">
                 <div className="space-y-1">
                   {mainNavItems.map((item, idx) => {
-                    const Icon = item.icon;
+                    
                     return (
                       <button
                         key={idx}
@@ -355,7 +342,7 @@ export function UserLayoutHeroUI({ children }: UserLayoutHeroUIProps) {
                             : "text-slate-500 hover:bg-slate-100/70 hover:text-slate-900"
                         }`}
                       >
-                        <Icon className={`w-4 h-4 shrink-0 transition-colors ${
+                        <Icon icon={item.icon} className={`w-4 h-4 shrink-0 transition-colors ${
                           item.active ? "text-slate-900" : "text-slate-400"
                         }`} />
                         <span className="truncate">{item.label}</span>
@@ -367,7 +354,7 @@ export function UserLayoutHeroUI({ children }: UserLayoutHeroUIProps) {
                 <div className="space-y-1">
                   <span className="px-3 text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Dịch vụ</span>
                   {serviceNavItems.map((item, idx) => {
-                    const Icon = item.icon;
+                    
                     return (
                       <button
                         key={idx}
@@ -378,7 +365,7 @@ export function UserLayoutHeroUI({ children }: UserLayoutHeroUIProps) {
                             : "text-slate-500 hover:bg-slate-100/70 hover:text-slate-900"
                         }`}
                       >
-                        <Icon className={`w-4 h-4 shrink-0 transition-colors ${
+                        <Icon icon={item.icon} className={`w-4 h-4 shrink-0 transition-colors ${
                           item.active ? "text-slate-900" : "text-slate-400"
                         }`} />
                         <span className="truncate">{item.label}</span>
@@ -390,7 +377,7 @@ export function UserLayoutHeroUI({ children }: UserLayoutHeroUIProps) {
                 <div className="space-y-1">
                   <span className="px-3 text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Lịch sử</span>
                   {historyNavItems.map((item, idx) => {
-                    const Icon = item.icon;
+                    
                     return (
                       <button
                         key={idx}
@@ -401,7 +388,7 @@ export function UserLayoutHeroUI({ children }: UserLayoutHeroUIProps) {
                             : "text-slate-500 hover:bg-slate-100/70 hover:text-slate-900"
                         }`}
                       >
-                        <Icon className={`w-4 h-4 shrink-0 transition-colors ${
+                        <Icon icon={item.icon} className={`w-4 h-4 shrink-0 transition-colors ${
                           item.active ? "text-slate-900" : "text-slate-400"
                         }`} />
                         <span className="truncate">{item.label}</span>
@@ -413,7 +400,7 @@ export function UserLayoutHeroUI({ children }: UserLayoutHeroUIProps) {
                 <div className="space-y-1">
                   <span className="px-3 text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Tài khoản</span>
                   {accountNavItems.map((item, idx) => {
-                    const Icon = item.icon;
+                    
                     return (
                       <button
                         key={idx}
@@ -424,7 +411,7 @@ export function UserLayoutHeroUI({ children }: UserLayoutHeroUIProps) {
                             : "text-slate-500 hover:bg-slate-100/70 hover:text-slate-900"
                         }`}
                       >
-                        <Icon className={`w-4 h-4 shrink-0 transition-colors ${
+                        <Icon icon={item.icon} className={`w-4 h-4 shrink-0 transition-colors ${
                           item.active ? "text-slate-900" : "text-slate-400"
                         }`} />
                         <span className="truncate">{item.label}</span>
@@ -440,7 +427,7 @@ export function UserLayoutHeroUI({ children }: UserLayoutHeroUIProps) {
                   onClick={() => signOut()}
                   className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-all duration-150"
                 >
-                  <LogOut className="w-4 h-4 text-red-400" />
+                  <Icon icon="lucide:log-out" className="w-4 h-4 text-red-400"  />
                   <span>Đăng xuất</span>
                 </button>
               </div>
@@ -458,7 +445,7 @@ export function UserLayoutHeroUI({ children }: UserLayoutHeroUIProps) {
                 onClick={() => setIsMobileSidebarOpen(true)}
                 className="lg:hidden p-1.5 rounded-md text-slate-500 hover:bg-slate-50 hover:text-slate-800"
               >
-                <Menu className="w-5 h-5" />
+                <Icon icon="lucide:menu" className="w-5 h-5"  />
               </button>
               <h1 className="text-base font-semibold text-slate-900 tracking-tight">
                 {getPageTitle()}
@@ -483,7 +470,7 @@ export function UserLayoutHeroUI({ children }: UserLayoutHeroUIProps) {
                     className="text-slate-500 hover:text-slate-850 border-none hover:bg-slate-100 rounded-full w-8 h-8 flex items-center justify-center"
                   >
                     <div className="relative">
-                      <Bell className="w-4 h-4" />
+                      <Icon icon="lucide:bell" className="w-4 h-4"  />
                       <span className="absolute top-0 right-0 w-1.5 h-1.5 bg-red-500 rounded-full" />
                     </div>
                   </Button>
@@ -502,7 +489,7 @@ export function UserLayoutHeroUI({ children }: UserLayoutHeroUIProps) {
                     className="font-medium h-9 text-xs gap-1.5 shadow-sm rounded-md"
                     onClick={() => router.push("/")}
                   >
-                    <ShoppingCart className="w-3.5 h-3.5" />
+                    <Icon icon="lucide:shopping-cart" className="w-3.5 h-3.5"  />
                     <span className="hidden sm:inline">Mua Proxy</span>
                   </Button>
                 </Tooltip.Trigger>
@@ -521,7 +508,7 @@ export function UserLayoutHeroUI({ children }: UserLayoutHeroUIProps) {
                     <Avatar className="text-white font-bold bg-gradient-to-tr from-blue-500 to-indigo-500 cursor-pointer w-7 h-7 flex items-center justify-center text-[10px] rounded-full">
                       <Avatar.Fallback>{initials}</Avatar.Fallback>
                     </Avatar>
-                    <ChevronDown className="w-3.5 h-3.5 text-slate-400 hidden sm:block" />
+                    <Icon icon="lucide:chevron-down" className="w-3.5 h-3.5 text-slate-400 hidden sm:block"  />
                   </button>
                 </DropdownTrigger>
                 <Dropdown.Popover placement="bottom end" className="p-1 bg-white border border-slate-200 rounded-lg shadow-sm outline-none">
@@ -569,7 +556,7 @@ export function UserLayoutHeroUI({ children }: UserLayoutHeroUIProps) {
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 bg-amber-50 border border-amber-250/70 rounded-xl">
                 <div className="flex items-start gap-3">
                   <div className="p-2 bg-amber-100 rounded-lg text-amber-700 shrink-0">
-                    <AlertTriangle className="w-5 h-5" />
+                    <Icon icon="lucide:alert-triangle" className="w-5 h-5"  />
                   </div>
                   <div className="space-y-0.5">
                     <h3 className="text-sm font-semibold text-amber-900">Vui lòng xác thực tài khoản Email</h3>

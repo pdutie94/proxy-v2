@@ -1,9 +1,10 @@
 "use client";
 
+import { Icon } from '@iconify/react';
 import { Card, Button, Chip } from "@heroui/react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Settings, Server, Mail, ShieldAlert, Check, HelpCircle } from "lucide-react";
+
 
 export default function SettingsPage() {
   const [siteName, setSiteName] = useState("Proxy Manager v2");
@@ -79,7 +80,7 @@ export default function SettingsPage() {
           {/* General settings */}
           <Card className="border border-slate-200 bg-white p-4 shadow-sm space-y-4">
             <h2 className="text-sm font-semibold text-slate-800 flex items-center gap-1.5 border-b border-slate-100 pb-2">
-              <Settings className="w-4 h-4 text-slate-500" />
+              <Icon icon="lucide:settings" className="w-4 h-4 text-slate-500"  />
               Thông tin chung
             </h2>
             <div className="space-y-3.5 max-w-md">
@@ -111,7 +112,7 @@ export default function SettingsPage() {
           {/* SMTP Settings */}
           <Card className="border border-slate-200 bg-white p-4 shadow-sm space-y-4">
             <h2 className="text-sm font-semibold text-slate-800 flex items-center gap-1.5 border-b border-slate-100 pb-2">
-              <Mail className="w-4 h-4 text-slate-500" />
+              <Icon icon="lucide:mail" className="w-4 h-4 text-slate-500"  />
               Cấu hình Email (SMTP)
             </h2>
 
@@ -217,7 +218,7 @@ export default function SettingsPage() {
           {/* System Status card */}
           <Card className="border border-slate-200 bg-white p-4 shadow-sm space-y-4">
             <h2 className="text-sm font-semibold text-slate-800 flex items-center gap-1.5 border-b border-slate-100 pb-2">
-              <Server className="w-4 h-4 text-slate-500" />
+              <Icon icon="lucide:server" className="w-4 h-4 text-slate-500"  />
               Trạng thái hạ tầng
             </h2>
             <div className="space-y-3.5 text-xs font-semibold text-slate-600">
@@ -255,7 +256,7 @@ export default function SettingsPage() {
           {/* Security details card */}
           <Card className="border border-slate-200 bg-white p-4 shadow-sm space-y-4">
             <h2 className="text-sm font-semibold text-slate-800 flex items-center gap-1.5 border-b border-slate-100 pb-2">
-              <ShieldAlert className="w-4 h-4 text-slate-500" />
+              <Icon icon="lucide:shield-alert" className="w-4 h-4 text-slate-500"  />
               Cấu hình Bảo mật
             </h2>
             <div className="space-y-3 text-xs font-semibold text-slate-600">

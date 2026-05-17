@@ -4,14 +4,8 @@ import { format } from "date-fns";
 import { useLogs } from "@/hooks/use-logs";
 import { useState, useCallback, useMemo } from "react";
 import { ServerJob, Server, Proxy } from "@prisma/client";
-import { 
-  Calendar, 
-  Eye, 
-  X, 
-  Trash2, 
-  Server as ServerIcon 
-} from "lucide-react";
-import { Button, Table } from "@heroui/react";
+import { Icon } from '@iconify/react';
+import { Button, Table, Pagination, Chip } from "@heroui/react";
 
 type LogEntry = ServerJob & {
   server?: Server | null;
@@ -27,25 +21,14 @@ export default function LogsPage() {
   const [page, setPage] = useState(1);
   const itemsPerPage = 20;
 
+  const [queryValue, setQueryValue] = useState('');
+
   const tabs = [
     { id: 'all', content: 'Tất cả' },
     { id: 'completed', content: 'Thành công' },
     { id: 'failed', content: 'Thất bại' },
     { id: 'active', content: 'Đang chạy' },
   ];
-
-  const filteredLogs = useMemo(() => {
-    return logs.filter((log: LogEntry) => {
-      if (selectedTab === 1 && log.status !== 'COMPLETED') return false;
-      if (selectedTab === 2 && log.status !== 'FAILED') return false;
-      if (selectedTab === 3 && log.status !== 'ACTIVE') return false;
-      return true;
-    });
-  }, [logs, selectedTab]);
-
-  const totalPages = Math.ceil(filteredLogs.length / itemsPerPage);
-  const startIndex = (page - 1) * itemsPerPage;
-  const paginatedLogs = filteredLogs.slice(startIndex, startIndex + itemsPerPage);
 
   const getJobTitle = (job: LogEntry) => {
     switch (job.type) {
@@ -61,31 +44,60 @@ export default function LogsPage() {
     }
   };
 
+  const filteredLogs = useMemo(() => {
+    return logs.filter((log: LogEntry) => {
+      // Tab filter
+      if (selectedTab === 1 && log.status !== 'COMPLETED') return false;
+      if (selectedTab === 2 && log.status !== 'FAILED') return false;
+      if (selectedTab === 3 && log.status !== 'ACTIVE') return false;
+
+      // Search filter
+      if (queryValue) {
+        const jobTitle = getJobTitle(log).toLowerCase();
+        const logContent = (log.logs || '').toLowerCase();
+        const serverName = (log.server?.name || '').toLowerCase();
+        const searchLower = queryValue.toLowerCase();
+
+        return jobTitle.includes(searchLower) || logContent.includes(searchLower) || serverName.includes(searchLower);
+      }
+
+      return true;
+    });
+  }, [logs, selectedTab, queryValue]);
+
+  const totalPages = Math.ceil(filteredLogs.length / itemsPerPage);
+  const startIndex = (page - 1) * itemsPerPage;
+  const paginatedLogs = filteredLogs.slice(startIndex, startIndex + itemsPerPage);
+
+  const startItem = filteredLogs.length === 0 ? 0 : (page - 1) * itemsPerPage + 1;
+  const endItem = Math.min(page * itemsPerPage, filteredLogs.length);
+  const pages = Array.from({length: totalPages}, (_, i) => i + 1);
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'COMPLETED':
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-50 text-green-700 border border-green-200/50">
+          <Chip size="sm" variant="soft" color="success" className="font-semibold">
             Thành công
-          </span>
+          </Chip>
         );
       case 'FAILED':
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-red-700 border border-red-200/50">
+          <Chip size="sm" variant="soft" color="danger" className="font-semibold">
             Thất bại
-          </span>
+          </Chip>
         );
       case 'ACTIVE':
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200/50">
+          <Chip size="sm" variant="soft" color="warning" className="font-semibold">
             Đang chạy
-          </span>
+          </Chip>
         );
       default:
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200/50">
+          <Chip size="sm" variant="soft" color="default" className="font-semibold">
             Đang chờ
-          </span>
+          </Chip>
         );
     }
   };
@@ -132,119 +144,163 @@ export default function LogsPage() {
           size="sm"
           onPress={() => setIsDeleteModalOpen(true)}
           isDisabled={logs.length === 0 || isClearing}
-          className="cursor-pointer font-bold text-xs h-9 px-3 flex items-center gap-1.5 self-start sm:self-auto rounded-lg"
+          className="cursor-pointer font-bold text-xs h-9 px-3 flex items-center gap-1.5 self-start sm:self-auto rounded-lg bg-red-500 text-white"
         >
-          <Trash2 className="w-3.5 h-3.5 shrink-0" />
+          <Icon icon="lucide:trash-2" className="w-3.5 h-3.5 shrink-0" />
           Dọn dẹp nhật ký
         </Button>
       </div>
 
-      {/* Main Container */}
-      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
-        {/* Compact Filters Tabs */}
-        <div className="flex border-b border-slate-100 bg-slate-50/50 px-2 overflow-x-auto text-xs scrollbar-none">
-          {tabs.map((tab, index) => (
+      {/* Flat Premium Toolbar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 mt-1">
+        {/* Left Side: Filter Tabs */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {tabs.map((tab, idx) => (
             <button
               key={tab.id}
               onClick={() => {
-                setSelectedTab(index);
+                setSelectedTab(idx);
                 setPage(1);
               }}
-              className={`px-4 py-2.5 border-b-2 font-semibold whitespace-nowrap cursor-pointer transition-all ${
-                selectedTab === index 
-                  ? 'border-blue-500 text-blue-600 font-bold' 
-                  : 'border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-200'
+              className={`h-8 px-3 text-xs font-semibold rounded-lg flex items-center gap-1.5 cursor-pointer outline-none transition-all duration-150 shadow-none ${
+                selectedTab === idx
+                  ? 'bg-blue-50/50 border border-blue-200 text-blue-600'
+                  : 'bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 text-slate-600'
               }`}
             >
-              {tab.content}
+              <span>{tab.content}</span>
             </button>
           ))}
         </div>
 
-        {/* Table representation */}
-        <div className="w-full">
-          <Table className="w-full text-left border-collapse">
-            <Table.ScrollContainer>
-              <Table.Content aria-label="Nhật ký hệ thống">
-                <Table.Header className="border-b border-slate-100 text-slate-400 text-[10px] font-bold uppercase tracking-wider bg-slate-50">
-                  <Table.Column isRowHeader className="py-2.5 px-3">Thời gian</Table.Column>
-                  <Table.Column className="py-2.5 px-3">Loại công việc</Table.Column>
-                  <Table.Column className="py-2.5 px-3">Máy chủ</Table.Column>
-                  <Table.Column className="py-2.5 px-3">Trạng thái</Table.Column>
-                  <Table.Column className="py-2.5 px-3 text-right">Thao tác</Table.Column>
-                </Table.Header>
-                <Table.Body className="divide-y divide-slate-100 text-xs">
-                  {paginatedLogs.map((log: LogEntry) => (
-                    <Table.Row key={log.id} className="hover:bg-slate-50/80 transition-colors border-b border-slate-100 last:border-b-0">
-                      <Table.Cell className="py-2.5 px-3 text-slate-500 whitespace-nowrap">
-                        {format(new Date(log.createdAt), 'dd/MM/yyyy HH:mm:ss')}
-                      </Table.Cell>
-                      <Table.Cell className="py-2.5 px-3 font-semibold text-slate-700">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                          <span>{getJobTitle(log)}</span>
-                        </div>
-                      </Table.Cell>
-                      <Table.Cell className="py-2.5 px-3 text-slate-600 font-medium whitespace-nowrap">
-                        {log.server ? (
-                          <div className="flex items-center gap-1.5">
-                            <ServerIcon className="w-3 h-3 text-slate-400 shrink-0" />
-                            <span>{log.server.name}</span>
-                          </div>
-                        ) : (
-                          "-"
-                        )}
-                      </Table.Cell>
-                      <Table.Cell className="py-2.5 px-3">
-                        {getStatusBadge(log.status)}
-                      </Table.Cell>
-                      <Table.Cell className="py-2.5 px-3 text-right">
-                        <button
-                          onClick={() => setSelectedLog(log)}
-                          className="inline-flex items-center justify-center p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer transition-colors"
-                          title="Xem chi tiết"
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                        </button>
-                      </Table.Cell>
-                    </Table.Row>
-                  ))}
-                  {paginatedLogs.length === 0 && (
-                    <Table.Row>
-                      <Table.Cell colSpan={5} className="py-8 text-center text-slate-400 font-medium">
-                        Chưa có nhật ký nào phù hợp
-                      </Table.Cell>
-                    </Table.Row>
-                  )}
-                </Table.Body>
-              </Table.Content>
-            </Table.ScrollContainer>
-          </Table>
-        </div>
-
-        {/* Compact Flat Pagination Footer */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between px-3 py-2.5 border-t border-slate-100 text-xs bg-slate-50/50">
-            <span className="text-slate-400 font-semibold">Trang {page} / {totalPages}</span>
-            <div className="flex items-center gap-1.5">
-              <Button
-                isDisabled={page <= 1}
-                onPress={() => setPage(page - 1)}
-                className="px-2.5 py-1 text-xs border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 font-bold h-7 min-w-0 rounded-lg cursor-pointer transition-all"
-              >
-                Trước
-              </Button>
-              <Button
-                isDisabled={page >= totalPages}
-                onPress={() => setPage(page + 1)}
-                className="px-2.5 py-1 text-xs border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 font-bold h-7 min-w-0 rounded-lg cursor-pointer transition-all"
-              >
-                Sau
-              </Button>
+        {/* Right Side: Search Input */}
+        <div className="flex items-center gap-2">
+          <div className="relative w-full sm:w-56">
+            <input
+              type="text"
+              placeholder="Tìm sự kiện, nội dung..."
+              value={queryValue}
+              onChange={(e) => {
+                setQueryValue(e.target.value);
+                setPage(1);
+              }}
+              className="w-full h-8 pl-8 pr-8 text-xs bg-slate-100/60 hover:bg-slate-100 focus:bg-white placeholder:text-slate-400 border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none transition-all duration-150"
+            />
+            <div className="absolute inset-y-0 left-2.5 flex items-center pointer-events-none text-slate-400">
+              <Icon icon="lucide:search" width={14} height={14} />
             </div>
+            {queryValue && (
+              <button
+                onClick={() => {
+                  setQueryValue('');
+                  setPage(1);
+                }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full hover:bg-slate-100 cursor-pointer bg-transparent border-none flex items-center justify-center"
+              >
+                <Icon icon="lucide:x" width={12} height={12} />
+              </button>
+            )}
           </div>
-        )}
+        </div>
       </div>
+
+      {/* Logs Table representation */}
+      <Table>
+        <Table.ScrollContainer>
+          <Table.Content aria-label="Nhật ký hệ thống">
+            <Table.Header>
+              <Table.Column isRowHeader>Thời gian</Table.Column>
+              <Table.Column>Loại công việc</Table.Column>
+              <Table.Column>Máy chủ</Table.Column>
+              <Table.Column>Trạng thái</Table.Column>
+              <Table.Column className="text-end">Thao tác</Table.Column>
+            </Table.Header>
+            <Table.Body>
+              {paginatedLogs.map((log: LogEntry) => (
+                <Table.Row key={log.id}>
+                  <Table.Cell className="align-top  text-slate-500 whitespace-nowrap font-medium">
+                    {format(new Date(log.createdAt), 'dd/MM/yyyy HH:mm:ss')}
+                  </Table.Cell>
+                  <Table.Cell className="align-top  font-semibold text-slate-700">
+                    <div className="flex items-center gap-2">
+                      <Icon icon="lucide:calendar" className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                      <span>{getJobTitle(log)}</span>
+                    </div>
+                  </Table.Cell>
+                  <Table.Cell className="align-top  text-slate-600 font-medium whitespace-nowrap">
+                    {log.server ? (
+                      <div className="flex items-center gap-1.5">
+                        <Icon icon="lucide:server" className="w-3 h-3 text-slate-400 shrink-0" />
+                        <span>{log.server.name}</span>
+                      </div>
+                    ) : (
+                      "-"
+                    )}
+                  </Table.Cell>
+                  <Table.Cell className="align-top">
+                    {getStatusBadge(log.status)}
+                  </Table.Cell>
+                  <Table.Cell className="align-top text-right">
+                    <button
+                      onClick={() => setSelectedLog(log)}
+                      className="w-7 h-7 rounded-md bg-transparent hover:bg-slate-100 text-slate-500 hover:text-slate-800 border-none flex items-center justify-center cursor-pointer transition-colors inline-flex"
+                      title="Xem chi tiết"
+                    >
+                      <Icon icon="lucide:eye" className="w-3.5 h-3.5" />
+                    </button>
+                  </Table.Cell>
+                </Table.Row>
+              ))}
+              {paginatedLogs.length === 0 && (
+                <Table.Row>
+                  <Table.Cell colSpan={5} className="py-12 text-center text-slate-400 font-medium">
+                    Chưa có nhật ký nào phù hợp.
+                  </Table.Cell>
+                </Table.Row>
+              )}
+            </Table.Body>
+          </Table.Content>
+        </Table.ScrollContainer>
+        {totalPages > 1 && (
+          <Table.Footer>
+            <Pagination size="sm">
+              <Pagination.Summary>
+                Hiển thị {startItem} - {endItem} trong tổng số {filteredLogs.length} kết quả
+              </Pagination.Summary>
+              <Pagination.Content>
+                <Pagination.Item>
+                  <Pagination.Previous
+                    isDisabled={page <= 1}
+                    onPress={() => setPage(page - 1)}
+                  >
+                    <Pagination.PreviousIcon />
+                    Trước
+                  </Pagination.Previous>
+                </Pagination.Item>
+                {pages.map((p) => (
+                  <Pagination.Item key={p}>
+                    <Pagination.Link
+                      isActive={p === page}
+                      onPress={() => setPage(p)}
+                    >
+                      {p}
+                    </Pagination.Link>
+                  </Pagination.Item>
+                ))}
+                <Pagination.Item>
+                  <Pagination.Next
+                    isDisabled={page >= totalPages}
+                    onPress={() => setPage(page + 1)}
+                  >
+                    Sau
+                    <Pagination.NextIcon />
+                  </Pagination.Next>
+                </Pagination.Item>
+              </Pagination.Content>
+            </Pagination>
+          </Table.Footer>
+        )}
+      </Table>
 
       {/* Modern Compact Log Details Overlay Modal */}
       {selectedLog && (
@@ -257,9 +313,9 @@ export default function LogsPage() {
               </h3>
               <button 
                 onClick={() => setSelectedLog(null)}
-                className="text-slate-400 hover:text-slate-600 cursor-pointer p-1 rounded-lg hover:bg-slate-100 transition-colors"
+                className="text-slate-400 hover:text-slate-600 cursor-pointer p-1 rounded-lg hover:bg-slate-100 transition-colors bg-transparent border-none flex items-center justify-center"
               >
-                <X className="w-4 h-4" />
+                <Icon icon="lucide:x" className="w-4 h-4" />
               </button>
             </div>
             {/* Modal Body */}
@@ -278,16 +334,19 @@ export default function LogsPage() {
           <div className="bg-white border border-slate-200 rounded-xl w-full max-w-sm overflow-hidden shadow-lg flex flex-col">
             {/* Modal Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50/50">
-              <h3 className="text-sm font-semibold text-slate-800">Xác nhận dọn dẹp nhật ký?</h3>
+              <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-1.5 text-danger">
+                <Icon icon="lucide:alert-triangle" className="w-4 h-4 shrink-0 text-red-500" />
+                Xác nhận dọn dẹp nhật ký?
+              </h3>
               <button 
                 onClick={() => setIsDeleteModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 cursor-pointer p-1 rounded-lg hover:bg-slate-100 transition-colors"
+                className="text-slate-400 hover:text-slate-600 cursor-pointer p-1 rounded-lg hover:bg-slate-100 transition-colors bg-transparent border-none flex items-center justify-center"
               >
-                <X className="w-4 h-4" />
+                <Icon icon="lucide:x" className="w-4 h-4" />
               </button>
             </div>
             {/* Modal Body */}
-            <div className="p-4 text-xs text-slate-600 font-medium leading-relaxed">
+            <div className="p-4 text-xs text-slate-600 font-medium leading-relaxed bg-white">
               Hành động này sẽ xóa vĩnh viễn toàn bộ lịch sử công việc trong cơ sở dữ liệu. Bạn có chắc chắn muốn thực hiện?
             </div>
             {/* Modal Footer */}
@@ -304,7 +363,7 @@ export default function LogsPage() {
                 variant="danger"
                 onPress={handleDeleteAll}
                 isDisabled={isClearing}
-                className="cursor-pointer font-bold text-xs h-8 px-3 rounded-lg flex items-center gap-1"
+                className="cursor-pointer font-bold text-xs h-8 px-3 rounded-lg flex items-center gap-1.5 bg-red-500 text-white"
               >
                 {isClearing && (
                   <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>

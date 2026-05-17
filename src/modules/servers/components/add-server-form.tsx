@@ -1,11 +1,12 @@
 "use client";
 
+import { Icon } from '@iconify/react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { serverSchema, ServerSchema } from '../schemas/server.schema';
 import { useServers } from '@/hooks/use-servers';
 import { Input } from "@heroui/react";
-import { ChevronDown, Info } from "lucide-react";
+
 import { useCallback, forwardRef, useImperativeHandle, useEffect, useMemo } from 'react';
 import { Server } from '@prisma/client';
 import { useLocations } from '@/modules/locations/hooks/use-locations';
@@ -226,7 +227,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
             <div className="flex items-center gap-1">
               <label className="block text-[11px] font-semibold text-slate-500">IPv6 Prefix</label>
               <div className="group relative cursor-pointer text-slate-400 hover:text-slate-600">
-                <Info className="w-3 h-3" />
+                <Icon icon="lucide:info" className="w-3 h-3"  />
                 <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 hidden group-hover:block w-48 bg-slate-800 text-[9px] text-white p-2 rounded shadow-lg z-20 pointer-events-none leading-relaxed">
                   Nhập 4 cụm đầu của dải IPv6 được cấp (Ví dụ: 2001:19f0:4401:903)
                 </div>
@@ -274,7 +275,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                     ))}
                   </select>
                   <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-400">
-                    <ChevronDown className="w-3.5 h-3.5" />
+                    <Icon icon="lucide:chevron-down" className="w-3.5 h-3.5"  />
                   </div>
                 </div>
               )}
@@ -316,7 +317,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
             <div className="flex items-center gap-1">
               <label className="block text-[11px] font-semibold text-slate-500">Cổng bắt đầu</label>
               <div className="group relative cursor-pointer text-slate-400 hover:text-slate-600">
-                <Info className="w-3 h-3" />
+                <Icon icon="lucide:info" className="w-3 h-3"  />
                 <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 hidden group-hover:block w-48 bg-slate-800 text-[9px] text-white p-2 rounded shadow-lg z-20 pointer-events-none leading-relaxed">
                   Cổng mặc định khi tạo Proxy hàng loạt (Ví dụ: 10000)
                 </div>
@@ -371,7 +372,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
               <div className="flex items-center gap-1">
                 <label className="block text-[11px] font-semibold text-slate-500">Chu kỳ xoay (Phút)</label>
                 <div className="group relative cursor-pointer text-slate-400 hover:text-slate-600">
-                  <Info className="w-3 h-3" />
+                  <Icon icon="lucide:info" className="w-3 h-3"  />
                   <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 hidden group-hover:block w-48 bg-slate-800 text-[9px] text-white p-2 rounded shadow-lg z-20 pointer-events-none leading-relaxed">
                     Hệ thống sẽ tự động đổi toàn bộ IP Proxy sau mỗi X phút
                   </div>

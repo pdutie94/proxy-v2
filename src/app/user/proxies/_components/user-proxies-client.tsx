@@ -1,8 +1,9 @@
 'use client';
 
+import { Icon } from '@iconify/react';
 import { useState } from 'react';
 import { Button } from '@heroui/react';
-import { Wallet, PlusCircle } from 'lucide-react';
+
 import { UserProxyIndexTable } from './user-proxy-index-table';
 import { BuyProxyModal } from '@/modules/store/components/buy-proxy-modal';
 import Link from 'next/link';
@@ -28,7 +29,7 @@ export function UserProxiesClient({ proxies }: UserProxiesClientProps) {
             href="/user/balance"
             className="cursor-pointer font-bold text-xs h-9 px-3 flex items-center gap-1.5 border border-slate-200 hover:bg-slate-50 text-slate-700 bg-white rounded-lg transition-all"
           >
-            <Wallet className="w-3.5 h-3.5 shrink-0" />
+            <Icon icon="lucide:wallet" className="w-3.5 h-3.5 shrink-0"  />
             Nạp tiền
           </Link>
           <Button
@@ -37,7 +38,7 @@ export function UserProxiesClient({ proxies }: UserProxiesClientProps) {
             onPress={() => setIsBuyModalOpen(true)}
             className="cursor-pointer font-bold text-xs h-9 px-3 flex items-center gap-1.5 rounded-lg"
           >
-            <PlusCircle className="w-3.5 h-3.5 shrink-0" />
+            <Icon icon="lucide:plus-circle" className="w-3.5 h-3.5 shrink-0"  />
             Mua Proxy
           </Button>
         </div>

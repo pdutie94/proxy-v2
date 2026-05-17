@@ -97,16 +97,21 @@ export function UserProxyTable({ proxies }: UserProxyTableProps) {
                   </Table.Cell>
 
                   <Table.Cell className="py-2.5 px-3">
-                    <div className="flex flex-col gap-0.5">
-                      <span className="font-semibold text-slate-700">
-                        {proxy.expiresAt ? format(new Date(proxy.expiresAt), 'dd/MM/yy HH:mm') : 'Vĩnh viễn'}
-                      </span>
-                      {proxy.expiresAt && (
-                        <span className="text-[10px] text-amber-600 font-bold">
-                          Còn {getCountdown(proxy.expiresAt)}
-                        </span>
-                      )}
-                    </div>
+                    {(() => {
+                      const isExpired = proxy.expiresAt ? new Date(proxy.expiresAt) <= new Date() : false;
+                      return (
+                        <div className="flex flex-col gap-0.5">
+                          <span className={`font-semibold ${isExpired ? 'text-slate-400 line-through' : 'text-slate-700'}`}>
+                            {proxy.expiresAt ? format(new Date(proxy.expiresAt), 'dd/MM/yy HH:mm') : 'Vĩnh viễn'}
+                          </span>
+                          {proxy.expiresAt && (
+                            <span className={`text-[10px] font-bold ${isExpired ? 'text-slate-400' : 'text-amber-600'}`}>
+                              {isExpired ? 'Hết hạn' : `Còn ${getCountdown(proxy.expiresAt)}`}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </Table.Cell>
 
                   <Table.Cell className="py-2.5 px-3">

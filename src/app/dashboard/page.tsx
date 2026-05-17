@@ -1,5 +1,6 @@
 "use client";
 
+import { Icon } from '@iconify/react';
 import { useServers } from "@/hooks/use-servers";
 import { useProxies } from "@/hooks/use-proxies";
 import { useUsers } from "@/hooks/use-users";
@@ -9,18 +10,7 @@ import { formatDistanceToNow } from "date-fns";
 import { vi } from "date-fns/locale";
 import { useState, useMemo } from "react";
 import { ServerJob, Server, Proxy } from "@prisma/client";
-import { 
-  Server as ServerIcon, 
-  ShieldCheck, 
-  Users, 
-  Calendar, 
-  Eye, 
-  X, 
-  Database, 
-  Activity, 
-  Layers,
-  Cpu
-} from "lucide-react";
+
 import { Button, Table } from "@heroui/react";
 import Link from "next/link";
 
@@ -123,7 +113,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {stats.map((stat, index) => {
           return (
-            <div key={index} className="bg-white border border-slate-200 card card--default kpi shadow-[sm_0_1px_2px_0_rgba(0,0,0,0.05)] min-h-[92px] justify-between">
+            <div key={index} className="bg-white border border-slate-200 card card--default kpi shadow-[sm_0_1px_2px_0_rgba(0,0,0,0.05)] min-h-[92px] justify-between p-3.5 flex flex-col rounded-xl">
               <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">{stat.title}</p>
               <div className="flex items-baseline justify-between mt-1">
                 <p className="text-2xl font-bold text-slate-900 tracking-tight leading-none">{stat.value}</p>
@@ -144,37 +134,37 @@ export default function DashboardPage() {
             <h2 className="text-sm font-semibold text-slate-800">Hoạt động gần đây</h2>
           </div>
 
-          <Table className="w-full text-left border-collapse">
+          <Table>
             <Table.ScrollContainer>
               <Table.Content aria-label="Hoạt động gần đây">
-                <Table.Header className="border-b border-slate-100 text-slate-400 text-[10px] font-bold uppercase tracking-wider bg-slate-50">
-                  <Table.Column isRowHeader className="py-2.5 px-3">Thời gian</Table.Column>
-                  <Table.Column className="py-2.5 px-3">Sự kiện</Table.Column>
-                  <Table.Column className="py-2.5 px-3 text-center">Trạng thái</Table.Column>
-                  <Table.Column className="py-2.5 px-3 text-right"></Table.Column>
+                <Table.Header>
+                  <Table.Column isRowHeader>Thời gian</Table.Column>
+                  <Table.Column>Sự kiện</Table.Column>
+                  <Table.Column>Trạng thái</Table.Column>
+                  <Table.Column className="text-end"></Table.Column>
                 </Table.Header>
-                <Table.Body className="divide-y divide-slate-100 text-xs">
+                <Table.Body>
                   {logs.map((job: LogEntry) => (
-                    <Table.Row key={job.id} className="hover:bg-slate-50/80 transition-colors border-b border-slate-100 last:border-b-0">
-                      <Table.Cell className="py-2.5 px-3 text-slate-500 whitespace-nowrap">
+                    <Table.Row key={job.id}>
+                      <Table.Cell className="align-top  text-slate-500 whitespace-nowrap font-medium">
                         {formatDistanceToNow(new Date(job.createdAt), { addSuffix: true, locale: vi })}
                       </Table.Cell>
-                      <Table.Cell className="py-2.5 px-3 font-semibold text-slate-700">
+                      <Table.Cell className="align-top  font-semibold text-slate-700">
                         <div className="flex items-center gap-2">
-                          <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <Icon icon="lucide:calendar" className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                           <span>{getJobTitle(job)}</span>
                         </div>
                       </Table.Cell>
-                      <Table.Cell className="py-2.5 px-3 text-center">
+                      <Table.Cell className="align-top">
                         {getJobBadge(job.status)}
                       </Table.Cell>
-                      <Table.Cell className="py-2.5 px-3 text-right">
+                      <Table.Cell className="align-top text-right">
                         <button
                           onClick={() => setSelectedLog(job)}
-                          className="inline-flex items-center justify-center p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer transition-colors"
+                          className="w-7 h-7 rounded-md bg-transparent hover:bg-slate-100 text-slate-500 hover:text-slate-800 border-none flex items-center justify-center cursor-pointer transition-colors inline-flex"
                           title="Xem chi tiết"
                         >
-                          <Eye className="w-3.5 h-3.5" />
+                          <Icon icon="lucide:eye" className="w-3.5 h-3.5" />
                         </button>
                       </Table.Cell>
                     </Table.Row>
@@ -182,7 +172,7 @@ export default function DashboardPage() {
                   {logs.length === 0 && (
                     <Table.Row>
                       <Table.Cell colSpan={4} className="py-8 text-center text-slate-400 font-medium">
-                        Chưa có hoạt động nào
+                        Chưa có hoạt động nào.
                       </Table.Cell>
                     </Table.Row>
                   )}
@@ -195,7 +185,6 @@ export default function DashboardPage() {
             <Link href="/dashboard/logs">
               <Button
                 size="sm"
-                variant="outline"
                 className="text-slate-600 hover:bg-slate-100/70 border border-slate-200 bg-white font-semibold text-xs h-8 px-4 cursor-pointer rounded-lg shadow-sm"
               >
                 Xem tất cả nhật ký
@@ -225,7 +214,7 @@ export default function DashboardPage() {
                     <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
                       <div 
                         className={`h-full rounded-full transition-all duration-300 ${
-                          percentage > 85 ? 'bg-red-500' : percentage > 60 ? 'bg-amber-500' : 'bg-green-500'
+                          percentage > 85 ? 'bg-red-50' : percentage > 60 ? 'bg-amber-50' : 'bg-green-50'
                         }`}
                         style={{ width: `${percentage}%` }}
                       />
@@ -238,7 +227,6 @@ export default function DashboardPage() {
                   <Link href="/dashboard/servers">
                     <Button
                       size="sm"
-                      variant="outline"
                       className="text-slate-500 font-semibold text-[11px] h-7 px-3 bg-slate-50 hover:bg-slate-100/70 border border-slate-100 cursor-pointer rounded-lg"
                     >
                       Xem thêm {servers.length - 5} máy chủ
@@ -256,7 +244,7 @@ export default function DashboardPage() {
               {/* Database */}
               <div className="flex justify-between items-center text-xs">
                 <div className="flex items-center gap-2 text-slate-600 font-semibold">
-                  <Database className={`w-4 h-4 shrink-0 ${healthData?.database === 'ONLINE' ? 'text-green-600' : 'text-red-500'}`} />
+                  <Icon icon="lucide:database" className={`w-4 h-4 shrink-0 ${healthData?.database === 'ONLINE' ? 'text-green-600' : 'text-red-500'}`} />
                   <span>Cơ sở dữ liệu</span>
                 </div>
                 {isHealthLoading ? (
@@ -277,7 +265,7 @@ export default function DashboardPage() {
               {/* Redis */}
               <div className="flex justify-between items-center text-xs">
                 <div className="flex items-center gap-2 text-slate-600 font-semibold">
-                  <Layers className={`w-4 h-4 shrink-0 ${healthData?.redis === 'ONLINE' ? 'text-green-600' : 'text-red-500'}`} />
+                  <Icon icon="lucide:layers" className={`w-4 h-4 shrink-0 ${healthData?.redis === 'ONLINE' ? 'text-green-600' : 'text-red-500'}`} />
                   <span>Hàng chờ (Redis)</span>
                 </div>
                 <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
@@ -292,7 +280,7 @@ export default function DashboardPage() {
               {/* Worker */}
               <div className="flex justify-between items-center text-xs">
                 <div className="flex items-center gap-2 text-slate-600 font-semibold">
-                  <Cpu className={`w-4 h-4 shrink-0 ${healthData?.worker === 'ONLINE' ? 'text-green-600' : 'text-red-500'}`} />
+                  <Icon icon="lucide:cpu" className={`w-4 h-4 shrink-0 ${healthData?.worker === 'ONLINE' ? 'text-green-600' : 'text-red-500'}`} />
                   <span>SSH Workers</span>
                 </div>
                 <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
@@ -319,9 +307,9 @@ export default function DashboardPage() {
               </h3>
               <button 
                 onClick={() => setSelectedLog(null)}
-                className="text-slate-400 hover:text-slate-600 cursor-pointer p-1 rounded-lg hover:bg-slate-100 transition-colors"
+                className="text-slate-400 hover:text-slate-600 cursor-pointer p-1 rounded-lg hover:bg-slate-100 transition-colors bg-transparent border-none flex items-center justify-center"
               >
-                <X className="w-4 h-4" />
+                <Icon icon="lucide:x" className="w-4 h-4" />
               </button>
             </div>
             {/* Modal Body */}

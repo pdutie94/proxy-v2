@@ -1,12 +1,13 @@
 "use client";
 
+import { Icon } from '@iconify/react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { bulkProxySchema, BulkProxySchema } from '../schemas/bulk-proxy.schema';
 import { useProxies } from '@/hooks/use-proxies';
 import { useServers } from '@/hooks/use-servers';
 import { Input } from "@heroui/react";
-import { RefreshCw, Info, ChevronDown, Calendar } from "lucide-react";
+
 import { useCallback, useState, useMemo, forwardRef, useImperativeHandle, useEffect } from 'react';
 import { format, addMinutes, addDays, addWeeks, addMonths, addYears } from 'date-fns';
 import { Proxy } from '@prisma/client';
@@ -206,7 +207,7 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
                     ))}
                   </select>
                   <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-400">
-                    <ChevronDown className="w-3.5 h-3.5" />
+                    <Icon icon="lucide:chevron-down" className="w-3.5 h-3.5"  />
                   </div>
                 </div>
               )}
@@ -237,7 +238,7 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
                     ))}
                   </select>
                   <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-400">
-                    <ChevronDown className="w-3.5 h-3.5" />
+                    <Icon icon="lucide:chevron-down" className="w-3.5 h-3.5"  />
                   </div>
                 </div>
               )}
@@ -253,7 +254,7 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
               <label className="block text-[11px] font-semibold text-slate-500">Số lượng Proxy</label>
               {!proxy && (
                 <div className="group relative cursor-pointer text-slate-400 hover:text-slate-600">
-                  <Info className="w-3 h-3" />
+                  <Icon icon="lucide:info" className="w-3 h-3"  />
                   <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 hidden group-hover:block w-48 bg-slate-800 text-[9px] text-white p-2 rounded shadow-lg z-20 pointer-events-none leading-relaxed">
                     Tối đa 1000 proxy một lần tạo
                   </div>
@@ -291,7 +292,7 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
               <label className="block text-[11px] font-semibold text-slate-500">{proxy ? "Cổng (Port)" : "Cổng bắt đầu"}</label>
               {!proxy && (
                 <div className="group relative cursor-pointer text-slate-400 hover:text-slate-600">
-                  <Info className="w-3 h-3" />
+                  <Icon icon="lucide:info" className="w-3 h-3"  />
                   <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 hidden group-hover:block w-48 bg-slate-800 text-[9px] text-white p-2 rounded shadow-lg z-20 pointer-events-none leading-relaxed">
                     Các port sẽ được tăng dần từ cổng này
                   </div>
@@ -347,7 +348,7 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
                 className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 hover:bg-slate-100 rounded-lg cursor-pointer transition-colors"
                 title="Tạo ngẫu nhiên"
               >
-                <RefreshCw className="w-3.5 h-3.5" />
+                <Icon icon="lucide:refresh-cw" className="w-3.5 h-3.5"  />
               </button>
             </div>
             {form.formState.errors.username && (
@@ -468,7 +469,7 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
                 ))}
               </select>
               <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-400">
-                <ChevronDown className="w-3.5 h-3.5" />
+                <Icon icon="lucide:chevron-down" className="w-3.5 h-3.5"  />
               </div>
             </div>
           </div>
@@ -477,7 +478,7 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
             <div className="space-y-1">
               <div className="flex items-center gap-1">
                 <label className="block text-[11px] font-semibold text-slate-500">Chọn ngày hết hạn</label>
-                <Calendar className="w-3 h-3 text-slate-400" />
+                <Icon icon="lucide:calendar" className="w-3 h-3 text-slate-400"  />
               </div>
               <input
                 type="datetime-local"
@@ -546,7 +547,7 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
                         ))}
                       </select>
                       <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-400">
-                        <ChevronDown className="w-3.5 h-3.5" />
+                        <Icon icon="lucide:chevron-down" className="w-3.5 h-3.5"  />
                       </div>
                     </div>
                   )}

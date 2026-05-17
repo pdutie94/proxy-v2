@@ -1,12 +1,13 @@
 "use client";
 
+import { Icon } from '@iconify/react';
 import { useState, useCallback, useRef } from "react";
 import { ServerList } from "@/modules/servers/components/server-list";
 import { AddServerForm, AddServerFormRef } from "@/modules/servers/components/add-server-form";
 import { useServers } from "@/hooks/use-servers";
 import { Server } from "@prisma/client";
 import { Button } from "@heroui/react";
-import { Plus, X } from "lucide-react";
+
 
 export default function ServersPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -45,7 +46,7 @@ export default function ServersPage() {
           onPress={toggleModal}
           className="cursor-pointer font-bold text-xs h-9 px-3 flex items-center gap-1.5 self-start sm:self-auto rounded-lg"
         >
-          <Plus className="w-3.5 h-3.5 shrink-0" />
+          <Icon icon="lucide:plus" className="w-3.5 h-3.5 shrink-0"  />
           Thêm Máy chủ
         </Button>
       </div>
@@ -66,7 +67,7 @@ export default function ServersPage() {
                 onClick={toggleModal}
                 className="text-slate-400 hover:text-slate-600 cursor-pointer p-1 rounded-lg hover:bg-slate-100 transition-colors"
               >
-                <X className="w-4 h-4" />
+                <Icon icon="lucide:x" className="w-4 h-4"  />
               </button>
             </div>
             {/* Modal Body */}

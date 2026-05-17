@@ -1,7 +1,8 @@
 'use client';
 
+import { Icon } from '@iconify/react';
 import { Table, Chip, Button } from '@heroui/react';
-import { ChevronDown, Search, X, AlertCircle } from 'lucide-react';
+
 import { format } from 'date-fns';
 import { payOrderAction } from '@/modules/store/actions/purchase.action';
 import { toast } from 'sonner';
@@ -187,14 +188,14 @@ export function UserOrdersClient({ orders }: UserOrdersClientProps) {
                 className="w-full h-8 pl-8 pr-8 text-xs bg-white placeholder:text-slate-400 border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none transition-all duration-150"
               />
               <div className="absolute inset-y-0 left-2.5 flex items-center pointer-events-none text-slate-400">
-                <Search className="w-3.5 h-3.5 shrink-0" />
+                <Icon icon="lucide:search" className="w-3.5 h-3.5 shrink-0"  />
               </div>
               {queryValue && (
                 <button
                   onClick={() => { setQueryValue(''); resetPage(); }}
                   className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full hover:bg-slate-100 cursor-pointer"
                 >
-                  <X className="w-3 h-3" />
+                  <Icon icon="lucide:x" className="w-3 h-3"  />
                 </button>
               )}
             </div>
@@ -214,7 +215,7 @@ export function UserOrdersClient({ orders }: UserOrdersClientProps) {
                 <option value="CANCELLED">Đã hủy</option>
               </select>
               <div className="absolute inset-y-0 right-2.5 flex items-center pointer-events-none text-slate-400">
-                <ChevronDown className="w-3 h-3" />
+                <Icon icon="lucide:chevron-down" className="w-3 h-3"  />
               </div>
             </div>
 
@@ -230,7 +231,7 @@ export function UserOrdersClient({ orders }: UserOrdersClientProps) {
                 ))}
               </select>
               <div className="absolute inset-y-0 right-2.5 flex items-center pointer-events-none text-slate-400">
-                <ChevronDown className="w-3 h-3" />
+                <Icon icon="lucide:chevron-down" className="w-3 h-3"  />
               </div>
             </div>
           </div>

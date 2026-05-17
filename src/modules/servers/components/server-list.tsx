@@ -1,20 +1,11 @@
 "use client";
 
-import { useServers } from '@/hooks/use-servers';
-import { Button, Table, Chip } from "@heroui/react";
-import { 
-  Play, 
-  RotateCcw, 
-  RefreshCw, 
-  Edit2, 
-  Trash2, 
-  Search, 
-  X, 
-  AlertTriangle, 
-  Cpu 
-} from "lucide-react";
+import { Icon } from '@iconify/react';
+import { useServers, ServerWithLocation } from '@/hooks/use-servers';
+import { Button, Table, Chip, Popover, PopoverTrigger, PopoverContent, Pagination, Checkbox } from "@heroui/react";
+
 import { Server } from '@prisma/client';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { JobProgressModal } from '@/components/jobs/job-progress-modal';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -29,35 +20,119 @@ export function ServerList({ onEdit, onAdd }: ServerListProps) {
   const queryClient = useQueryClient();
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
-  const [activeConfirmServer, setActiveConfirmServer] = useState<Server | null>(null);
+  const [openPopoverId, setOpenPopoverId] = useState<string | null>(null);
   
   const [page, setPage] = useState(1);
   const itemsPerPage = 10;
 
-  // Filters state
+  // Filters & Sorting state
   const [queryValue, setQueryValue] = useState('');
-  const [selectedTab, setSelectedTab] = useState(0);
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+  const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
+  const [sortSelected, setSortSelected] = useState(['createdAt desc']);
 
-  const tabs = [
-    { label: 'Tất cả', value: 'ALL' },
+  // Column Visibility State
+  const [visibleColumns, setVisibleColumns] = useState<string[]>([
+    'name',
+    'host',
+    'location',
+    'status',
+    'maxProxies',
+    'lastPort',
+  ]);
+
+  const toggleColumn = (col: string) => {
+    setVisibleColumns(prev =>
+      prev.includes(col) ? prev.filter(c => c !== col) : [...prev, col]
+    );
+  };
+  const isColumnVisible = (col: string) => visibleColumns.includes(col);
+
+  const statusOptions = [
     { label: 'Trực tuyến', value: 'ONLINE' },
     { label: 'Đang cài đặt', value: 'SETTING_UP' },
     { label: 'Đang chờ', value: 'PENDING' },
     { label: 'Lỗi', value: 'ERROR' },
   ];
 
-  const filteredServers = servers.filter((server) => {
-    const matchesQuery = server.name.toLowerCase().includes(queryValue.toLowerCase()) || 
-                        server.host.toLowerCase().includes(queryValue.toLowerCase());
-    
-    const matchesTab = selectedTab === 0 || 
-                      (selectedTab === 1 && server.status === 'ONLINE') ||
-                      (selectedTab === 2 && server.status === 'SETTING_UP') ||
-                      (selectedTab === 3 && server.status === 'PENDING') ||
-                      (selectedTab === 4 && server.status === 'ERROR');
+  const sortOptions = [
+    { label: 'Mới nhất', value: 'createdAt desc' },
+    { label: 'Cũ nhất', value: 'createdAt asc' },
+    { label: 'Tên máy chủ A-Z', value: 'name asc' },
+    { label: 'Tên máy chủ Z-A', value: 'name desc' },
+  ];
 
-    return matchesQuery && matchesTab;
-  });
+  // Dynamic unique locations currently assigned to servers
+  const uniqueLocations = useMemo(() => {
+    const locationsMap = new Map<string, { id: string; name: string; countryCode: string }>();
+    servers.forEach(server => {
+      if (server.location) {
+        locationsMap.set(server.location.id, {
+          id: server.location.id,
+          name: server.location.name,
+          countryCode: server.location.countryCode,
+        });
+      }
+    });
+    return Array.from(locationsMap.values());
+  }, [servers]);
+
+  // Smart label for Location filter button
+  const locationLabel = useMemo(() => {
+    if (selectedLocations.length === 0) return "Vị trí";
+    const selectedNames = selectedLocations.map(id => {
+      const loc = uniqueLocations.find(l => l.id === id);
+      return loc?.name || id;
+    });
+    if (selectedNames.length <= 2) return `Vị trí: ${selectedNames.join(', ')}`;
+    return `Vị trí: ${selectedNames.slice(0, 2).join(', ')} (+${selectedNames.length - 2})`;
+  }, [selectedLocations, uniqueLocations]);
+
+  // Smart label for Status filter button
+  const statusLabel = useMemo(() => {
+    if (selectedStatuses.length === 0) return "Trạng thái";
+    const selectedNames = selectedStatuses.map(status => {
+      const opt = statusOptions.find(o => o.value === status);
+      return opt?.label || status;
+    });
+    if (selectedNames.length <= 2) return `Trạng thái: ${selectedNames.join(', ')}`;
+    return `Trạng thái: ${selectedNames.slice(0, 2).join(', ')} (+${selectedNames.length - 2})`;
+  }, [selectedStatuses]);
+
+  const hasActiveFilters = selectedLocations.length > 0 || selectedStatuses.length > 0;
+
+  // Filtered & Sorted Servers
+  const filteredServers = useMemo(() => {
+    const result = servers.filter((server) => {
+      const matchesQuery = server.name.toLowerCase().includes(queryValue.toLowerCase()) || 
+                          server.host.toLowerCase().includes(queryValue.toLowerCase());
+      
+      const matchesStatus = selectedStatuses.length === 0 || selectedStatuses.includes(server.status);
+
+      const matchesLocation = selectedLocations.length === 0 || 
+                              (server.locationId && selectedLocations.includes(server.locationId));
+
+      return matchesQuery && matchesStatus && matchesLocation;
+    });
+
+    // Apply sorting
+    if (sortSelected.length > 0) {
+      const [key, direction] = sortSelected[0].split(' ');
+      result.sort((a, b) => {
+        if (key === 'createdAt') {
+          const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return direction === 'asc' ? timeA - timeB : timeB - timeA;
+        }
+        if (key === 'name') {
+          return direction === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
+        }
+        return 0;
+      });
+    }
+
+    return result;
+  }, [servers, queryValue, selectedStatuses, selectedLocations, sortSelected]);
 
   const handleDelete = useCallback(() => {
     if (deleteId) {
@@ -86,6 +161,10 @@ export function ServerList({ onEdit, onAdd }: ServerListProps) {
   const totalPages = Math.ceil(filteredServers.length / itemsPerPage);
   const startIndex = (page - 1) * itemsPerPage;
   const paginatedServers = filteredServers.slice(startIndex, startIndex + itemsPerPage);
+
+  const startItem = filteredServers.length === 0 ? 0 : (page - 1) * itemsPerPage + 1;
+  const endItem = Math.min(page * itemsPerPage, filteredServers.length);
+  const pages = Array.from({length: totalPages}, (_, i) => i + 1);
 
   const getStatusChip = (status: string) => {
     switch (status) {
@@ -119,213 +198,414 @@ export function ServerList({ onEdit, onAdd }: ServerListProps) {
   return (
     <div className="w-full">
       {/* Sleek Ultra-Compact Filter & Search Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-3 bg-white p-2 border border-slate-200 rounded-xl shadow-sm">
-        {/* Left: Tab selectors */}
-        <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
-          {tabs.map((tab, idx) => (
-            <button
-              key={tab.value}
-              onClick={() => {
-                setSelectedTab(idx);
-                setPage(1);
-              }}
-              className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer whitespace-nowrap ${
-                selectedTab === idx
-                  ? 'bg-slate-100 text-slate-800'
-                  : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 mt-1">
+        {/* Left Side: Filter Dropdowns */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Status Filter Dropdown */}
+          <Popover>
+            <PopoverTrigger>
+              <button className={`h-8 px-2.5 text-xs font-semibold rounded-lg flex items-center gap-1.5 cursor-pointer outline-none transition-all duration-150 shadow-none ${
+                selectedStatuses.length > 0 ? 'bg-blue-50/50 border border-blue-200 text-blue-600' : 'bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 text-slate-600'
+              }`}>
+                <Icon icon="lucide:activity" width={14} height={14} className={selectedStatuses.length > 0 ? 'text-blue-500' : 'text-slate-400'} />
+                <span>{statusLabel}</span>
+                <Icon icon="lucide:chevron-down" width={12} height={12} className={selectedStatuses.length > 0 ? 'text-blue-400' : 'text-slate-400'} />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent placement="bottom start" offset={8} className="p-3 w-48 flex flex-col gap-2 bg-white border border-slate-200 rounded-lg shadow-md z-50">
+              <span className="text-xs font-semibold text-slate-500 mb-1">Lọc theo Trạng thái</span>
+              <div className="flex flex-col gap-2">
+                {statusOptions.map(opt => (
+                  <Checkbox
+                    key={opt.value}
+                    isSelected={selectedStatuses.includes(opt.value)}
+                    onChange={(isSelected: boolean) => {
+                      if (!isSelected) {
+                        setSelectedStatuses(selectedStatuses.filter(s => s !== opt.value));
+                      } else {
+                        setSelectedStatuses([...selectedStatuses, opt.value]);
+                      }
+                      setPage(1);
+                    }}
+                    variant="secondary"
+                    className="flex items-center gap-2 cursor-pointer outline-none select-none"
+                  >
+                    <Checkbox.Control>
+                      <Checkbox.Indicator />
+                    </Checkbox.Control>
+                    <span className="text-xs text-slate-700 hover:text-slate-900">{opt.label}</span>
+                  </Checkbox>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
 
-        {/* Right: Search Input */}
-        <div className="relative w-full sm:w-60">
-          <input
-            type="text"
-            placeholder="Tìm kiếm máy chủ..."
-            value={queryValue}
-            onChange={(e) => {
-              setQueryValue(e.target.value);
-              setPage(1);
-            }}
-            className="w-full h-8 pl-8 pr-8 text-xs bg-white placeholder:text-slate-400 border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none transition-all duration-150"
-          />
-          <div className="absolute inset-y-0 left-2.5 flex items-center pointer-events-none text-slate-400">
-            <Search className="w-3.5 h-3.5 shrink-0" />
-          </div>
-          {queryValue && (
+          {/* Location Filter Dropdown */}
+          <Popover>
+            <PopoverTrigger>
+              <button className={`h-8 px-2.5 text-xs font-semibold rounded-lg flex items-center gap-1.5 cursor-pointer outline-none transition-all duration-150 shadow-none ${
+                selectedLocations.length > 0 ? 'bg-blue-50/50 border border-blue-200 text-blue-600' : 'bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 text-slate-600'
+              }`}>
+                <Icon icon="lucide:map-pin" width={14} height={14} className={selectedLocations.length > 0 ? 'text-blue-500' : 'text-slate-400'} />
+                <span>{locationLabel}</span>
+                <Icon icon="lucide:chevron-down" width={12} height={12} className={selectedLocations.length > 0 ? 'text-blue-400' : 'text-slate-400'} />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent placement="bottom start" offset={8} className="p-3 w-48 flex flex-col gap-2 bg-white border border-slate-200 rounded-lg shadow-md z-50">
+              <span className="text-xs font-semibold text-slate-500 mb-1">Lọc theo Vị trí</span>
+              <div className="flex flex-col gap-2 max-h-40 overflow-y-auto">
+                {uniqueLocations.map(loc => (
+                  <Checkbox
+                    key={loc.id}
+                    isSelected={selectedLocations.includes(loc.id)}
+                    onChange={(isSelected: boolean) => {
+                      if (!isSelected) {
+                        setSelectedLocations(selectedLocations.filter(id => id !== loc.id));
+                      } else {
+                        setSelectedLocations([...selectedLocations, loc.id]);
+                      }
+                      setPage(1);
+                    }}
+                    variant="secondary"
+                    className="flex items-center gap-2 cursor-pointer outline-none select-none"
+                  >
+                    <Checkbox.Control>
+                      <Checkbox.Indicator />
+                    </Checkbox.Control>
+                    <span className="text-xs text-slate-700 hover:text-slate-900">{loc.name} ({loc.countryCode})</span>
+                  </Checkbox>
+                ))}
+                {uniqueLocations.length === 0 && (
+                  <span className="text-xs text-slate-400">Không có vị trí</span>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
+
+          {/* Reset Filters */}
+          {hasActiveFilters && (
             <button
               onClick={() => {
-                setQueryValue('');
+                setSelectedLocations([]);
+                setSelectedStatuses([]);
                 setPage(1);
               }}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full hover:bg-slate-100 cursor-pointer"
+              className="text-xs font-semibold text-blue-500 hover:text-blue-600 cursor-pointer transition-colors border-none bg-transparent ml-1"
             >
-              <X className="w-3 h-3" />
+              Xóa bộ lọc
             </button>
           )}
+        </div>
+
+        {/* Right Side: Search, Sort, Columns */}
+        <div className="flex items-center gap-2">
+          {/* Search Input */}
+          <div className="relative w-full sm:w-56">
+            <input
+              type="text"
+              placeholder="Tìm kiếm máy chủ..."
+              value={queryValue}
+              onChange={(e) => {
+                setQueryValue(e.target.value);
+                setPage(1);
+              }}
+              className="w-full h-8 pl-8 pr-8 text-xs bg-slate-100/60 hover:bg-slate-100 focus:bg-white placeholder:text-slate-400 border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none transition-all duration-150"
+            />
+            <div className="absolute inset-y-0 left-2.5 flex items-center pointer-events-none text-slate-400">
+              <Icon icon="lucide:search" width={14} height={14} />
+            </div>
+            {queryValue && (
+              <button
+                onClick={() => {
+                  setQueryValue('');
+                  setPage(1);
+                }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full hover:bg-slate-100 cursor-pointer bg-transparent border-none flex items-center justify-center"
+              >
+                <Icon icon="lucide:x" width={12} height={12} />
+              </button>
+            )}
+          </div>
+
+          {/* Sort Button */}
+          <Popover>
+            <PopoverTrigger>
+              <button className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-50 border border-slate-200 bg-white transition-all duration-150 cursor-pointer outline-none shadow-none" title="Sắp xếp">
+                <Icon icon="lucide:arrow-up-down" width={14} height={14} />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent placement="bottom end" offset={8} className="p-2 w-40 flex flex-col bg-white border border-slate-200 rounded-lg shadow-md z-50">
+              {sortOptions.map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => {
+                    setSortSelected([opt.value]);
+                    setPage(1);
+                  }}
+                  className={`w-full text-left px-2 py-1.5 text-xs rounded transition-colors cursor-pointer border-none bg-transparent ${
+                    sortSelected[0] === opt.value
+                      ? 'bg-blue-50 text-blue-600 font-semibold'
+                      : 'text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </PopoverContent>
+          </Popover>
+
+          {/* Columns Visibility Button */}
+          <Popover>
+            <PopoverTrigger>
+              <button className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-50 border border-slate-200 bg-white transition-all duration-150 cursor-pointer outline-none shadow-none" title="Hiển thị cột">
+                <Icon icon="lucide:columns" width={14} height={14} />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent placement="bottom end" offset={8} className="p-3 w-48 flex flex-col gap-2 bg-white border border-slate-200 rounded-lg shadow-md z-50">
+              <span className="text-xs font-semibold text-slate-500 mb-1">Chọn cột hiển thị</span>
+              <div className="flex flex-col gap-2">
+                {[
+                  { key: 'name', label: 'Tên Máy chủ' },
+                  { key: 'host', label: 'Địa chỉ IP' },
+                  { key: 'location', label: 'Vị trí' },
+                  { key: 'status', label: 'Trạng thái' },
+                  { key: 'maxProxies', label: 'Giới hạn Proxy' },
+                  { key: 'lastPort', label: 'Cổng cuối (SV)' },
+                ].map(col => (
+                  <Checkbox
+                    key={col.key}
+                    isSelected={isColumnVisible(col.key)}
+                    onChange={() => toggleColumn(col.key)}
+                    variant="secondary"
+                    className="flex items-center gap-2 cursor-pointer outline-none select-none"
+                  >
+                    <Checkbox.Control>
+                      <Checkbox.Indicator />
+                    </Checkbox.Control>
+                    <span className="text-xs text-slate-700 hover:text-slate-900">{col.label}</span>
+                  </Checkbox>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
 
       {/* Servers Table list */}
-      <div className="w-full border border-slate-200 rounded-xl bg-white overflow-hidden shadow-sm">
-        <Table className="w-full text-left border-collapse">
-          <Table.ScrollContainer>
-            <Table.Content aria-label="Danh sách máy chủ">
-              <Table.Header className="border-b border-slate-100 text-slate-400 text-[10px] font-bold uppercase tracking-wider bg-slate-50">
-                <Table.Column isRowHeader className="py-2.5 px-3">Tên Máy chủ</Table.Column>
-                <Table.Column className="py-2.5 px-3">Địa chỉ IP</Table.Column>
-                <Table.Column className="py-2.5 px-3">Trạng thái</Table.Column>
-                <Table.Column className="py-2.5 px-3">Giới hạn Proxy</Table.Column>
-                <Table.Column className="py-2.5 px-3">Cổng cuối (SV)</Table.Column>
-                <Table.Column className="py-2.5 px-3 text-right">Thao tác</Table.Column>
-              </Table.Header>
-              <Table.Body className="divide-y divide-slate-100 text-xs">
-                {paginatedServers.map((server: Server) => (
-                  <Table.Row key={server.id} className="hover:bg-slate-50/80 transition-colors border-b border-slate-100 last:border-b-0">
-                    <Table.Cell className="py-2.5 px-3 font-semibold text-slate-700 whitespace-nowrap">
+      <Table>
+        <Table.ScrollContainer>
+          <Table.Content aria-label="Danh sách máy chủ">
+            <Table.Header>
+              {isColumnVisible('name') && <Table.Column isRowHeader>Tên Máy chủ</Table.Column>}
+              {isColumnVisible('host') && <Table.Column>Địa chỉ IP</Table.Column>}
+              {isColumnVisible('location') && <Table.Column>Vị trí</Table.Column>}
+              {isColumnVisible('status') && <Table.Column>Trạng thái</Table.Column>}
+              {isColumnVisible('maxProxies') && <Table.Column>Giới hạn Proxy</Table.Column>}
+              {isColumnVisible('lastPort') && <Table.Column>Cổng cuối (SV)</Table.Column>}
+              <Table.Column className="text-end">Thao tác</Table.Column>
+            </Table.Header>
+            <Table.Body>
+              {paginatedServers.map((server: ServerWithLocation) => (
+                <Table.Row key={server.id}>
+                  {isColumnVisible('name') && (
+                    <Table.Cell className="align-top  font-semibold text-slate-800">
                       {server.name}
                     </Table.Cell>
-                    <Table.Cell className="py-2.5 px-3 font-mono text-slate-500 whitespace-nowrap">
+                  )}
+                  {isColumnVisible('host') && (
+                    <Table.Cell className="align-top  font-mono text-slate-500">
                       {server.host}
                     </Table.Cell>
-                    <Table.Cell className="py-2.5 px-3">
+                  )}
+                  {isColumnVisible('location') && (
+                    <Table.Cell className="align-top  text-slate-600">
+                      {server.location ? (
+                        <div className="inline-flex items-center cursor-help" title={server.location.name}>
+                          <img 
+                            src={`https://purecatamphetamine.github.io/country-flag-icons/3x2/${server.location.countryCode.toUpperCase()}.svg`} 
+                            width={16} 
+                            height={11}
+                            alt={server.location.countryCode}
+                            className="rounded-sm border border-slate-200/80 shrink-0"
+                          />
+                        </div>
+                      ) : (
+                        <span className="text-slate-400">---</span>
+                      )}
+                    </Table.Cell>
+                  )}
+                  {isColumnVisible('status') && (
+                    <Table.Cell className="align-top">
                       {getStatusChip(server.status)}
                     </Table.Cell>
-                    <Table.Cell className="py-2.5 px-3 font-medium text-slate-600">
+                  )}
+                  {isColumnVisible('maxProxies') && (
+                    <Table.Cell className="align-top  font-medium text-slate-600">
                       {server.maxProxies}
                     </Table.Cell>
-                    <Table.Cell className="py-2.5 px-3 font-mono text-slate-500 font-semibold">
+                  )}
+                  {isColumnVisible('lastPort') && (
+                    <Table.Cell className="align-top  font-mono text-slate-500 font-semibold">
                       {server.lastPort || '---'}
                     </Table.Cell>
-                    <Table.Cell className="py-2.5 px-3 text-right">
-                      <div className="inline-flex items-center gap-1">
-                        <button
-                          onClick={() => setActiveConfirmServer(server)}
-                          disabled={server.status === 'SETTING_UP' || (setupMutation.isPending && setupMutation.variables === server.id)}
-                          className="inline-flex items-center justify-center p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 disabled:opacity-50 disabled:hover:bg-transparent rounded-lg cursor-pointer transition-colors"
-                          title="Thiết lập Server (Cài đặt Gost/IP)"
-                        >
-                          {setupMutation.isPending && setupMutation.variables === server.id ? (
-                            <span className="w-3.5 h-3.5 border-2 border-blue-600/30 border-t-blue-600 rounded-full animate-spin"></span>
-                          ) : (
-                            <Play className="w-3.5 h-3.5" />
-                          )}
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (window.confirm("Bạn có chắc chắn muốn reset server? Tác vụ này sẽ xóa sạch toàn bộ Proxy!")) {
-                              resetMutation.mutate(server.id, {
-                                onSuccess: (job) => {
-                                  setActiveJobId(job.jobId);
-                                  toast.success('Đã gửi yêu cầu reset server');
-                                }
+                  )}
+                  <Table.Cell className="align-top text-right">
+                    <div className="inline-flex items-center gap-1 justify-end">
+                      {/* Edit Button */}
+                      <button
+                        onClick={() => onEdit(server)}
+                        className="w-7 h-7 rounded-md bg-transparent hover:bg-slate-100 text-slate-500 hover:text-slate-800 border-none flex items-center justify-center cursor-pointer transition-colors"
+                        title="Chỉnh sửa thông tin"
+                      >
+                        <Icon icon="lucide:edit-3" className="w-3.5 h-3.5" />
+                      </button>
+
+                      <Popover
+                        isOpen={openPopoverId === server.id}
+                        onOpenChange={(open) => setOpenPopoverId(open ? server.id : null)}
+                      >
+                        <PopoverTrigger>
+                          <button
+                            className="w-7 h-7 rounded-md bg-transparent hover:bg-slate-100 text-slate-500 hover:text-slate-800 border-none flex items-center justify-center cursor-pointer transition-colors"
+                            title="Tùy chọn khác"
+                          >
+                            <Icon icon="lucide:more-vertical" className="w-3.5 h-3.5" />
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent placement="bottom end" offset={4} className="p-2 w-48 flex flex-col bg-white border border-slate-200 rounded-lg shadow-md z-50">
+                          <button
+                            onClick={() => {
+                              setOpenPopoverId(null);
+                              setupMutation.mutate(server.id, {
+                                onSuccess: (data) => {
+                                  if (data?.jobId) setActiveJobId(data.jobId);
+                                  toast.success('Đã bắt đầu thiết lập server');
+                                },
                               });
-                            }
-                          }}
-                          disabled={server.status === 'SETTING_UP' || (resetMutation.isPending && resetMutation.variables === server.id)}
-                          className="inline-flex items-center justify-center p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 disabled:opacity-50 disabled:hover:bg-transparent rounded-lg cursor-pointer transition-colors"
-                          title="Reset Server (Xóa hết Proxy)"
-                        >
-                          {resetMutation.isPending && resetMutation.variables === server.id ? (
-                            <span className="w-3.5 h-3.5 border-2 border-red-600/30 border-t-red-600 rounded-full animate-spin"></span>
-                          ) : (
-                            <RotateCcw className="w-3.5 h-3.5" />
-                          )}
-                        </button>
-                        <button
-                          onClick={() => syncMutation.mutate(server.id, {
-                            onSuccess: (job) => {
-                              setActiveJobId(job.jobId);
-                              toast.success('Đã gửi yêu cầu đồng bộ');
-                            }
-                          })}
-                          disabled={syncMutation.isPending && syncMutation.variables === server.id}
-                          className="inline-flex items-center justify-center p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 disabled:opacity-50 disabled:hover:bg-transparent rounded-lg cursor-pointer transition-colors"
-                          title="Đồng bộ cổng từ Server"
-                        >
-                          {syncMutation.isPending && syncMutation.variables === server.id ? (
-                            <span className="w-3.5 h-3.5 border-2 border-amber-600/30 border-t-amber-600 rounded-full animate-spin"></span>
-                          ) : (
-                            <RefreshCw className="w-3.5 h-3.5" />
-                          )}
-                        </button>
-                        <button
-                          onClick={() => onEdit(server)}
-                          className="inline-flex items-center justify-center p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer transition-colors"
-                          title="Chỉnh sửa"
-                        >
-                          <Edit2 className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => setDeleteId(server.id)}
-                          className="inline-flex items-center justify-center p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg cursor-pointer transition-colors"
-                          title="Xóa Server"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </Table.Cell>
-                  </Table.Row>
-                ))}
-                {paginatedServers.length === 0 && (
-                  <Table.Row>
-                    <Table.Cell colSpan={6} className="py-12 text-center text-slate-400 font-medium">
-                      Danh sách máy chủ hiện đang trống.
-                    </Table.Cell>
-                  </Table.Row>
-                )}
-              </Table.Body>
-            </Table.Content>
-          </Table.ScrollContainer>
-        </Table>
-
-        {/* Compact Flat Pagination Footer */}
+                            }}
+                            className="w-full text-left px-2.5 py-1.5 text-xs rounded text-slate-600 hover:bg-slate-50 flex items-center gap-2 cursor-pointer border-none bg-transparent"
+                          >
+                            <Icon icon="lucide:settings" className="w-3.5 h-3.5 text-slate-400" />
+                            <span>Cài đặt máy chủ</span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              setOpenPopoverId(null);
+                              syncMutation.mutate(server.id, {
+                                onSuccess: (data) => {
+                                  if (data?.jobId) setActiveJobId(data.jobId);
+                                  toast.success('Đã bắt đầu đồng bộ cổng');
+                                },
+                              });
+                            }}
+                            className="w-full text-left px-2.5 py-1.5 text-xs rounded text-slate-600 hover:bg-slate-50 flex items-center gap-2 cursor-pointer border-none bg-transparent"
+                          >
+                            <Icon icon="lucide:refresh-cw" className="w-3.5 h-3.5 text-slate-400" />
+                            <span>Đồng bộ cổng</span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              setOpenPopoverId(null);
+                              resetMutation.mutate(server.id, {
+                                onSuccess: (data) => {
+                                  if (data?.jobId) setActiveJobId(data.jobId);
+                                  toast.success('Đã bắt đầu reset server');
+                                },
+                              });
+                            }}
+                            className="w-full text-left px-2.5 py-1.5 text-xs rounded text-slate-600 hover:bg-slate-50 flex items-center gap-2 cursor-pointer border-none bg-transparent"
+                          >
+                            <Icon icon="lucide:rotate-ccw" className="w-3.5 h-3.5 text-slate-400" />
+                            <span>Reset máy chủ</span>
+                          </button>
+                          <div className="h-px bg-slate-100 my-1 w-full" />
+                          <button
+                            onClick={() => {
+                              setOpenPopoverId(null);
+                              setDeleteId(server.id);
+                            }}
+                            className="w-full text-left px-2.5 py-1.5 text-xs rounded text-red-600 hover:bg-red-50 flex items-center gap-2 cursor-pointer border-none bg-transparent font-semibold"
+                          >
+                            <Icon icon="lucide:trash-2" className="w-3.5 h-3.5 text-red-400" />
+                            <span>Xóa máy chủ</span>
+                          </button>
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  </Table.Cell>
+                </Table.Row>
+              ))}
+              {paginatedServers.length === 0 && (
+                <Table.Row>
+                  <Table.Cell colSpan={7} className="py-12 text-center text-slate-400 font-medium">
+                    Không tìm thấy máy chủ nào.
+                  </Table.Cell>
+                </Table.Row>
+              )}
+            </Table.Body>
+          </Table.Content>
+        </Table.ScrollContainer>
         {totalPages > 1 && (
-          <div className="flex items-center justify-between px-3 py-2.5 border-t border-slate-100 text-xs bg-slate-50/50">
-            <span className="text-slate-400 font-semibold">Trang {page} / {totalPages}</span>
-            <div className="flex items-center gap-1.5">
-              <Button
-                isDisabled={page <= 1}
-                onPress={() => setPage(page - 1)}
-                className="px-2.5 py-1 text-xs border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 font-bold h-7 min-w-0 rounded-lg cursor-pointer transition-all"
-              >
-                Trước
-              </Button>
-              <Button
-                isDisabled={page >= totalPages}
-                onPress={() => setPage(page + 1)}
-                className="px-2.5 py-1 text-xs border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 font-bold h-7 min-w-0 rounded-lg cursor-pointer transition-all"
-              >
-                Sau
-              </Button>
-            </div>
-          </div>
+          <Table.Footer>
+            <Pagination size="sm">
+              <Pagination.Summary>
+                Hiển thị {startItem} - {endItem} trong tổng số {filteredServers.length} kết quả
+              </Pagination.Summary>
+              <Pagination.Content>
+                <Pagination.Item>
+                  <Pagination.Previous
+                    isDisabled={page <= 1}
+                    onPress={() => setPage(page - 1)}
+                  >
+                    <Pagination.PreviousIcon />
+                    Trước
+                  </Pagination.Previous>
+                </Pagination.Item>
+                {pages.map((p) => (
+                  <Pagination.Item key={p}>
+                    <Pagination.Link
+                      isActive={p === page}
+                      onPress={() => setPage(p)}
+                    >
+                      {p}
+                    </Pagination.Link>
+                  </Pagination.Item>
+                ))}
+                <Pagination.Item>
+                  <Pagination.Next
+                    isDisabled={page >= totalPages}
+                    onPress={() => setPage(page + 1)}
+                  >
+                    Sau
+                    <Pagination.NextIcon />
+                  </Pagination.Next>
+                </Pagination.Item>
+              </Pagination.Content>
+            </Pagination>
+          </Table.Footer>
         )}
-      </div>
+      </Table>
 
-      {/* Modern Compact Overlay Modal for Deleting Server */}
+      {/* Delete Confirmation Overlay Modal */}
       {deleteId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-150">
           <div className="bg-white border border-slate-200 rounded-xl w-full max-w-sm overflow-hidden shadow-lg flex flex-col">
             {/* Modal Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50/50">
               <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-1.5 text-danger">
-                <AlertTriangle className="w-4 h-4 shrink-0" />
-                Xác nhận xóa máy chủ?
+                <Icon icon="lucide:alert-triangle" className="w-4 h-4 shrink-0 text-red-500" />
+                Xóa máy chủ?
               </h3>
               <button 
                 onClick={() => setDeleteId(null)}
-                className="text-slate-400 hover:text-slate-600 cursor-pointer p-1 rounded-lg hover:bg-slate-100 transition-colors"
+                className="text-slate-400 hover:text-slate-600 cursor-pointer p-1 rounded-lg hover:bg-slate-100 transition-colors bg-transparent border-none flex items-center justify-center"
               >
-                <X className="w-4 h-4" />
+                <Icon icon="lucide:x" className="w-4 h-4" />
               </button>
             </div>
             {/* Modal Body */}
             <div className="p-4 text-xs text-slate-600 font-medium leading-relaxed bg-white">
-              Bạn có chắc chắn muốn xóa máy chủ này? Hành động này không thể hoàn tác và sẽ ảnh hưởng đến các Proxy đang chạy trên máy chủ này.
+              Hành động này sẽ xóa máy chủ khỏi hệ thống và ngừng hoạt động toàn bộ proxy liên quan. Bạn có chắc chắn muốn thực hiện?
             </div>
             {/* Modal Footer */}
             <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-slate-100 bg-slate-50/50">
@@ -341,96 +621,25 @@ export function ServerList({ onEdit, onAdd }: ServerListProps) {
                 variant="danger"
                 onPress={handleDelete}
                 isDisabled={deleteMutation.isPending}
-                className="cursor-pointer font-bold text-xs h-8 px-3 rounded-lg flex items-center gap-1"
+                className="cursor-pointer font-bold text-xs h-8 px-3 rounded-lg flex items-center gap-1.5 bg-red-500 text-white"
               >
                 {deleteMutation.isPending && (
                   <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
                 )}
-                Xóa máy chủ
+                Xác nhận xóa
               </Button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Modern Compact Overlay Modal for Setup Server */}
-      {activeConfirmServer && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-          <div className="bg-white border border-slate-200 rounded-xl w-full max-w-sm overflow-hidden shadow-lg flex flex-col">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50/50">
-              <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
-                <Cpu className="w-4 h-4 shrink-0 text-slate-600" />
-                Xác nhận thiết lập máy chủ?
-              </h3>
-              <button 
-                onClick={() => setActiveConfirmServer(null)}
-                className="text-slate-400 hover:text-slate-600 cursor-pointer p-1 rounded-lg hover:bg-slate-100 transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            {/* Modal Body */}
-            <div className="p-4 text-xs text-slate-600 font-medium leading-relaxed bg-white space-y-3">
-              {activeConfirmServer.status === 'ONLINE' && (
-                <div className="p-2.5 bg-red-50 border border-red-200 rounded-lg text-[11px] text-red-600 font-bold flex gap-1.5">
-                  <AlertTriangle className="w-4 h-4 shrink-0 text-red-500" />
-                  <span>
-                    ⚠️ CẢNH BÁO: Máy chủ này đang ở trạng thái HOẠT ĐỘNG (ONLINE). Việc thiết lập lại sẽ xóa sạch toàn bộ cấu hình Proxy hiện tại và ngắt các kết nối đang chạy!
-                  </span>
-                </div>
-              )}
-              <p>
-                Hệ thống sẽ thực hiện dọn dẹp (Deep Clean) và cài đặt lại toàn bộ môi trường Super-V5.0.0 trên máy chủ <b>{activeConfirmServer.host}</b>.
-              </p>
-              <p className="text-[11px] text-slate-400">
-                Quá trình này có thể mất 1-2 phút. Bạn có muốn tiếp tục không?
-              </p>
-            </div>
-            {/* Modal Footer */}
-            <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-slate-100 bg-slate-50/50">
-              <Button
-                size="sm"
-                onPress={() => setActiveConfirmServer(null)}
-                className="cursor-pointer font-bold text-xs h-8 px-3 rounded-lg border border-slate-200 bg-white text-slate-600"
-              >
-                Hủy bỏ
-              </Button>
-              <Button
-                size="sm"
-                variant="primary"
-                isDisabled={setupMutation.isPending}
-                onPress={() => {
-                  setupMutation.mutate(activeConfirmServer.id, {
-                    onSuccess: (job) => {
-                      setActiveJobId(job.jobId);
-                      setActiveConfirmServer(null);
-                      toast.success('Đã gửi yêu cầu thiết lập');
-                    }
-                  });
-                }}
-                className="cursor-pointer font-bold text-xs h-8 px-3 rounded-lg flex items-center gap-1"
-              >
-                {setupMutation.isPending && (
-                  <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                )}
-                Bắt đầu thiết lập
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Terminal Job execution feedback modal */}
-      <JobProgressModal 
-        key={activeJobId || 'none'}
+      {/* Job Progress Modal */}
+      <JobProgressModal
         jobId={activeJobId}
-        open={!!activeJobId}
-        onClose={() => setActiveJobId(null)}
-        onCompleted={() => {
+        open={activeJobId !== null}
+        onClose={() => {
+          setActiveJobId(null);
           queryClient.invalidateQueries({ queryKey: ['servers'] });
-          queryClient.invalidateQueries({ queryKey: ['proxies'] });
-          toast.success('Xử lý hoàn tất');
         }}
       />
     </div>

@@ -1,12 +1,13 @@
 "use client";
 
+import { Icon } from '@iconify/react';
 import { useState, useCallback, useRef } from "react";
 import { UserList } from "@/modules/users/components/user-list";
 import { AddUserForm, AddUserFormRef } from "@/modules/users/components/add-user-form";
 import { useUsers } from "@/hooks/use-users";
 import { User } from "@prisma/client";
 import { Button } from "@heroui/react";
-import { Plus, X } from "lucide-react";
+
 
 export default function UsersPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -45,7 +46,7 @@ export default function UsersPage() {
           onPress={toggleModal}
           className="cursor-pointer font-bold text-xs h-9 px-3 flex items-center gap-1.5 self-start sm:self-auto rounded-lg"
         >
-          <Plus className="w-3.5 h-3.5 shrink-0" />
+          <Icon icon="lucide:plus" className="w-3.5 h-3.5 shrink-0"  />
           Thêm người dùng
         </Button>
       </div>
@@ -66,7 +67,7 @@ export default function UsersPage() {
                 onClick={toggleModal}
                 className="text-slate-400 hover:text-slate-600 cursor-pointer p-1 rounded-lg hover:bg-slate-100 transition-colors"
               >
-                <X className="w-4 h-4" />
+                <Icon icon="lucide:x" className="w-4 h-4"  />
               </button>
             </div>
             {/* Modal Body */}

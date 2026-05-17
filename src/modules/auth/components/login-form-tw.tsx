@@ -1,5 +1,6 @@
 'use client';
 
+import { Icon } from '@iconify/react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema, LoginInput } from '../types';
@@ -9,7 +10,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { Input, Button } from "@heroui/react";
-import { Eye, EyeOff } from "lucide-react";
+
 
 export function LoginForm() {
   const router = useRouter();
@@ -112,7 +113,7 @@ export function LoginForm() {
               onClick={toggleVisibility} 
               className="absolute right-2.5 top-1/2 -translate-y-1/2 focus:outline-none cursor-pointer text-slate-400 hover:text-slate-600 flex items-center justify-center p-0.5 rounded-full"
             >
-              {isVisible ? <EyeOff className="w-3.5 h-3.5 shrink-0" /> : <Eye className="w-3.5 h-3.5 shrink-0" />}
+              {isVisible ? <Icon icon="lucide:eye-off" className="w-3.5 h-3.5 shrink-0"  /> : <Icon icon="lucide:eye" className="w-3.5 h-3.5 shrink-0"  />}
             </button>
           </div>
           {errors.password && <p className="mt-1 text-[10px] text-red-500 font-semibold">{errors.password.message}</p>}

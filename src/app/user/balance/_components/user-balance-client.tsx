@@ -1,7 +1,8 @@
 'use client';
 
+import { Icon } from '@iconify/react';
 import { Button, Card } from '@heroui/react';
-import { CircleDollarSign, Landmark, Smartphone, CreditCard, Info } from 'lucide-react';
+
 import { addTestBalanceAction } from '@/modules/auth/actions/test-balance.action';
 import { toast } from 'sonner';
 import { useState } from 'react';
@@ -49,15 +50,15 @@ export function UserBalanceClient({ user }: UserBalanceClientProps) {
             {/* Payment Method Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
               <div className="border-2 border-blue-500 bg-blue-50/20 p-5 rounded-2xl flex flex-col items-center gap-2.5 cursor-pointer hover:scale-[1.02] transition-all">
-                <Landmark className="w-6 h-6 text-blue-500" />
+                <Icon icon="lucide:landmark" className="w-6 h-6 text-blue-500"  />
                 <span className="text-xs font-bold text-slate-700">Ngân hàng</span>
               </div>
               <div className="border border-slate-200 p-5 rounded-2xl flex flex-col items-center gap-2.5 cursor-pointer hover:border-blue-500 hover:scale-[1.02] transition-all bg-white">
-                <Smartphone className="w-6 h-6 text-slate-500" />
+                <Icon icon="lucide:smartphone" className="w-6 h-6 text-slate-500"  />
                 <span className="text-xs font-bold text-slate-600">Ví điện tử</span>
               </div>
               <div className="border border-slate-200 p-5 rounded-2xl flex flex-col items-center gap-2.5 cursor-pointer hover:border-blue-500 hover:scale-[1.02] transition-all bg-white">
-                <CreditCard className="w-6 h-6 text-slate-500" />
+                <Icon icon="lucide:credit-card" className="w-6 h-6 text-slate-500"  />
                 <span className="text-xs font-bold text-slate-600">Thẻ cào</span>
               </div>
             </div>
@@ -93,7 +94,7 @@ export function UserBalanceClient({ user }: UserBalanceClientProps) {
           <Card className="border border-slate-200 bg-white p-4 shadow-sm">
             <div className="flex items-center justify-between mb-3.5">
               <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Số dư hiện tại</h2>
-              <CircleDollarSign className="w-5 h-5 text-emerald-500" />
+              <Icon icon="lucide:circle-dollar-sign" className="w-5 h-5 text-emerald-500"  />
             </div>
 
             <div className="mb-4">
@@ -105,7 +106,7 @@ export function UserBalanceClient({ user }: UserBalanceClientProps) {
             <hr className="border-slate-100 my-4" />
 
             <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg text-[10px] text-blue-700 font-semibold flex items-start gap-1.5 leading-relaxed mb-6">
-              <Info className="w-3.5 h-3.5 shrink-0 text-blue-500 mt-0.5" />
+              <Icon icon="lucide:info" className="w-3.5 h-3.5 shrink-0 text-blue-500 mt-0.5"  />
               <span>Số dư này được dùng để thanh toán các đơn hàng mới hoặc tự động gia hạn proxy.</span>
             </div>
 

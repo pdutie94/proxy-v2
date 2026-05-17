@@ -16,7 +16,7 @@ export default async function LandingPage() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-[#020617] text-white font-sans selection:bg-blue-500/30 overflow-hidden relative">
+    <div className="h-screen flex flex-col bg-[#020617] text-white selection:bg-blue-500/30 overflow-hidden relative">
       {/* Dynamic Background */}
       <div className="absolute inset-0 z-0">
         <div className="absolute top-0 left-1/4 w-1/2 h-1/2 bg-blue-600/10 blur-[120px] rounded-full"></div>

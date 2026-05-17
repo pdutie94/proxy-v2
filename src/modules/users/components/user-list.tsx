@@ -1,8 +1,9 @@
 "use client";
 
+import { Icon } from '@iconify/react';
 import { useUsers } from '@/hooks/use-users';
-import { Button, Table, Chip } from "@heroui/react";
-import { Edit2, Lock, Unlock, Calendar, X, AlertTriangle } from "lucide-react";
+import { Button, Table, Chip, Pagination, Popover, PopoverTrigger, PopoverContent } from "@heroui/react";
+
 import { format } from "date-fns";
 import { User } from '@prisma/client';
 import { useState, useCallback } from 'react';
@@ -19,9 +20,23 @@ export function UserList({ onEdit }: UserListProps) {
   const [page, setPage] = useState(1);
   const itemsPerPage = 20;
 
-  const totalPages = Math.ceil(users.length / itemsPerPage);
+  // Filters State
+  const [queryValue, setQueryValue] = useState('');
+  const [roleFilter, setRoleFilter] = useState<'ALL' | 'ADMIN' | 'USER'>('ALL');
+
+  const filteredUsers = users.filter((user: User) => {
+    const matchesQuery = user.email.toLowerCase().includes(queryValue.toLowerCase());
+    const matchesRole = roleFilter === 'ALL' || user.role === roleFilter;
+    return matchesQuery && matchesRole;
+  });
+
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
   const startIndex = (page - 1) * itemsPerPage;
-  const paginatedUsers = users.slice(startIndex, startIndex + itemsPerPage);
+  const paginatedUsers = filteredUsers.slice(startIndex, startIndex + itemsPerPage);
+
+  const startItem = filteredUsers.length === 0 ? 0 : (page - 1) * itemsPerPage + 1;
+  const endItem = Math.min(page * itemsPerPage, filteredUsers.length);
+  const pages = Array.from({length: totalPages}, (_, i) => i + 1);
 
   const handleDelete = useCallback(() => {
     if (deleteId) {
@@ -92,119 +107,218 @@ export function UserList({ onEdit }: UserListProps) {
 
   return (
     <div className="w-full">
-      <div className="w-full border border-slate-200 rounded-xl bg-white overflow-hidden shadow-sm">
-        <Table className="w-full text-left border-collapse">
-          <Table.ScrollContainer>
-            <Table.Content aria-label="Danh sách người dùng">
-              <Table.Header className="border-b border-slate-100 text-slate-400 text-[10px] font-bold uppercase tracking-wider bg-slate-50">
-                <Table.Column isRowHeader className="py-2.5 px-3">Email</Table.Column>
-                <Table.Column className="py-2.5 px-3">Vai trò</Table.Column>
-                <Table.Column className="py-2.5 px-3">Trạng thái</Table.Column>
-                <Table.Column className="py-2.5 px-3">Ngày tạo</Table.Column>
-                <Table.Column className="py-2.5 px-3 text-right">Thao tác</Table.Column>
-              </Table.Header>
-              <Table.Body className="divide-y divide-slate-100 text-xs">
-                {paginatedUsers.map((user: User) => (
-                  <Table.Row key={user.id} className="hover:bg-slate-50/80 transition-colors border-b border-slate-100 last:border-b-0">
-                    <Table.Cell className="py-2.5 px-3 font-semibold text-slate-700 whitespace-nowrap">
-                      {user.email}
-                    </Table.Cell>
-                    <Table.Cell className="py-2.5 px-3">
-                      {getRoleChip(user.role)}
-                    </Table.Cell>
-                    <Table.Cell className="py-2.5 px-3">
-                      {getStatusChip(user.isActive)}
-                    </Table.Cell>
-                    <Table.Cell className="py-2.5 px-3 text-slate-500 whitespace-nowrap font-medium">
-                      <div className="flex items-center gap-1.5">
-                        <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                        <span>{format(new Date(user.createdAt), 'dd/MM/yyyy')}</span>
-                      </div>
-                    </Table.Cell>
-                    <Table.Cell className="py-2.5 px-3 text-right">
-                      <div className="inline-flex items-center gap-1.5">
-                        <button
-                          onClick={() => onEdit(user)}
-                          className="inline-flex items-center justify-center p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer transition-colors"
-                          title="Chỉnh sửa"
-                        >
-                          <Edit2 className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => user.isActive ? setDeleteId(user.id) : setRestoreId(user.id)}
-                          className={`inline-flex items-center justify-center p-1.5 rounded-lg cursor-pointer transition-colors ${
-                            user.isActive 
-                              ? 'text-danger/70 hover:text-danger hover:bg-danger-50' 
-                              : 'text-success/70 hover:text-success hover:bg-success-50'
-                          }`}
-                          title={user.isActive ? "Khóa người dùng" : "Mở khóa người dùng"}
-                        >
-                          {user.isActive ? (
-                            <Lock className="w-3.5 h-3.5" />
-                          ) : (
-                            <Unlock className="w-3.5 h-3.5" />
-                          )}
-                        </button>
-                      </div>
-                    </Table.Cell>
-                  </Table.Row>
-                ))}
-                {paginatedUsers.length === 0 && (
-                  <Table.Row>
-                    <Table.Cell colSpan={5} className="py-12 text-center text-slate-400 font-medium">
-                      Danh sách người dùng hiện đang trống.
-                    </Table.Cell>
-                  </Table.Row>
-                )}
-              </Table.Body>
-            </Table.Content>
-          </Table.ScrollContainer>
-        </Table>
+      {/* Sleek Ultra-Compact Filter & Search Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 mt-1">
+        {/* Left Side: Filter Dropdowns */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <Popover>
+            <PopoverTrigger>
+              <button className={`h-8 px-2.5 text-xs font-semibold rounded-lg flex items-center gap-1.5 cursor-pointer outline-none transition-all duration-150 shadow-none ${
+                roleFilter !== 'ALL' ? 'bg-blue-50/50 border border-blue-200 text-blue-600' : 'bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 text-slate-600'
+              }`}>
+                <Icon icon="lucide:user" width={14} height={14} className={roleFilter !== 'ALL' ? 'text-blue-500' : 'text-slate-400'} />
+                <span>{roleFilter === 'ALL' ? 'Vai trò' : roleFilter === 'ADMIN' ? 'Vai trò: Quản trị viên' : 'Vai trò: Người dùng'}</span>
+                <Icon icon="lucide:chevron-down" width={12} height={12} className={roleFilter !== 'ALL' ? 'text-blue-400' : 'text-slate-400'} />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent placement="bottom start" offset={8} className="p-2 w-40 flex flex-col bg-white border border-slate-200 rounded-lg shadow-md z-50">
+              {[
+                { key: 'ALL', label: 'Tất cả' },
+                { key: 'ADMIN', label: 'Quản trị viên' },
+                { key: 'USER', label: 'Người dùng' }
+              ].map(opt => (
+                <button
+                  key={opt.key}
+                  onClick={() => {
+                    setRoleFilter(opt.key as 'ALL' | 'ADMIN' | 'USER');
+                    setPage(1);
+                  }}
+                  className={`w-full text-left px-2 py-1.5 text-xs rounded transition-colors cursor-pointer border-none bg-transparent ${
+                    roleFilter === opt.key
+                      ? 'bg-blue-50 text-blue-600 font-semibold'
+                      : 'text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </PopoverContent>
+          </Popover>
 
-        {/* Compact Flat Pagination Footer */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between px-3 py-2.5 border-t border-slate-100 text-xs bg-slate-50/50">
-            <span className="text-slate-400 font-semibold">Trang {page} / {totalPages}</span>
-            <div className="flex items-center gap-1.5">
-              <Button
-                isDisabled={page <= 1}
-                onPress={() => setPage(page - 1)}
-                className="px-2.5 py-1 text-xs border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 font-bold h-7 min-w-0 rounded-lg cursor-pointer transition-all"
-              >
-                Trước
-              </Button>
-              <Button
-                isDisabled={page >= totalPages}
-                onPress={() => setPage(page + 1)}
-                className="px-2.5 py-1 text-xs border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 font-bold h-7 min-w-0 rounded-lg cursor-pointer transition-all"
-              >
-                Sau
-              </Button>
+          {roleFilter !== 'ALL' && (
+            <button
+              onClick={() => {
+                setRoleFilter('ALL');
+                setPage(1);
+              }}
+              className="text-xs font-semibold text-blue-500 hover:text-blue-600 cursor-pointer transition-colors border-none bg-transparent ml-1"
+            >
+              Xóa lọc
+            </button>
+          )}
+        </div>
+
+        {/* Right Side: Search Input */}
+        <div className="flex items-center gap-2">
+          <div className="relative w-full sm:w-56">
+            <input
+              type="text"
+              placeholder="Tìm email người dùng..."
+              value={queryValue}
+              onChange={(e) => {
+                setQueryValue(e.target.value);
+                setPage(1);
+              }}
+              className="w-full h-8 pl-8 pr-8 text-xs bg-slate-100/60 hover:bg-slate-100 focus:bg-white placeholder:text-slate-400 border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none transition-all duration-150"
+            />
+            <div className="absolute inset-y-0 left-2.5 flex items-center pointer-events-none text-slate-400">
+              <Icon icon="lucide:search" width={14} height={14} />
             </div>
+            {queryValue && (
+              <button
+                onClick={() => {
+                  setQueryValue('');
+                  setPage(1);
+                }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full hover:bg-slate-100 cursor-pointer bg-transparent border-none flex items-center justify-center"
+              >
+                <Icon icon="lucide:x" width={12} height={12} />
+              </button>
+            )}
           </div>
-        )}
+        </div>
       </div>
 
-      {/* Modern Compact Overlay Modal for Locking User */}
+      {/* Users Table list */}
+      <Table>
+        <Table.ScrollContainer>
+          <Table.Content aria-label="Danh sách thành viên">
+            <Table.Header>
+              <Table.Column isRowHeader>Email</Table.Column>
+              <Table.Column>Vai trò</Table.Column>
+              <Table.Column>Trạng thái</Table.Column>
+              <Table.Column>Ngày đăng ký</Table.Column>
+              <Table.Column className="text-end">Thao tác</Table.Column>
+            </Table.Header>
+            <Table.Body>
+              {paginatedUsers.map((user: User) => (
+                <Table.Row key={user.id}>
+                  <Table.Cell className="align-top  font-semibold text-slate-800">
+                    {user.email}
+                  </Table.Cell>
+                  <Table.Cell className="align-top">
+                    {getRoleChip(user.role)}
+                  </Table.Cell>
+                  <Table.Cell className="align-top">
+                    {getStatusChip(user.isActive)}
+                  </Table.Cell>
+                  <Table.Cell className="align-top  text-slate-500 font-medium whitespace-nowrap">
+                    {user.createdAt ? format(new Date(user.createdAt), 'dd/MM/yyyy HH:mm') : '---'}
+                  </Table.Cell>
+                  <Table.Cell className="align-top text-right">
+                    <div className="inline-flex items-center gap-1 justify-end">
+                      {/* Edit Button */}
+                      <button
+                        onClick={() => onEdit(user)}
+                        className="w-7 h-7 rounded-md bg-transparent hover:bg-slate-100 text-slate-500 hover:text-slate-800 border-none flex items-center justify-center cursor-pointer transition-colors"
+                        title="Chỉnh sửa vai trò"
+                      >
+                        <Icon icon="lucide:edit-3" className="w-3.5 h-3.5" />
+                      </button>
+
+                      {/* Toggle Active state Button */}
+                      {user.isActive ? (
+                        <button
+                          onClick={() => setDeleteId(user.id)}
+                          className="w-7 h-7 rounded-md bg-transparent hover:bg-red-50 text-red-500 hover:text-red-700 border-none flex items-center justify-center cursor-pointer transition-colors"
+                          title="Khóa tài khoản"
+                        >
+                          <Icon icon="lucide:lock" className="w-3.5 h-3.5" />
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => setRestoreId(user.id)}
+                          className="w-7 h-7 rounded-md bg-transparent hover:bg-green-50 text-green-500 hover:text-green-700 border-none flex items-center justify-center cursor-pointer transition-colors"
+                          title="Kích hoạt tài khoản"
+                        >
+                          <Icon icon="lucide:unlock" className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </Table.Cell>
+                </Table.Row>
+              ))}
+              {paginatedUsers.length === 0 && (
+                <Table.Row>
+                  <Table.Cell colSpan={5} className="py-12 text-center text-slate-400 font-medium">
+                    Không tìm thấy người dùng nào.
+                  </Table.Cell>
+                </Table.Row>
+              )}
+            </Table.Body>
+          </Table.Content>
+        </Table.ScrollContainer>
+        {totalPages > 1 && (
+          <Table.Footer>
+            <Pagination size="sm">
+              <Pagination.Summary>
+                Hiển thị {startItem} - {endItem} trong tổng số {filteredUsers.length} kết quả
+              </Pagination.Summary>
+              <Pagination.Content>
+                <Pagination.Item>
+                  <Pagination.Previous
+                    isDisabled={page <= 1}
+                    onPress={() => setPage(page - 1)}
+                  >
+                    <Pagination.PreviousIcon />
+                    Trước
+                  </Pagination.Previous>
+                </Pagination.Item>
+                {pages.map((p) => (
+                  <Pagination.Item key={p}>
+                    <Pagination.Link
+                      isActive={p === page}
+                      onPress={() => setPage(p)}
+                    >
+                      {p}
+                    </Pagination.Link>
+                  </Pagination.Item>
+                ))}
+                <Pagination.Item>
+                  <Pagination.Next
+                    isDisabled={page >= totalPages}
+                    onPress={() => setPage(page + 1)}
+                  >
+                    Sau
+                    <Pagination.NextIcon />
+                  </Pagination.Next>
+                </Pagination.Item>
+              </Pagination.Content>
+            </Pagination>
+          </Table.Footer>
+        )}
+      </Table>
+
+      {/* Lock Confirmation Overlay Modal */}
       {deleteId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-150">
           <div className="bg-white border border-slate-200 rounded-xl w-full max-w-sm overflow-hidden shadow-lg flex flex-col">
             {/* Modal Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50/50">
               <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-1.5 text-danger">
-                <AlertTriangle className="w-4 h-4 shrink-0" />
-                Khóa người dùng?
+                <Icon icon="lucide:lock" className="w-4 h-4 shrink-0 text-red-500" />
+                Khóa tài khoản?
               </h3>
               <button 
                 onClick={() => setDeleteId(null)}
-                className="text-slate-400 hover:text-slate-600 cursor-pointer p-1 rounded-lg hover:bg-slate-100 transition-colors"
+                className="text-slate-400 hover:text-slate-600 cursor-pointer p-1 rounded-lg hover:bg-slate-100 transition-colors bg-transparent border-none flex items-center justify-center"
               >
-                <X className="w-4 h-4" />
+                <Icon icon="lucide:x" className="w-4 h-4" />
               </button>
             </div>
             {/* Modal Body */}
             <div className="p-4 text-xs text-slate-600 font-medium leading-relaxed bg-white">
-              Bạn có chắc chắn muốn khóa người dùng này? Người dùng sẽ bị mất quyền đăng nhập và truy cập vào hệ thống ngay lập tức.
+              Bạn có chắc chắn muốn khóa tài khoản này? Người dùng sẽ không thể đăng nhập hoặc mua/quản lý proxy trên hệ thống nữa.
             </div>
             {/* Modal Footer */}
             <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-slate-100 bg-slate-50/50">
@@ -220,35 +334,38 @@ export function UserList({ onEdit }: UserListProps) {
                 variant="danger"
                 onPress={handleDelete}
                 isDisabled={deleteMutation.isPending}
-                className="cursor-pointer font-bold text-xs h-8 px-3 rounded-lg flex items-center gap-1"
+                className="cursor-pointer font-bold text-xs h-8 px-3 rounded-lg flex items-center gap-1.5 bg-red-500 text-white"
               >
                 {deleteMutation.isPending && (
                   <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
                 )}
-                Khóa người dùng
+                Xác nhận khóa
               </Button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Modern Compact Overlay Modal for Restoring User */}
+      {/* Unlock Confirmation Overlay Modal */}
       {restoreId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-150">
           <div className="bg-white border border-slate-200 rounded-xl w-full max-w-sm overflow-hidden shadow-lg flex flex-col">
             {/* Modal Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50/50">
-              <h3 className="text-sm font-semibold text-slate-800">Khôi phục người dùng?</h3>
+              <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-1.5 text-success">
+                <Icon icon="lucide:unlock" className="w-4 h-4 shrink-0 text-emerald-500" />
+                Mở khóa tài khoản?
+              </h3>
               <button 
                 onClick={() => setRestoreId(null)}
-                className="text-slate-400 hover:text-slate-600 cursor-pointer p-1 rounded-lg hover:bg-slate-100 transition-colors"
+                className="text-slate-400 hover:text-slate-600 cursor-pointer p-1 rounded-lg hover:bg-slate-100 transition-colors bg-transparent border-none flex items-center justify-center"
               >
-                <X className="w-4 h-4" />
+                <Icon icon="lucide:x" className="w-4 h-4" />
               </button>
             </div>
             {/* Modal Body */}
             <div className="p-4 text-xs text-slate-600 font-medium leading-relaxed bg-white">
-              Bạn có chắc chắn muốn mở khóa người dùng này? Người dùng sẽ có thể đăng nhập lại vào hệ thống.
+              Bạn có chắc chắn muốn mở khóa và kích hoạt lại tài khoản này? Người dùng sẽ lấy lại toàn bộ quyền sử dụng bình thường.
             </div>
             {/* Modal Footer */}
             <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-slate-100 bg-slate-50/50">
@@ -261,15 +378,14 @@ export function UserList({ onEdit }: UserListProps) {
               </Button>
               <Button
                 size="sm"
-                variant="primary"
                 onPress={handleRestore}
                 isDisabled={restoreMutation.isPending}
-                className="cursor-pointer font-bold text-xs h-8 px-3 rounded-lg flex items-center gap-1"
+                className="cursor-pointer font-bold text-xs h-8 px-3 rounded-lg flex items-center gap-1.5 bg-blue-600 text-white"
               >
                 {restoreMutation.isPending && (
                   <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
                 )}
-                Mở khóa
+                Xác nhận kích hoạt
               </Button>
             </div>
           </div>

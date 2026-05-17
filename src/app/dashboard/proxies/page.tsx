@@ -1,5 +1,6 @@
 "use client";
 
+import { Icon } from '@iconify/react';
 import { useState, useCallback, useRef } from "react";
 import { ProxyList } from "@/modules/proxies/components/proxy-list";
 import { AddProxyForm, AddProxyFormRef } from "@/modules/proxies/components/add-proxy-form";
@@ -7,7 +8,7 @@ import { useProxies } from "@/hooks/use-proxies";
 import { Proxy } from "@prisma/client";
 import { JobProgressModal } from "@/components/jobs/job-progress-modal";
 import { Button } from "@heroui/react";
-import { Plus, X } from "lucide-react";
+
 
 export default function ProxiesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -53,7 +54,7 @@ export default function ProxiesPage() {
           onPress={toggleModal}
           className="cursor-pointer font-bold text-xs h-9 px-3 flex items-center gap-1.5 self-start sm:self-auto rounded-lg"
         >
-          <Plus className="w-3.5 h-3.5 shrink-0" />
+          <Icon icon="lucide:plus" className="w-3.5 h-3.5 shrink-0"  />
           Tạo Proxy mới
         </Button>
       </div>
@@ -74,7 +75,7 @@ export default function ProxiesPage() {
                 onClick={toggleModal}
                 className="text-slate-400 hover:text-slate-600 cursor-pointer p-1 rounded-lg hover:bg-slate-100 transition-colors"
               >
-                <X className="w-4 h-4" />
+                <Icon icon="lucide:x" className="w-4 h-4"  />
               </button>
             </div>
             {/* Modal Body */}

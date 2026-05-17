@@ -1,11 +1,12 @@
 "use client";
 
+import { Icon } from '@iconify/react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { userSchema, UserSchema } from '../schemas/user.schema';
 import { useUsers } from '@/hooks/use-users';
 import { Input } from "@heroui/react";
-import { ChevronDown } from "lucide-react";
+
 import { useCallback, forwardRef, useImperativeHandle, useEffect } from 'react';
 import { User } from '@prisma/client';
 
@@ -132,7 +133,7 @@ export const AddUserForm = forwardRef<AddUserFormRef, AddUserFormProps>(
                   <option value="ADMIN">Quản trị viên</option>
                 </select>
                 <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-400">
-                  <ChevronDown className="w-3.5 h-3.5" />
+                  <Icon icon="lucide:chevron-down" className="w-3.5 h-3.5"  />
                 </div>
               </div>
             )}

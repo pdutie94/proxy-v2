@@ -1,8 +1,9 @@
 'use client';
 
+import { Icon } from '@iconify/react';
 import { useState, useMemo } from 'react';
 import { Button } from '@heroui/react';
-import { ChevronDown, Info, X } from 'lucide-react';
+
 import { toast } from 'sonner';
 import { createPendingOrderAction, payOrderAction } from '../actions/purchase.action';
 import { useRouter } from 'next/navigation';
@@ -127,7 +128,7 @@ export function BuyProxyModal({ open, onClose }: BuyProxyModalProps) {
             onClick={() => { onClose(); setStep(0); setOrderId(null); }}
             className="text-slate-400 hover:text-slate-600 cursor-pointer p-1 rounded-lg hover:bg-slate-100 transition-colors"
           >
-            <X className="w-4 h-4" />
+            <Icon icon="lucide:x" className="w-4 h-4"  />
           </button>
         </div>
 
@@ -197,7 +198,7 @@ export function BuyProxyModal({ open, onClose }: BuyProxyModalProps) {
                       )}
                     </select>
                     <div className="absolute inset-y-0 right-2.5 flex items-center pointer-events-none text-slate-400">
-                      <ChevronDown className="w-3.5 h-3.5" />
+                      <Icon icon="lucide:chevron-down" className="w-3.5 h-3.5"  />
                     </div>
                   </div>
                 </div>
@@ -215,7 +216,7 @@ export function BuyProxyModal({ open, onClose }: BuyProxyModalProps) {
                       ))}
                     </select>
                     <div className="absolute inset-y-0 right-2.5 flex items-center pointer-events-none text-slate-400">
-                      <ChevronDown className="w-3.5 h-3.5" />
+                      <Icon icon="lucide:chevron-down" className="w-3.5 h-3.5"  />
                     </div>
                   </div>
                 </div>
@@ -277,7 +278,7 @@ export function BuyProxyModal({ open, onClose }: BuyProxyModalProps) {
 
               {/* Warning Banner */}
               <div className="p-2.5 bg-blue-50 border border-blue-100 rounded-lg text-[10px] text-blue-700 font-semibold flex items-start gap-1.5 leading-relaxed">
-                <Info className="w-3.5 h-3.5 shrink-0 text-blue-500 mt-0.5" />
+                <Icon icon="lucide:info" className="w-3.5 h-3.5 shrink-0 text-blue-500 mt-0.5"  />
                 <span>Vui lòng kiểm tra kỹ thông tin đơn hàng trước khi xác nhận thanh toán.</span>
               </div>
             </>

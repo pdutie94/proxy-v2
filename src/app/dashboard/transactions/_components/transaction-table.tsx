@@ -1,11 +1,11 @@
 'use client';
 
-import { Table, Chip, Button } from '@heroui/react';
+import { Icon } from '@iconify/react';
+import { Table, Chip, Button, Popover, PopoverTrigger, PopoverContent, Pagination } from '@heroui/react';
 import { format } from 'date-fns';
 import { approveTransactionAction, rejectTransactionAction } from '@/modules/wallet/actions/admin-transaction.action';
 import { toast } from 'sonner';
 import { useState } from 'react';
-import { Check, X } from 'lucide-react';
 
 import { TransactionWithUser } from '@/types';
 
@@ -18,9 +18,26 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
   const [page, setPage] = useState(1);
   const itemsPerPage = 20;
 
-  const totalPages = Math.ceil(transactions.length / itemsPerPage);
+  // Filters State
+  const [queryValue, setQueryValue] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'PENDING' | 'COMPLETED' | 'REJECTED'>('ALL');
+  const [typeFilter, setTypeFilter] = useState<'ALL' | 'DEPOSIT' | 'PAYMENT'>('ALL');
+
+  const filteredTransactions = transactions.filter((tx) => {
+    const email = tx.user?.email || '';
+    const matchesQuery = email.toLowerCase().includes(queryValue.toLowerCase());
+    const matchesStatus = statusFilter === 'ALL' || tx.status === statusFilter;
+    const matchesType = typeFilter === 'ALL' || tx.type === typeFilter;
+    return matchesQuery && matchesStatus && matchesType;
+  });
+
+  const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
   const startIndex = (page - 1) * itemsPerPage;
-  const paginatedTransactions = transactions.slice(startIndex, startIndex + itemsPerPage);
+  const paginatedTransactions = filteredTransactions.slice(startIndex, startIndex + itemsPerPage);
+
+  const startItem = filteredTransactions.length === 0 ? 0 : (page - 1) * itemsPerPage + 1;
+  const endItem = Math.min(page * itemsPerPage, filteredTransactions.length);
+  const pages = Array.from({length: totalPages}, (_, i) => i + 1);
 
   const handleApprove = async (id: string) => {
     setLoadingId(id);
@@ -86,52 +103,172 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
   };
 
   return (
-    <div className="w-full border border-slate-200 rounded-xl bg-white overflow-hidden shadow-sm">
-      <Table className="w-full text-left border-collapse">
+    <div className="w-full">
+      {/* Sleek Ultra-Compact Filter & Search Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 mt-1">
+        {/* Left Side: Filter Dropdowns */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Status Filter */}
+          <Popover>
+            <PopoverTrigger>
+              <button className={`h-8 px-2.5 text-xs font-semibold rounded-lg flex items-center gap-1.5 cursor-pointer outline-none transition-all duration-150 shadow-none ${
+                statusFilter !== 'ALL' ? 'bg-blue-50/50 border border-blue-200 text-blue-600' : 'bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 text-slate-600'
+              }`}>
+                <Icon icon="lucide:check-circle" width={14} height={14} className={statusFilter !== 'ALL' ? 'text-blue-500' : 'text-slate-400'} />
+                <span>{statusFilter === 'ALL' ? 'Trạng thái' : statusFilter === 'PENDING' ? 'Chờ duyệt' : statusFilter === 'COMPLETED' ? 'Thành công' : 'Đã từ chối'}</span>
+                <Icon icon="lucide:chevron-down" width={12} height={12} className={statusFilter !== 'ALL' ? 'text-blue-400' : 'text-slate-400'} />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent placement="bottom start" offset={8} className="p-2 w-40 flex flex-col bg-white border border-slate-200 rounded-lg shadow-md z-50">
+              {[
+                { key: 'ALL', label: 'Tất cả' },
+                { key: 'PENDING', label: 'Chờ duyệt' },
+                { key: 'COMPLETED', label: 'Thành công' },
+                { key: 'REJECTED', label: 'Đã từ chối' }
+              ].map(opt => (
+                <button
+                  key={opt.key}
+                  onClick={() => {
+                    setStatusFilter(opt.key as any);
+                    setPage(1);
+                  }}
+                  className={`w-full text-left px-2 py-1.5 text-xs rounded transition-colors cursor-pointer border-none bg-transparent ${
+                    statusFilter === opt.key
+                      ? 'bg-blue-50 text-blue-600 font-semibold'
+                      : 'text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </PopoverContent>
+          </Popover>
+
+          {/* Type Filter */}
+          <Popover>
+            <PopoverTrigger>
+              <button className={`h-8 px-2.5 text-xs font-semibold rounded-lg flex items-center gap-1.5 cursor-pointer outline-none transition-all duration-150 shadow-none ${
+                typeFilter !== 'ALL' ? 'bg-blue-50/50 border border-blue-200 text-blue-600' : 'bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 text-slate-600'
+              }`}>
+                <Icon icon="lucide:sliders" width={14} height={14} className={typeFilter !== 'ALL' ? 'text-blue-500' : 'text-slate-400'} />
+                <span>{typeFilter === 'ALL' ? 'Loại GD' : typeFilter === 'DEPOSIT' ? 'Nạp tiền' : 'Thanh toán'}</span>
+                <Icon icon="lucide:chevron-down" width={12} height={12} className={typeFilter !== 'ALL' ? 'text-blue-400' : 'text-slate-400'} />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent placement="bottom start" offset={8} className="p-2 w-40 flex flex-col bg-white border border-slate-200 rounded-lg shadow-md z-50">
+              {[
+                { key: 'ALL', label: 'Tất cả' },
+                { key: 'DEPOSIT', label: 'Nạp tiền' },
+                { key: 'PAYMENT', label: 'Thanh toán' }
+              ].map(opt => (
+                <button
+                  key={opt.key}
+                  onClick={() => {
+                    setTypeFilter(opt.key as any);
+                    setPage(1);
+                  }}
+                  className={`w-full text-left px-2 py-1.5 text-xs rounded transition-colors cursor-pointer border-none bg-transparent ${
+                    typeFilter === opt.key
+                      ? 'bg-blue-50 text-blue-600 font-semibold'
+                      : 'text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </PopoverContent>
+          </Popover>
+
+          {(statusFilter !== 'ALL' || typeFilter !== 'ALL') && (
+            <button
+              onClick={() => {
+                setStatusFilter('ALL');
+                setTypeFilter('ALL');
+                setPage(1);
+              }}
+              className="text-xs font-semibold text-blue-500 hover:text-blue-600 cursor-pointer transition-colors border-none bg-transparent ml-1"
+            >
+              Xóa lọc
+            </button>
+          )}
+        </div>
+
+        {/* Right Side: Search Input */}
+        <div className="flex items-center gap-2">
+          <div className="relative w-full sm:w-56">
+            <input
+              type="text"
+              placeholder="Tìm email người dùng..."
+              value={queryValue}
+              onChange={(e) => {
+                setQueryValue(e.target.value);
+                setPage(1);
+              }}
+              className="w-full h-8 pl-8 pr-8 text-xs bg-slate-100/60 hover:bg-slate-100 focus:bg-white placeholder:text-slate-400 border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none transition-all duration-150"
+            />
+            <div className="absolute inset-y-0 left-2.5 flex items-center pointer-events-none text-slate-400">
+              <Icon icon="lucide:search" width={14} height={14} />
+            </div>
+            {queryValue && (
+              <button
+                onClick={() => {
+                  setQueryValue('');
+                  setPage(1);
+                }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full hover:bg-slate-100 cursor-pointer bg-transparent border-none flex items-center justify-center"
+              >
+                <Icon icon="lucide:x" width={12} height={12} />
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Transactions Table list */}
+      <Table>
         <Table.ScrollContainer>
           <Table.Content aria-label="Danh sách giao dịch hệ thống">
-            <Table.Header className="border-b border-slate-100 text-slate-400 text-[10px] font-bold uppercase tracking-wider bg-slate-50">
-              <Table.Column isRowHeader className="py-2.5 px-3">Người dùng</Table.Column>
-              <Table.Column className="py-2.5 px-3 w-36">Số tiền</Table.Column>
-              <Table.Column className="py-2.5 px-3 w-28">Loại</Table.Column>
-              <Table.Column className="py-2.5 px-3 w-28">Trạng thái</Table.Column>
-              <Table.Column className="py-2.5 px-3 w-40">Thời gian</Table.Column>
-              <Table.Column className="py-2.5 px-3 w-44 text-right">Thao tác</Table.Column>
+            <Table.Header>
+              <Table.Column isRowHeader>Người dùng</Table.Column>
+              <Table.Column className="w-36">Số tiền</Table.Column>
+              <Table.Column className="w-28">Loại</Table.Column>
+              <Table.Column className="w-28">Trạng thái</Table.Column>
+              <Table.Column className="w-40">Thời gian</Table.Column>
+              <Table.Column className="w-44 text-end">Thao tác</Table.Column>
             </Table.Header>
-            <Table.Body className="divide-y divide-slate-100 text-xs">
+            <Table.Body>
               {paginatedTransactions.map((tx) => (
-                <Table.Row key={tx.id} className="hover:bg-slate-50/80 transition-colors border-b border-slate-100 last:border-b-0">
-                  <Table.Cell className="py-2.5 px-3 font-semibold text-slate-800">
+                <Table.Row key={tx.id}>
+                  <Table.Cell className="align-top  font-semibold text-slate-800">
                     {tx.user?.email}
                   </Table.Cell>
-                  <Table.Cell className="py-2.5 px-3">
+                  <Table.Cell className="align-top">
                     <span className={`font-bold text-xs ${tx.type === 'DEPOSIT' ? 'text-emerald-600' : 'text-rose-600'}`}>
                       {tx.type === 'DEPOSIT' ? '+' : '-'}{Number(tx.amount).toLocaleString()}đ
                     </span>
                   </Table.Cell>
-                  <Table.Cell className="py-2.5 px-3">
+                  <Table.Cell className="align-top">
                     {getTypeChip(tx.type)}
                   </Table.Cell>
-                  <Table.Cell className="py-2.5 px-3">
+                  <Table.Cell className="align-top">
                     {getStatusChip(tx.status)}
                   </Table.Cell>
-                  <Table.Cell className="py-2.5 px-3 text-slate-500 font-medium">
+                  <Table.Cell className="align-top  text-slate-500 font-medium whitespace-nowrap">
                     {format(new Date(tx.createdAt), 'dd/MM/yyyy HH:mm')}
                   </Table.Cell>
-                  <Table.Cell className="py-2.5 px-3 text-right">
+                  <Table.Cell className="align-top text-right">
                     {tx.status === 'PENDING' && tx.type === 'DEPOSIT' ? (
-                      <div className="inline-flex items-center gap-1.5">
+                      <div className="inline-flex items-center gap-1.5 justify-end">
                         <Button
                           size="sm"
-                          variant="primary"
                           onPress={() => handleApprove(tx.id)}
                           isDisabled={loadingId !== null}
-                          className="cursor-pointer font-bold h-7 text-[10px] px-2.5 rounded-lg inline-flex items-center gap-1 border-0"
+                          className="cursor-pointer font-bold h-7 text-[10px] px-2.5 rounded-lg inline-flex items-center gap-1 border-0 bg-blue-600 hover:bg-blue-700 text-white"
                         >
                           {loadingId === tx.id ? (
                             <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
                           ) : (
-                            <Check className="w-3.5 h-3.5" />
+                            <Icon icon="lucide:check" className="w-3.5 h-3.5" />
                           )}
                           Duyệt
                         </Button>
@@ -144,13 +281,13 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                           {loadingId === tx.id ? (
                             <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
                           ) : (
-                            <X className="w-3.5 h-3.5" />
+                            <Icon icon="lucide:x" className="w-3.5 h-3.5" />
                           )}
                           Từ chối
                         </Button>
                       </div>
                     ) : (
-                      <span className="text-slate-400 font-semibold italic text-[11px]">
+                      <span className="text-slate-400 font-semibold italic text-[11px] block">
                         {tx.notes || '-'}
                       </span>
                     )}
@@ -167,30 +304,46 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
             </Table.Body>
           </Table.Content>
         </Table.ScrollContainer>
+        {totalPages > 1 && (
+          <Table.Footer>
+            <Pagination size="sm">
+              <Pagination.Summary>
+                Hiển thị {startItem} - {endItem} trong tổng số {filteredTransactions.length} kết quả
+              </Pagination.Summary>
+              <Pagination.Content>
+                <Pagination.Item>
+                  <Pagination.Previous
+                    isDisabled={page <= 1}
+                    onPress={() => setPage(page - 1)}
+                  >
+                    <Pagination.PreviousIcon />
+                    Trước
+                  </Pagination.Previous>
+                </Pagination.Item>
+                {pages.map((p) => (
+                  <Pagination.Item key={p}>
+                    <Pagination.Link
+                      isActive={p === page}
+                      onPress={() => setPage(p)}
+                    >
+                      {p}
+                    </Pagination.Link>
+                  </Pagination.Item>
+                ))}
+                <Pagination.Item>
+                  <Pagination.Next
+                    isDisabled={page >= totalPages}
+                    onPress={() => setPage(page + 1)}
+                  >
+                    Sau
+                    <Pagination.NextIcon />
+                  </Pagination.Next>
+                </Pagination.Item>
+              </Pagination.Content>
+            </Pagination>
+          </Table.Footer>
+        )}
       </Table>
-
-      {/* Compact Flat Pagination Footer */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between px-3 py-2.5 border-t border-slate-100 text-xs bg-slate-50/50">
-          <span className="text-slate-400 font-semibold">Trang {page} / {totalPages}</span>
-          <div className="flex items-center gap-1.5">
-            <Button
-              isDisabled={page <= 1}
-              onPress={() => setPage(page - 1)}
-              className="px-2.5 py-1 text-xs border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 font-bold h-7 min-w-0 rounded-lg cursor-pointer transition-all"
-            >
-              Trước
-            </Button>
-            <Button
-              isDisabled={page >= totalPages}
-              onPress={() => setPage(page + 1)}
-              className="px-2.5 py-1 text-xs border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 font-bold h-7 min-w-0 rounded-lg cursor-pointer transition-all"
-            >
-              Sau
-            </Button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
