@@ -1,25 +1,14 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
+import { Button } from "@heroui/react";
 import { 
-  Modal, 
-  Text, 
-  Box, 
-  BlockStack, 
-  InlineStack, 
-  Badge, 
-  ProgressBar,
-  Banner,
-  Scrollable,
-  Spinner,
-  Icon
-} from "@shopify/polaris";
-import { 
-  CheckCircleIcon, 
-  ClockIcon,
-  PlayIcon,
-  SearchIcon
-} from "@shopify/polaris-icons";
+  CheckCircle2, 
+  Clock, 
+  Terminal, 
+  X,
+  AlertTriangle
+} from "lucide-react";
 import { format } from 'date-fns';
 
 interface JobStatus {
@@ -61,19 +50,13 @@ export const JobProgressModal = ({ jobId, open, onClose, onCompleted }: JobProgr
           setIsPolling(false);
           if (onCompleted) onCompleted();
         }
-        
-        // If FAILED, we DON'T stop polling immediately, 
-        // because BullMQ might retry and change status back to ACTIVE.
-        // We only show the error state in the UI.
       } else {
         setError(result.message);
-        // Don't stop polling on API error either, could be transient
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
     }
   }, [jobId, onCompleted]);
-
 
   useEffect(() => {
     let intervalId: ReturnType<typeof setInterval>;
@@ -90,10 +73,30 @@ export const JobProgressModal = ({ jobId, open, onClose, onCompleted }: JobProgr
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'COMPLETED': return <Badge tone="success">THÀNH CÔNG</Badge>;
-      case 'FAILED': return <Badge tone="critical">THẤT BẠI</Badge>;
-      case 'ACTIVE': return <Badge tone="info">ĐANG CHẠY</Badge>;
-      default: return <Badge>ĐANG CHỜ</Badge>;
+      case 'COMPLETED':
+        return (
+          <span className="px-2 py-0.5 text-[9px] font-bold uppercase rounded bg-emerald-50 text-emerald-600 border border-emerald-200">
+            Thành công
+          </span>
+        );
+      case 'FAILED':
+        return (
+          <span className="px-2 py-0.5 text-[9px] font-bold uppercase rounded bg-rose-50 text-rose-600 border border-rose-200">
+            Thất bại
+          </span>
+        );
+      case 'ACTIVE':
+        return (
+          <span className="px-2 py-0.5 text-[9px] font-bold uppercase rounded bg-blue-50 text-blue-600 border border-blue-200 animate-pulse">
+            Đang chạy
+          </span>
+        );
+      default:
+        return (
+          <span className="px-2 py-0.5 text-[9px] font-bold uppercase rounded bg-slate-50 text-slate-500 border border-slate-200">
+            Đang chờ
+          </span>
+        );
     }
   };
 
@@ -111,7 +114,6 @@ export const JobProgressModal = ({ jobId, open, onClose, onCompleted }: JobProgr
   const parseLogs = (logs: string | null) => {
     if (!logs) return [];
     return logs.split('\n').filter(line => line.trim() !== '').map(line => {
-      // Regex to parse [ISO_DATE] Message
       const match = line.match(/^\[(.*?)\] (.*)$/);
       if (match) {
         return {
@@ -124,160 +126,159 @@ export const JobProgressModal = ({ jobId, open, onClose, onCompleted }: JobProgr
   };
 
   const logSteps = parseLogs(job?.logs || null);
-  
   const progress = job?.status === 'COMPLETED' ? 100 : (job?.status === 'FAILED' ? 100 : (job?.status === 'ACTIVE' ? 50 : 10));
-  const progressTone = job?.status === 'FAILED' ? 'critical' : (job?.status === 'COMPLETED' ? 'success' : 'primary');
+
+  const getProgressColor = (status: string) => {
+    switch (status) {
+      case 'COMPLETED': return 'bg-emerald-500';
+      case 'FAILED': return 'bg-rose-500';
+      case 'ACTIVE': return 'bg-blue-500';
+      default: return 'bg-slate-300';
+    }
+  };
+
+  if (!open) return null;
 
   return (
-    <Modal
-      open={open}
-      onClose={onClose}
-      title={getJobTypeLabel(job?.type || '')}
-      primaryAction={{
-        content: isPolling ? 'Ẩn (Chạy ngầm)' : 'Đóng',
-        onAction: onClose,
-      }}
-    >
-      <Modal.Section>
-        <BlockStack gap="400">
-          <Box padding="400" background="bg-surface-secondary" borderRadius="200">
-            <BlockStack gap="300">
-              <InlineStack align="space-between">
-                <InlineStack gap="200">
-                  <Icon source={job?.type === 'SETUP_SERVER' ? PlayIcon : SearchIcon} tone="base" />
-                  <Text as="h2" variant="headingMd">
-                    {job?.server?.name || 'Đang xác định...'}
-                  </Text>
-                </InlineStack>
-                {getStatusBadge(job?.status || 'WAITING')}
-              </InlineStack>
-              
-              <ProgressBar progress={progress} tone={progressTone} size="small" />
-              
-              <InlineStack gap="400">
-                <InlineStack gap="100">
-                  <Icon source={ClockIcon} tone="subdued" />
-                  <Text as="span" variant="bodyMd" tone="subdued">
-                    Bắt đầu: {job?.startedAt ? format(new Date(job.startedAt), 'HH:mm:ss') : '--:--:--'}
-                  </Text>
-                </InlineStack>
-                {job?.finishedAt && (
-                  <InlineStack gap="100">
-                    <Icon source={CheckCircleIcon} tone="subdued" />
-                    <Text as="span" variant="bodyMd" tone="subdued">
-                      Kết thúc: {format(new Date(job.finishedAt), 'HH:mm:ss')}
-                    </Text>
-                  </InlineStack>
-                )}
-              </InlineStack>
-            </BlockStack>
-          </Box>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+      <div className="bg-white border border-slate-200 rounded-xl w-full max-w-md overflow-hidden shadow-lg flex flex-col">
+        {/* Modal Header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50/50">
+          <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
+            <Terminal className="w-4 h-4 shrink-0 text-slate-500" />
+            {getJobTypeLabel(job?.type || '')}
+          </h3>
+          <button 
+            onClick={onClose}
+            className="text-slate-400 hover:text-slate-600 cursor-pointer p-1 rounded-lg hover:bg-slate-100 transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Modal Body */}
+        <div className="p-4 space-y-4 max-h-[70vh] overflow-y-auto bg-white text-xs">
+          {/* Server Info & Status */}
+          <div className="p-3 bg-slate-50 border border-slate-100 rounded-lg space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="font-semibold text-slate-700">
+                {job?.server?.name || 'Đang kết nối...'}
+              </span>
+              {getStatusBadge(job?.status || 'WAITING')}
+            </div>
+
+            {/* Flat Dynamic Progress Bar */}
+            <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+              <div 
+                className={`h-full rounded-full transition-all duration-500 ${getProgressColor(job?.status || 'WAITING')}`}
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+
+            {/* Timestamps */}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-slate-400 text-[10px]">
+              <div className="flex items-center gap-1">
+                <Clock className="w-3.5 h-3.5" />
+                <span>Bắt đầu: {job?.startedAt ? format(new Date(job.startedAt), 'HH:mm:ss') : '--:--:--'}</span>
+              </div>
+              {job?.finishedAt && (
+                <div className="flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>Kết thúc: {format(new Date(job.finishedAt), 'HH:mm:ss')}</span>
+                </div>
+              )}
+            </div>
+          </div>
 
           {error && (
-            <Banner tone="critical">
-              <p>{error}</p>
-            </Banner>
+            <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-lg text-rose-600 font-semibold flex gap-1.5 items-start">
+              <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>{error}</span>
+            </div>
           )}
 
-          <Text as="h3" variant="headingSm">Nhật ký thực hiện</Text>
-          
-          <Box 
-            background="bg-surface-inverse" 
-            borderRadius="200" 
-            padding="400"
-            minHeight="240px"
-          >
-            <Scrollable style={{ height: '320px' }} focusable shadow>
-              <BlockStack gap="100">
-                {logSteps.length === 0 ? (
-                  <Box padding="400">
-                    <InlineStack align="center" gap="200">
-                      <Spinner size="small" />
-                      <Text as="span" tone="subdued">Đang kết nối tới máy chủ...</Text>
-                    </InlineStack>
-                  </Box>
-                ) : (
-                  logSteps.map((step, index) => {
-                    let color = '#e2e8f0'; // Normal (Slate 200)
-                    let borderColor = '#303030';
+          {/* Terminal Logs View */}
+          <div className="space-y-1.5">
+            <h4 className="font-bold text-slate-600">Nhật ký thực hiện</h4>
+            <div className="bg-slate-900 border border-slate-800 rounded-lg p-3 min-h-[220px] max-h-[280px] overflow-y-auto font-mono text-[10.5px] leading-relaxed shadow-inner">
+              {logSteps.length === 0 ? (
+                <div className="flex items-center justify-center py-16 gap-2 text-slate-400">
+                  <span className="w-3.5 h-3.5 border-2 border-slate-500/30 border-t-slate-400 rounded-full animate-spin"></span>
+                  <span>Đang kết nối tới máy chủ...</span>
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  {logSteps.map((step, index) => {
+                    let colorClass = 'text-slate-300';
+                    let dotColor = 'bg-slate-700 border-slate-800';
                     
                     if (step.message.startsWith('LỖI')) {
-                      color = '#f87171'; // Error (Rose 400)
-                      borderColor = '#f87171';
+                      colorClass = 'text-rose-400 font-bold';
+                      dotColor = 'bg-rose-500 border-rose-600';
                     } else if (step.message.includes('[RETRY]')) {
-                      color = '#fbbf24'; // Retry (Amber 400)
-                      borderColor = '#fbbf24';
+                      colorClass = 'text-amber-400 font-medium';
+                      dotColor = 'bg-amber-400 border-amber-500';
                     } else if (step.message.includes('thành công')) {
-                      color = '#34d399'; // Success (Emerald 400)
-                      borderColor = '#34d399';
+                      colorClass = 'text-emerald-400 font-medium';
+                      dotColor = 'bg-emerald-500 border-emerald-600';
                     } else if (index === logSteps.length - 1 && isPolling) {
-                      borderColor = '#3b82f6'; // Active (Blue 500)
+                      dotColor = 'bg-blue-500 border-blue-600 animate-ping';
                     }
 
                     return (
-                      <div 
-                        key={index} 
-                        style={{ 
-                          paddingTop: '6px', 
-                          paddingBottom: '6px',
-                          display: 'flex',
-                          gap: '16px',
-                          alignItems: 'flex-start',
-                          borderLeft: `2px solid ${borderColor}`,
-                          paddingLeft: '12px',
-                          marginBottom: '4px'
-                        }}
-                      >
-                        <span style={{ 
-                          fontSize: '13px', 
-                          color: '#94a3b8', 
-                          fontWeight: '500', 
-                          minWidth: '65px',
-                          fontFamily: 'monospace'
-                        }}>
+                      <div key={index} className="flex gap-2.5 pl-3.5 border-l border-slate-800 relative py-0.5">
+                        <div className={`absolute -left-1 top-1.5 w-1.5 h-1.5 rounded-full border ${dotColor}`} />
+                        <span className="text-[9.5px] text-slate-500 select-none shrink-0 font-medium tracking-tight">
                           {step.time}
                         </span>
-                        <div style={{ flex: 1 }}>
-                          <p style={{ 
-                            fontSize: '14px', 
-                            lineHeight: '1.4',
-                            color: color,
-                            margin: 0,
-                            fontWeight: step.message.startsWith('LỖI') ? '600' : '400'
-                          }}>
-                            {step.message}
-                          </p>
-                        </div>
-                        {index === logSteps.length - 1 && isPolling && (
-                          <div style={{ paddingLeft: '8px' }}>
-                            <Spinner size="small" />
-                          </div>
-                        )}
+                        <p className={`flex-1 break-all ${colorClass}`}>
+                          {step.message}
+                        </p>
                       </div>
                     );
-                  })
-                )}
-              </BlockStack>
-            </Scrollable>
-          </Box>
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
 
           {job?.status === 'COMPLETED' && (
-            <Banner tone="success" title="Hoàn tất thành công">
-              <p>Máy chủ đã được thiết lập và sẵn sàng hoạt động.</p>
-            </Banner>
+            <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-700 font-semibold flex gap-1.5 items-start">
+              <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-emerald-600" />
+              <div>
+                <p className="font-bold">Hoàn tất thành công</p>
+                <p className="text-[10px] font-normal text-emerald-600/90 mt-0.5">Máy chủ đã được thiết lập và sẵn sàng hoạt động.</p>
+              </div>
+            </div>
           )}
 
           {job?.status === 'FAILED' && (
-            <Banner tone="critical" title={isPolling ? "Đang thử lại..." : "Lỗi thực hiện"}>
-              <p>
-                {isPolling 
-                  ? "Hệ thống đang gặp sự cố tạm thời và đang tự động thử lại. Vui lòng chờ..." 
-                  : "Quá trình gặp sự cố. Vui lòng kiểm tra nhật ký chi tiết phía trên."}
-              </p>
-            </Banner>
+            <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-lg text-rose-700 font-semibold flex gap-1.5 items-start">
+              <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600" />
+              <div>
+                <p className="font-bold">{isPolling ? "Đang thử lại..." : "Lỗi thực hiện"}</p>
+                <p className="text-[10px] font-normal text-rose-600/90 mt-0.5">
+                  {isPolling 
+                    ? "Hệ thống đang gặp sự cố tạm thời và đang tự động thử lại. Vui lòng chờ..." 
+                    : "Quá trình gặp sự cố. Vui lòng kiểm tra nhật ký chi tiết phía trên."}
+                </p>
+              </div>
+            </div>
           )}
-        </BlockStack>
-      </Modal.Section>
-    </Modal>
+        </div>
+
+        {/* Modal Footer */}
+        <div className="flex items-center justify-end px-4 py-3 border-t border-slate-100 bg-slate-50/50">
+          <Button
+            size="sm"
+            variant="primary"
+            onPress={onClose}
+            className="cursor-pointer font-bold text-xs h-8 px-4 rounded-lg"
+          >
+            {isPolling ? 'Ẩn (Chạy ngầm)' : 'Đóng'}
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 };

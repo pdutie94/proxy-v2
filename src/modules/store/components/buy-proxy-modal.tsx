@@ -1,20 +1,8 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { 
-  Modal, 
-  Box, 
-  TextField, 
-  Select, 
-  BlockStack, 
-  InlineStack, 
-  Text, 
-  Banner, 
-  Divider,
-  Button,
-  ButtonGroup,
-  Label
-} from '@shopify/polaris';
+import { Button } from '@heroui/react';
+import { ChevronDown, Info, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { createPendingOrderAction, payOrderAction } from '../actions/purchase.action';
 import { useRouter } from 'next/navigation';
@@ -125,103 +113,206 @@ export function BuyProxyModal({ open, onClose }: BuyProxyModalProps) {
 
   const orderDateStr = format(new Date(), 'yyyy-MM-dd HH:mm:ss');
 
+  if (!open) return null;
+
   return (
-    <Modal
-      open={open}
-      onClose={() => { onClose(); setStep(0); setOrderId(null); }}
-      title={step === 0 ? "Mua Proxy mới" : "Xác nhận đơn hàng"}
-      primaryAction={{ 
-        content: step === 0 ? "Tiến hành thanh toán" : `Thanh toán ${totalPrice.toLocaleString()}đ`, 
-        onAction: handlePurchase, 
-        loading: loading,
-        disabled: step === 0 && (locationsLoading || countriesOptions.length === 0 || !country),
-      }}
-      secondaryActions={
-        step === 0 
-          ? [{ content: 'Hủy bỏ', onAction: onClose }]
-          : [{ content: 'Quay lại', onAction: () => setStep(0) }]
-      }
-    >
-      <Modal.Section>
-        {step === 0 ? (
-          <BlockStack gap="400">
-            <div className="space-y-1">
-              <Label id="proxy-type-label">Loại Proxy</Label>
-              <ButtonGroup variant="segmented" fullWidth>
-                <Button pressed={activeType === 'ipv6'} onClick={() => setActiveType('ipv6')}>IPv6</Button>
-                <Button pressed={activeType === 'ipv4'} onClick={() => setActiveType('ipv4')}>IPv4 Private</Button>
-                <Button pressed={activeType === 'ipv4_shared'} onClick={() => setActiveType('ipv4_shared')}>IPv4 Shared</Button>
-              </ButtonGroup>
-            </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+      <div className="bg-white border border-slate-200 rounded-xl w-full max-w-sm overflow-hidden shadow-lg flex flex-col">
+        {/* Modal Header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50/50">
+          <h3 className="text-sm font-semibold text-slate-800">
+            {step === 0 ? "Mua Proxy mới" : "Xác nhận đơn hàng"}
+          </h3>
+          <button 
+            onClick={() => { onClose(); setStep(0); setOrderId(null); }}
+            className="text-slate-400 hover:text-slate-600 cursor-pointer p-1 rounded-lg hover:bg-slate-100 transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
 
-            <InlineStack gap="400">
-              <div className="flex-1">
-                {locationsLoading ? (
-                  <Select label="Quốc gia" options={[{ value: '', label: 'Đang tải...' }]} value="" onChange={() => {}} disabled />
-                ) : countriesOptions.length === 0 ? (
-                  <Select label="Quốc gia" options={[{ value: '', label: 'Không có vị trí khả dụng' }]} value="" onChange={() => {}} disabled />
-                ) : (
-                  <Select label="Quốc gia" options={countriesOptions} value={country} onChange={setCountry} />
-                )}
+        {/* Modal Body */}
+        <div className="p-4 space-y-4 text-xs bg-white">
+          {step === 0 ? (
+            <>
+              {/* Proxy Type Segmented Buttons */}
+              <div className="space-y-1">
+                <label className="block text-[11px] font-semibold text-slate-500">Loại Proxy</label>
+                <div className="grid grid-cols-3 gap-1 p-0.5 bg-slate-100 border border-slate-200 rounded-lg h-9">
+                  <button
+                    type="button"
+                    onClick={() => setActiveType('ipv6')}
+                    className={`text-[10px] font-bold rounded-md transition-all cursor-pointer ${
+                      activeType === 'ipv6'
+                        ? 'bg-white text-slate-800 shadow-sm border border-slate-200/50'
+                        : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                  >
+                    IPv6
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveType('ipv4')}
+                    className={`text-[10px] font-bold rounded-md transition-all cursor-pointer ${
+                      activeType === 'ipv4'
+                        ? 'bg-white text-slate-800 shadow-sm border border-slate-200/50'
+                        : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                  >
+                    IPv4 Private
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveType('ipv4_shared')}
+                    className={`text-[10px] font-bold rounded-md transition-all cursor-pointer ${
+                      activeType === 'ipv4_shared'
+                        ? 'bg-white text-slate-800 shadow-sm border border-slate-200/50'
+                        : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                  >
+                    IPv4 Shared
+                  </button>
+                </div>
               </div>
-              <div className="flex-1">
-                <Select label="Thời hạn" options={PERIODS} value={period} onChange={setPeriod} />
+
+              {/* Country & Period columns */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="block text-[11px] font-semibold text-slate-500">Quốc gia</label>
+                  <div className="relative">
+                    <select
+                      value={country}
+                      onChange={(e) => setCountry(e.target.value)}
+                      disabled={locationsLoading || countriesOptions.length === 0}
+                      className="w-full text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg h-9 px-3 outline-none disabled:bg-slate-50 disabled:text-slate-400 cursor-pointer appearance-none transition-all duration-150"
+                    >
+                      {locationsLoading ? (
+                        <option value="">Đang tải...</option>
+                      ) : countriesOptions.length === 0 ? (
+                        <option value="">Không khả dụng</option>
+                      ) : (
+                        countriesOptions.map(opt => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))
+                      )}
+                    </select>
+                    <div className="absolute inset-y-0 right-2.5 flex items-center pointer-events-none text-slate-400">
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-[11px] font-semibold text-slate-500">Thời hạn</label>
+                  <div className="relative">
+                    <select
+                      value={period}
+                      onChange={(e) => setPeriod(e.target.value)}
+                      className="w-full text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg h-9 px-3 outline-none cursor-pointer appearance-none transition-all duration-150"
+                    >
+                      {PERIODS.map(p => (
+                        <option key={p.value} value={p.value}>{p.label}</option>
+                      ))}
+                    </select>
+                    <div className="absolute inset-y-0 right-2.5 flex items-center pointer-events-none text-slate-400">
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    </div>
+                  </div>
+                </div>
               </div>
-            </InlineStack>
 
-            <TextField label="Số lượng" type="number" value={count} onChange={setCount} autoComplete="off" min={1} />
+              {/* Quantity */}
+              <div className="space-y-1">
+                <label className="block text-[11px] font-semibold text-slate-500">Số lượng</label>
+                <input
+                  type="number"
+                  min={1}
+                  value={count}
+                  onChange={(e) => setCount(e.target.value)}
+                  className="w-full h-9 px-2.5 text-xs bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none transition-all duration-150 font-semibold text-slate-600"
+                />
+              </div>
 
-            <Divider />
+              {/* Tạm tính */}
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between">
+                <span className="font-bold text-slate-500">Tạm tính:</span>
+                <span className="font-extrabold text-slate-800 text-sm">{totalPrice.toLocaleString()}đ</span>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Order Info Summary */}
+              <div className="border border-slate-200 bg-white rounded-lg p-3.5 space-y-2">
+                <div className="flex items-center gap-2 whitespace-nowrap">
+                  <span className="text-slate-400 font-medium">Mã đơn hàng:</span>
+                  <div className="flex-grow border-b border-dotted border-slate-200"></div>
+                  <span className="font-mono font-bold text-slate-800">ORD-{orderId?.slice(0, 8).toUpperCase()}</span>
+                </div>
+                <div className="flex items-center gap-2 whitespace-nowrap">
+                  <span className="text-slate-400 font-medium">Ngày tạo:</span>
+                  <div className="flex-grow border-b border-dotted border-slate-200"></div>
+                  <span className="font-semibold text-slate-700">{orderDateStr}</span>
+                </div>
+                <div className="flex items-center gap-2 whitespace-nowrap">
+                  <span className="text-slate-400 font-medium">Loại đơn:</span>
+                  <div className="flex-grow border-b border-dotted border-slate-200"></div>
+                  <span className="font-semibold text-slate-700">Mua hàng</span>
+                </div>
+                <div className="flex items-center gap-2 whitespace-nowrap">
+                  <span className="text-slate-400 font-medium">Số lượng IP:</span>
+                  <div className="flex-grow border-b border-dotted border-slate-200"></div>
+                  <span className="font-mono font-bold text-slate-800">{count}</span>
+                </div>
+                <div className="flex items-center gap-2 whitespace-nowrap">
+                  <span className="text-slate-400 font-medium">Số ngày:</span>
+                  <div className="flex-grow border-b border-dotted border-slate-200"></div>
+                  <span className="font-mono font-bold text-slate-800">{period}</span>
+                </div>
+                <div className="flex items-center gap-2 whitespace-nowrap pt-1 border-t border-slate-100">
+                  <span className="font-bold text-slate-500">Tổng thanh toán:</span>
+                  <div className="flex-grow border-b border-dotted border-slate-200"></div>
+                  <span className="font-extrabold text-blue-600 text-sm">{totalPrice.toLocaleString()}đ</span>
+                </div>
+              </div>
 
-            <Box padding="300" background="bg-surface-secondary" borderRadius="200">
-              <InlineStack align="space-between">
-                <Text variant="bodyMd" fontWeight="bold" as="span">Tạm tính:</Text>
-                <Text variant="headingLg" as="span">{totalPrice.toLocaleString()}đ</Text>
-              </InlineStack>
-            </Box>
-          </BlockStack>
-        ) : (
-          <BlockStack gap="400">
-            <Box padding="400" background="bg-surface" borderRadius="200" borderStyle="solid" borderWidth="025" borderColor="border-secondary">
-              <BlockStack gap="200">
-                <InlineStack align="space-between">
-                  <Text variant="bodyMd" fontWeight="bold" as="span">Mã đơn hàng:</Text>
-                  <Text variant="bodyMd" fontWeight="bold" as="span">ORD-{orderId?.slice(0, 8).toUpperCase()}</Text>
-                </InlineStack>
-                <Divider />
-                <InlineStack align="space-between">
-                  <Text variant="bodyMd" fontWeight="bold" as="span">Ngày tạo:</Text>
-                  <Text variant="bodyMd" as="span">{orderDateStr}</Text>
-                </InlineStack>
-                <Divider />
-                <InlineStack align="space-between">
-                  <Text variant="bodyMd" fontWeight="bold" as="span">Loại đơn:</Text>
-                  <Text variant="bodyMd" as="span">Mua hàng</Text>
-                </InlineStack>
-                <Divider />
-                <InlineStack align="space-between">
-                  <Text variant="bodyMd" fontWeight="bold" as="span">Số lượng IP:</Text>
-                  <Text variant="bodyMd" as="span">{count}</Text>
-                </InlineStack>
-                <Divider />
-                <InlineStack align="space-between">
-                  <Text variant="bodyMd" fontWeight="bold" as="span">Số ngày:</Text>
-                  <Text variant="bodyMd" as="span">{period}</Text>
-                </InlineStack>
-                <Divider />
-                <InlineStack align="space-between">
-                  <Text variant="bodyMd" fontWeight="bold" as="span">Tổng thanh toán:</Text>
-                  <Text variant="bodyMd" fontWeight="bold" as="span">{totalPrice.toLocaleString()}đ</Text>
-                </InlineStack>
-              </BlockStack>
-            </Box>
-            
-            <Banner tone="info">
-              <Text variant="bodyXs" as="p">Vui lòng kiểm tra kỹ thông tin đơn hàng trước khi xác nhận thanh toán.</Text>
-            </Banner>
-          </BlockStack>
-        )}
-      </Modal.Section>
-    </Modal>
+              {/* Warning Banner */}
+              <div className="p-2.5 bg-blue-50 border border-blue-100 rounded-lg text-[10px] text-blue-700 font-semibold flex items-start gap-1.5 leading-relaxed">
+                <Info className="w-3.5 h-3.5 shrink-0 text-blue-500 mt-0.5" />
+                <span>Vui lòng kiểm tra kỹ thông tin đơn hàng trước khi xác nhận thanh toán.</span>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Modal Footer */}
+        <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-slate-100 bg-slate-50/50">
+          <Button
+            size="sm"
+            onPress={() => {
+              if (step === 0) {
+                onClose();
+              } else {
+                setStep(0);
+              }
+            }}
+            className="cursor-pointer font-bold text-xs h-8 px-3 rounded-lg border border-slate-200 bg-white text-slate-600"
+          >
+            {step === 0 ? 'Hủy bỏ' : 'Quay lại'}
+          </Button>
+          <Button
+            size="sm"
+            variant="primary"
+            onPress={handlePurchase}
+            isDisabled={loading || (step === 0 && (locationsLoading || countriesOptions.length === 0 || !country))}
+            className="cursor-pointer font-bold text-xs h-8 px-3 rounded-lg flex items-center gap-1.5"
+          >
+            {loading && (
+              <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+            )}
+            {step === 0 ? "Tiến hành thanh toán" : `Thanh toán ${totalPrice.toLocaleString()}đ`}
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }

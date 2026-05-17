@@ -1,26 +1,18 @@
 'use client';
 
+import { Table, Chip, Button } from "@heroui/react";
 import { 
-  IndexTable, 
-  Card,
-  Badge,
-  Text,
-  Button,
-  InlineStack,
-  useSetIndexFiltersMode,
-  IndexFilters,
-  TabProps,
-  ChoiceList,
-  Tooltip,
-  IndexFiltersProps,
-  BlockStack,
-  Icon,
-  EmptyState,
-  TextField,
-  Modal,
-  TextContainer,
-} from "@shopify/polaris";
-import { DuplicateIcon, RefreshIcon, SearchIcon, NoteIcon, ExportIcon, CheckIcon, DeleteIcon } from "@shopify/polaris-icons";
+  Clipboard, 
+  Download, 
+  RefreshCw, 
+  Trash2, 
+  Search, 
+  X, 
+  AlertTriangle, 
+  Check, 
+  ChevronDown, 
+  FileText 
+} from "lucide-react";
 import { format } from "date-fns";
 import React, { useState, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
@@ -50,12 +42,7 @@ export function UserProxyIndexTable({ proxies: initialProxies }: UserProxyIndexT
   const [selectedResources, setSelectedResources] = useState<string[]>([]);
 
   // Filters State
-  const { mode, setMode } = useSetIndexFiltersMode();
   const [queryValue, setQueryValue] = useState('');
-
-  // Filter values
-  const [filterUsername, setFilterUsername] = useState('');
-  const [filterPassword, setFilterPassword] = useState('');
   const [filterStatus, setFilterStatus] = useState<string[]>([]);
   const [filterLocationId, setFilterLocationId] = useState<string[]>([]);
 
@@ -68,13 +55,17 @@ export function UserProxyIndexTable({ proxies: initialProxies }: UserProxyIndexT
   const handleDeleteConfirm = useCallback(() => {
     if (deleteConfirmState.id) {
       deleteMutation.mutate(deleteConfirmState.id, {
-        onSuccess: () => setDeleteConfirmState({ isOpen: false, id: null })
+        onSuccess: () => {
+          setDeleteConfirmState({ isOpen: false, id: null });
+          toast.success('Xóa Proxy thành công');
+        }
       });
     } else {
       bulkDeleteMutation.mutate(selectedResources, {
         onSuccess: () => {
           setSelectedResources([]);
           setDeleteConfirmState({ isOpen: false, id: null });
+          toast.success('Xóa hàng loạt thành công');
         }
       });
     }
@@ -86,30 +77,13 @@ export function UserProxyIndexTable({ proxies: initialProxies }: UserProxyIndexT
   const [page, setPage] = useState(1);
   const itemsPerPage = 20;
 
-  const tabs: TabProps[] = useMemo(() => itemStrings.map((item, index) => ({
-    content: item,
-    index,
-    id: `user-proxy-tab-${index}`,
-    isLocked: true,
-  })), [itemStrings]);
-
   const resetPage = useCallback(() => {
     setPage(1);
     setSelectedResources([]);
   }, []);
 
-  const onHandleFiltersClearAll = useCallback(() => {
-    setFilterUsername('');
-    setFilterPassword('');
-    setFilterStatus([]);
-    setFilterLocationId([]);
-    setQueryValue('');
-    setPage(1);
-  }, []);
-
-  // Sort: chỉ Cũ nhất / Mới nhất
   const [sortSelected, setSortSelected] = useState(['id desc']);
-  const sortOptions: IndexFiltersProps['sortOptions'] = [
+  const sortOptions = [
     { label: 'Ngày tạo', value: 'id asc', directionLabel: 'Cũ nhất' },
     { label: 'Ngày tạo', value: 'id desc', directionLabel: 'Mới nhất' },
   ];
@@ -133,16 +107,6 @@ export function UserProxyIndexTable({ proxies: initialProxies }: UserProxyIndexT
           !proxy.port.toString().includes(queryValue) &&
           !proxy.username.toLowerCase().includes(q)
         ) return false;
-      }
-
-      // Filter: tài khoản
-      if (filterUsername && !proxy.username.toLowerCase().includes(filterUsername.toLowerCase())) {
-        return false;
-      }
-
-      // Filter: mật khẩu
-      if (filterPassword && !proxy.password.toLowerCase().includes(filterPassword.toLowerCase())) {
-        return false;
       }
 
       // Filter: trạng thái
@@ -170,23 +134,27 @@ export function UserProxyIndexTable({ proxies: initialProxies }: UserProxyIndexT
     }
 
     return result;
-  }, [displayProxies, selectedTab, queryValue, filterUsername, filterPassword, filterStatus, filterLocationId, sortSelected, itemStrings]);
+  }, [displayProxies, selectedTab, queryValue, filterStatus, filterLocationId, sortSelected, itemStrings]);
 
   const totalPages = Math.ceil(filteredProxies.length / itemsPerPage);
   const startIndex = (page - 1) * itemsPerPage;
   const paginatedProxies = filteredProxies.slice(startIndex, startIndex + itemsPerPage);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleSelectionChange = useCallback((selectionType: any, isSelected: boolean, selection?: string | any) => {
-    if (selectionType === 'all' || selectionType === 'page') {
-      setSelectedResources(isSelected ? paginatedProxies.map(p => p.id) : []);
-    } else if (selectionType === 'single') {
-      const id = selection as string;
-      setSelectedResources(prev => 
-        isSelected ? [...prev, id] : prev.filter(item => item !== id)
-      );
+  // SELECTION LOGIC
+  const isAllSelected = paginatedProxies.length > 0 && paginatedProxies.every(p => selectedResources.includes(p.id));
+  const toggleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedResources(prev => prev.filter(id => !paginatedProxies.map(p => p.id).includes(id)));
+    } else {
+      setSelectedResources(prev => Array.from(new Set([...prev, ...paginatedProxies.map(p => p.id)])));
     }
-  }, [paginatedProxies]);
+  };
+
+  const toggleSelectRow = (id: string) => {
+    setSelectedResources(prev => 
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
 
   const handleCopyProxies = useCallback(() => {
     const selectedProxies = filteredProxies.filter(p => selectedResources.includes(p.id));
@@ -226,345 +194,432 @@ export function UserProxyIndexTable({ proxies: initialProxies }: UserProxyIndexT
     setSelectedResources([]);
   }, [selectedResources, filteredProxies]);
 
-  const promotedBulkActions = [
-    {
-      content: `Copy ${selectedResources.length} Proxy`,
-      onAction: handleCopyProxies,
-      icon: DuplicateIcon,
-    },
-    {
-      content: `Xuất file TXT`,
-      onAction: handleExportProxies,
-      icon: ExportIcon,
+  const handleBulkToggleAutoRenew = (status: boolean) => {
+    bulkUpdateAutoRenewMutation.mutate({ ids: selectedResources, autoRenew: status }, { 
+      onSuccess: () => {
+        setSelectedResources([]);
+        toast.success('Cập nhật tự động gia hạn thành công');
+      } 
+    });
+  };
+
+  const getStatusChip = (status: string) => {
+    switch (status) {
+      case 'ACTIVE':
+        return (
+          <Chip size="sm" variant="soft" color="success" className="font-semibold text-[10px] uppercase">
+            Hoạt động
+          </Chip>
+        );
+      case 'CREATING':
+        return (
+          <Chip size="sm" variant="soft" color="warning" className="font-semibold text-[10px] uppercase animate-pulse">
+            Đang tạo
+          </Chip>
+        );
+      default:
+        return (
+          <Chip size="sm" variant="soft" color="danger" className="font-semibold text-[10px] uppercase">
+            Lỗi
+          </Chip>
+        );
     }
-  ];
-
-  const bulkActions = [
-    {
-      content: 'Bật tự động gia hạn',
-      onAction: () => bulkUpdateAutoRenewMutation.mutate({ ids: selectedResources, autoRenew: true }, { onSuccess: () => setSelectedResources([]) }),
-    },
-    {
-      content: 'Tắt tự động gia hạn',
-      onAction: () => bulkUpdateAutoRenewMutation.mutate({ ids: selectedResources, autoRenew: false }, { onSuccess: () => setSelectedResources([]) }),
-    },
-    {
-      content: 'Xóa proxy',
-      destructive: true,
-      onAction: () => setDeleteConfirmState({ isOpen: true, id: null }),
-    },
-  ];
-
-  // Applied filters (tags shown below search bar)
-  const appliedFilters: IndexFiltersProps['appliedFilters'] = [];
-  if (filterUsername) {
-    appliedFilters.push({
-      key: 'username',
-      label: `Tài khoản: ${filterUsername}`,
-      onRemove: () => { setFilterUsername(''); resetPage(); },
-    });
-  }
-  if (filterPassword) {
-    appliedFilters.push({
-      key: 'password',
-      label: `Mật khẩu: ${filterPassword}`,
-      onRemove: () => { setFilterPassword(''); resetPage(); },
-    });
-  }
-  if (filterStatus.length > 0) {
-    const labels: Record<string, string> = { ACTIVE: 'Hoạt động', CREATING: 'Đang tạo', ERROR: 'Lỗi', EXPIRED: 'Hết hạn' };
-    appliedFilters.push({
-      key: 'status',
-      label: `Trạng thái: ${filterStatus.map(s => labels[s] ?? s).join(', ')}`,
-      onRemove: () => { setFilterStatus([]); resetPage(); },
-    });
-  }
-  if (filterLocationId.length > 0) {
-    const names = locations
-      .filter(l => filterLocationId.includes(l.id))
-      .map(l => l.name)
-      .join(', ');
-    appliedFilters.push({
-      key: 'locationId',
-      label: `Vị trí: ${names}`,
-      onRemove: () => { setFilterLocationId([]); resetPage(); },
-    });
-  }
-
-  const rowMarkup = paginatedProxies.map(
-    (proxy, index) => (
-      <IndexTable.Row 
-        id={proxy.id} 
-        key={proxy.id} 
-        position={index}
-        selected={selectedResources.includes(proxy.id)}
-      >
-      <IndexTable.Cell>
-        <BlockStack gap="100">
-          <Text as="span" variant="bodyMd" fontWeight="bold">
-            {proxy.server?.name || proxy.server?.host || 'Không xác định'}
-          </Text>
-          <InlineStack gap="100">
-            <Badge tone="info">{proxy.ipType}</Badge>
-          </InlineStack>
-        </BlockStack>
-      </IndexTable.Cell>
-      <IndexTable.Cell>
-        <div style={{ minWidth: '240px' }}>
-          <BlockStack gap="050">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
-              <Text as="span" variant="bodyMd" tone="subdued">IP:PORT</Text>
-              <div style={{ flexGrow: 1, borderBottom: '1px dotted #E2E8F0' }}></div>
-              <Text as="span" variant="bodyMd" fontWeight="bold">{proxy.server?.host}:{proxy.port}</Text>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
-              <Text as="span" variant="bodyMd" tone="subdued">Tài khoản</Text>
-              <div style={{ flexGrow: 1, borderBottom: '1px dotted #E2E8F0' }}></div>
-              <Text as="span" variant="bodyMd" fontWeight="medium">{proxy.username}</Text>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
-              <Text as="span" variant="bodyMd" tone="subdued">Mật khẩu</Text>
-              <div style={{ flexGrow: 1, borderBottom: '1px dotted #E2E8F0' }}></div>
-              <Text as="span" variant="bodyMd" fontWeight="medium">{proxy.password}</Text>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
-              <Text as="span" variant="bodyMd" tone="subdued">Loại</Text>
-              <div style={{ flexGrow: 1, borderBottom: '1px dotted #E2E8F0' }}></div>
-              <Badge size="small">HTTPS / SOCKS5</Badge>
-            </div>
-            {proxy.ipv6 && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
-                <Text as="span" variant="bodyMd" tone="subdued">IPv6</Text>
-                <div style={{ flexGrow: 1, borderBottom: '1px dotted #E2E8F0' }}></div>
-                <Text as="span" variant="bodyMd">{proxy.ipv6}</Text>
-              </div>
-            )}
-          </BlockStack>
-        </div>
-      </IndexTable.Cell>
-        <IndexTable.Cell>
-          <div style={{ minWidth: '160px' }}>
-            <BlockStack gap="050">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
-                <Text as="span" variant="bodyMd" tone="subdued">Hết hạn</Text>
-                <div style={{ flexGrow: 1, borderBottom: '1px dotted #E2E8F0' }}></div>
-                <Text as="span" variant="bodyMd" tone={proxy.autoRenew ? "success" : "caution"} fontWeight="medium">
-                  {proxy.expiresAt ? format(new Date(proxy.expiresAt), 'dd/MM/yyyy HH:mm') : 'Vĩnh viễn'}
-                </Text>
-              </div>
-              {proxy.expiresAt && (
-                <>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
-                    <Text as="span" variant="bodyMd" tone="subdued">Còn lại</Text>
-                    <div style={{ flexGrow: 1, borderBottom: '1px dotted #E2E8F0' }}></div>
-                    <Text as="span" variant="bodyMd" fontWeight="medium" tone={proxy.autoRenew ? "success" : "caution"}>
-                      {getCountdown(proxy.expiresAt)}
-                    </Text>
-                  </div>
-                  {proxy.autoRenew && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
-                      <Text as="span" variant="bodyMd" tone="subdued">Tự động gia hạn</Text>
-                      <div style={{ flexGrow: 1, borderBottom: '1px dotted #E2E8F0' }}></div>
-                      <div style={{ color: '#008060', display: 'flex' }}>
-                        <Icon source={CheckIcon} tone="success" />
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
-            </BlockStack>
-          </div>
-        </IndexTable.Cell>
-        <IndexTable.Cell>
-          <Badge tone={proxy.status === 'ACTIVE' ? 'success' : proxy.status === 'CREATING' ? 'attention' : 'critical'}>
-            {proxy.status === 'ACTIVE' ? 'Hoạt động' : proxy.status === 'CREATING' ? 'Đang tạo' : 'Lỗi'}
-          </Badge>
-        </IndexTable.Cell>
-        <IndexTable.Cell>
-          {proxy.comment ? (
-            <Tooltip content={proxy.comment}>
-              <Icon source={NoteIcon} tone="base" />
-            </Tooltip>
-          ) : '-'}
-        </IndexTable.Cell>
-        <IndexTable.Cell>
-          <InlineStack align="end" gap="200" wrap={false}>
-            <Tooltip content="Sao chép">
-              <Button icon={DuplicateIcon} variant="tertiary" onClick={() => {
-                const text = `${proxy.server?.host}:${proxy.port}:${proxy.username}:${proxy.password}`;
-                copyToClipboard(text).then(success => {
-                  if (success) toast.success('Đã copy proxy');
-                });
-              }} />
-            </Tooltip>
-            
-            <Tooltip content="Kiểm tra Google">
-              <Button icon={SearchIcon} variant="tertiary" onClick={() => checkGoogleMutation.mutate(proxy.id)} loading={checkGoogleMutation.isPending && checkGoogleMutation.variables === proxy.id} disabled={proxy.status !== 'ACTIVE'} />
-            </Tooltip>
-            
-            <Tooltip content="Đổi IP (Rotate)">
-              <Button icon={RefreshIcon} variant="tertiary" onClick={() => rotateProxyMutation.mutate(proxy.id)} loading={rotateProxyMutation.isPending && rotateProxyMutation.variables === proxy.id} disabled={proxy.status !== 'ACTIVE' || proxy.ipType !== 'IPv6'} />
-            </Tooltip>
-            
-            <Tooltip content="Xóa Proxy">
-              <Button icon={DeleteIcon} variant="tertiary" tone="critical" onClick={() => setDeleteConfirmState({ isOpen: true, id: proxy.id })} loading={deleteMutation.isPending && deleteMutation.variables === proxy.id} />
-            </Tooltip>
-          </InlineStack>
-        </IndexTable.Cell>
-      </IndexTable.Row>
-    ),
-  );
-
-  const emptyStateMarkup = (
-    <EmptyState
-      heading="Không tìm thấy proxy nào"
-      image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png"
-    >
-      <p>Hãy thử thay đổi bộ lọc hoặc mua proxy mới để bắt đầu.</p>
-    </EmptyState>
-  );
+  };
 
   return (
-    <Card padding="0">
-      <IndexFilters
-        sortOptions={sortOptions}
-        sortSelected={sortSelected}
-        queryValue={queryValue}
-        queryPlaceholder="Tìm kiếm proxy..."
-        onQueryChange={(value) => { setQueryValue(value); resetPage(); }}
-        onQueryClear={() => { setQueryValue(''); resetPage(); }}
-        onSort={setSortSelected}
-        tabs={tabs}
-        selected={selectedTab}
-        onSelect={(index) => { setSelectedTab(index); resetPage(); }}
-        filters={[
-          {
-            key: 'username',
-            label: 'Tài khoản',
-            filter: (
-              <TextField
-                label="Tài khoản"
-                labelHidden
-                value={filterUsername}
-                onChange={(value) => { setFilterUsername(value); resetPage(); }}
-                placeholder="Nhập tài khoản..."
-                autoComplete="off"
-                clearButton
-                onClearButtonClick={() => { setFilterUsername(''); resetPage(); }}
-              />
-            ),
-            shortcut: true,
-          },
-          {
-            key: 'password',
-            label: 'Mật khẩu',
-            filter: (
-              <TextField
-                label="Mật khẩu"
-                labelHidden
-                value={filterPassword}
-                onChange={(value) => { setFilterPassword(value); resetPage(); }}
-                placeholder="Nhập mật khẩu..."
-                autoComplete="off"
-                clearButton
-                onClearButtonClick={() => { setFilterPassword(''); resetPage(); }}
-              />
-            ),
-            shortcut: false,
-          },
-          {
-            key: 'status',
-            label: 'Trạng thái',
-            filter: (
-              <ChoiceList
-                title="Trạng thái"
-                choices={[
-                  { label: 'Hoạt động', value: 'ACTIVE' },
-                  { label: 'Đang tạo', value: 'CREATING' },
-                  { label: 'Lỗi', value: 'ERROR' },
-                ]}
-                selected={filterStatus}
-                onChange={(value) => { setFilterStatus(value); resetPage(); }}
-                allowMultiple
-              />
-            ),
-            shortcut: true,
-          },
-          {
-            key: 'locationId',
-            label: 'Vị trí',
-            filter: (
-              <ChoiceList
-                title="Vị trí"
-                choices={locations.map(l => ({ label: l.name, value: l.id }))}
-                selected={filterLocationId}
-                onChange={(value) => { setFilterLocationId(value); resetPage(); }}
-                allowMultiple
-              />
-            ),
-            shortcut: true,
-          },
-        ]}
-        appliedFilters={appliedFilters}
-        onClearAll={onHandleFiltersClearAll}
-        mode={mode}
-        setMode={setMode}
-      />
-      <IndexTable
-        resourceName={{
-          singular: 'proxy',
-          plural: 'proxy',
-        }}
-        itemCount={filteredProxies.length}
-        selectedItemsCount={selectedResources.length}
-        headings={[
-          { title: 'Máy chủ' },
-          { title: 'Thông tin Proxy' },
-          { title: 'Hết hạn' },
-          { title: 'Trạng thái' },
-          { title: 'Ghi chú' },
-          { title: 'Thao tác', alignment: 'end' },
-        ]}
-        onSelectionChange={handleSelectionChange}
-        promotedBulkActions={promotedBulkActions}
-        bulkActions={bulkActions}
-        emptyState={emptyStateMarkup}
-        pagination={{
-          hasNext: page < totalPages,
-          hasPrevious: page > 1,
-          onNext: () => setPage(page + 1),
-          onPrevious: () => setPage(page - 1),
-          label: "",
-        }}
-      >
-        {rowMarkup}
-      </IndexTable>
+    <div className="w-full">
+      {/* Sleek Floating Batch Actions Bar */}
+      {selectedResources.length > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-2.5 p-3 mb-3 bg-blue-50 border border-blue-100 rounded-xl animate-fade-in text-xs font-semibold text-blue-800 shadow-sm">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+            <span>Đã chọn {selectedResources.length} proxy</span>
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Button
+              size="sm"
+              onPress={handleCopyProxies}
+              className="cursor-pointer h-7 px-2.5 bg-blue-100 hover:bg-blue-200 text-blue-700 font-bold rounded-lg flex items-center gap-1 border-0"
+            >
+              <Clipboard className="w-3.5 h-3.5 shrink-0" />
+              Copy
+            </Button>
+            <Button
+              size="sm"
+              onPress={handleExportProxies}
+              className="cursor-pointer h-7 px-2.5 bg-blue-100 hover:bg-blue-200 text-blue-700 font-bold rounded-lg flex items-center gap-1 border-0"
+            >
+              <Download className="w-3.5 h-3.5 shrink-0" />
+              Xuất file
+            </Button>
+            <Button
+              size="sm"
+              onPress={() => handleBulkToggleAutoRenew(true)}
+              className="cursor-pointer h-7 px-2.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 font-bold rounded-lg border-0"
+            >
+              Bật gia hạn tự động
+            </Button>
+            <Button
+              size="sm"
+              onPress={() => handleBulkToggleAutoRenew(false)}
+              className="cursor-pointer h-7 px-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-lg border-0"
+            >
+              Tắt gia hạn tự động
+            </Button>
+            <Button
+              size="sm"
+              onPress={() => setDeleteConfirmState({ isOpen: true, id: null })}
+              className="cursor-pointer h-7 px-2.5 bg-red-100 hover:bg-red-200 text-red-700 font-bold rounded-lg border-0"
+            >
+              Xóa
+            </Button>
+            <button
+              onClick={() => setSelectedResources([])}
+              className="text-blue-500 hover:text-blue-700 cursor-pointer p-1 hover:bg-blue-100 rounded-lg transition-colors ml-1"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
 
-      <Modal
-        open={deleteConfirmState.isOpen}
-        onClose={() => setDeleteConfirmState({ isOpen: false, id: null })}
-        title="Xác nhận xóa Proxy"
-        primaryAction={{
-          content: 'Xóa ngay',
-          destructive: true,
-          onAction: handleDeleteConfirm,
-          loading: deleteConfirmState.id ? deleteMutation.isPending : bulkDeleteMutation.isPending
-        }}
-        secondaryActions={[
-          {
-            content: 'Hủy',
-            onAction: () => setDeleteConfirmState({ isOpen: false, id: null }),
-          },
-        ]}
-      >
-        <Modal.Section>
-          <TextContainer>
-            <p>
+      {/* Sleek Ultra-Compact Filter & Search Bar */}
+      <div className="flex flex-col gap-2.5 mb-3 bg-white p-2.5 border border-slate-200 rounded-xl shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          {/* Tabs */}
+          <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+            {itemStrings.map((tab, idx) => (
+              <button
+                key={tab}
+                onClick={() => {
+                  setSelectedTab(idx);
+                  setPage(1);
+                  setSelectedResources([]);
+                }}
+                className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+                  selectedTab === idx
+                    ? 'bg-slate-100 text-slate-800'
+                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+
+          {/* Right: Search, Location & Sort */}
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Search Input */}
+            <div className="relative w-full sm:w-40">
+              <input
+                type="text"
+                placeholder="Tìm kiếm..."
+                value={queryValue}
+                onChange={(e) => { setQueryValue(e.target.value); resetPage(); }}
+                className="w-full h-8 pl-8 pr-8 text-xs bg-white placeholder:text-slate-400 border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none transition-all duration-150"
+              />
+              <div className="absolute inset-y-0 left-2.5 flex items-center pointer-events-none text-slate-400">
+                <Search className="w-3.5 h-3.5 shrink-0" />
+              </div>
+              {queryValue && (
+                <button
+                  onClick={() => { setQueryValue(''); resetPage(); }}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full hover:bg-slate-100 cursor-pointer"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+            </div>
+
+            {/* Location Select Filter */}
+            <div className="relative">
+              <select
+                value={filterLocationId[0] || ''}
+                onChange={(e) => { setFilterLocationId(e.target.value ? [e.target.value] : []); resetPage(); }}
+                className="h-8 pl-3 pr-8 text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none cursor-pointer appearance-none transition-all duration-150"
+              >
+                <option value="">Tất cả vị trí</option>
+                {locations.map(l => (
+                  <option key={l.id} value={l.id}>{l.name}</option>
+                ))}
+              </select>
+              <div className="absolute inset-y-0 right-2.5 flex items-center pointer-events-none text-slate-400">
+                <ChevronDown className="w-3 h-3" />
+              </div>
+            </div>
+
+            {/* Sort Select */}
+            <div className="relative">
+              <select
+                value={sortSelected[0]}
+                onChange={(e) => setSortSelected([e.target.value])}
+                className="h-8 pl-3 pr-8 text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none cursor-pointer appearance-none transition-all duration-150"
+              >
+                {sortOptions.map(opt => (
+                  <option key={opt.value} value={opt.value}>Sắp xếp: {opt.label} ({opt.directionLabel})</option>
+                ))}
+              </select>
+              <div className="absolute inset-y-0 right-2.5 flex items-center pointer-events-none text-slate-400">
+                <ChevronDown className="w-3 h-3" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* User Proxies Table list */}
+      <div className="w-full border border-slate-200 rounded-xl bg-white overflow-hidden shadow-sm">
+        <Table className="w-full text-left border-collapse">
+          <Table.ScrollContainer>
+            <Table.Content aria-label="Danh sách Proxy của tôi">
+              <Table.Header className="border-b border-slate-100 text-slate-400 text-[10px] font-bold uppercase tracking-wider bg-slate-50">
+                <Table.Column className="py-2.5 px-3 w-8 text-center">
+                  <input
+                    type="checkbox"
+                    checked={isAllSelected}
+                    onChange={toggleSelectAll}
+                    className="w-3.5 h-3.5 rounded text-blue-600 border-slate-300 focus:ring-blue-500/50 cursor-pointer"
+                  />
+                </Table.Column>
+                <Table.Column isRowHeader className="py-2.5 px-3">Máy chủ</Table.Column>
+                <Table.Column className="py-2.5 px-3 w-60">Thông tin Proxy</Table.Column>
+                <Table.Column className="py-2.5 px-3 w-40">Hết hạn</Table.Column>
+                <Table.Column className="py-2.5 px-3">Trạng thái</Table.Column>
+                <Table.Column className="py-2.5 px-3">Ghi chú</Table.Column>
+                <Table.Column className="py-2.5 px-3 text-right">Thao tác</Table.Column>
+              </Table.Header>
+              <Table.Body className="divide-y divide-slate-100 text-xs">
+                {paginatedProxies.map((proxy: ProxyWithServer) => (
+                  <Table.Row key={proxy.id} className="hover:bg-slate-50/80 transition-colors border-b border-slate-100 last:border-b-0">
+                    <Table.Cell className="py-2.5 px-3 text-center">
+                      <input
+                        type="checkbox"
+                        checked={selectedResources.includes(proxy.id)}
+                        onChange={() => toggleSelectRow(proxy.id)}
+                        className="w-3.5 h-3.5 rounded text-blue-600 border-slate-300 focus:ring-blue-500/50 cursor-pointer"
+                      />
+                    </Table.Cell>
+                    <Table.Cell className="py-2.5 px-3 whitespace-nowrap">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="font-bold text-slate-800">
+                          {proxy.server?.name || proxy.server?.host || 'Không xác định'}
+                        </span>
+                        <div className="flex items-center mt-0.5">
+                          <Chip size="sm" variant="soft" color="accent" className="font-semibold text-[9px] uppercase px-1 py-0 h-4">
+                            {proxy.ipType}
+                          </Chip>
+                        </div>
+                      </div>
+                    </Table.Cell>
+                    <Table.Cell className="py-2.5 px-3">
+                      <div className="space-y-1 py-1 max-w-[240px]">
+                        <div className="flex items-center gap-2 whitespace-nowrap">
+                          <span className="text-[10px] text-slate-400 select-none">IP:PORT</span>
+                          <div className="flex-1 border-b border-dotted border-slate-200"></div>
+                          <span className="font-mono font-bold text-slate-700">{proxy.server?.host}:{proxy.port}</span>
+                        </div>
+                        <div className="flex items-center gap-2 whitespace-nowrap">
+                          <span className="text-[10px] text-slate-400 select-none">Tài khoản</span>
+                          <div className="flex-1 border-b border-dotted border-slate-200"></div>
+                          <span className="font-mono font-semibold text-slate-600">{proxy.username}</span>
+                        </div>
+                        <div className="flex items-center gap-2 whitespace-nowrap">
+                          <span className="text-[10px] text-slate-400 select-none">Mật khẩu</span>
+                          <div className="flex-1 border-b border-dotted border-slate-200"></div>
+                          <span className="font-mono font-semibold text-slate-600">{proxy.password}</span>
+                        </div>
+                        <div className="flex items-center gap-2 whitespace-nowrap">
+                          <span className="text-[10px] text-slate-400 select-none">Loại</span>
+                          <div className="flex-1 border-b border-dotted border-slate-200"></div>
+                          <span className="text-[10px] font-bold text-slate-500 uppercase bg-slate-100 px-1 rounded">HTTPS/SOCKS5</span>
+                        </div>
+                        {proxy.ipv6 && (
+                          <div className="flex items-center gap-2 whitespace-nowrap">
+                            <span className="text-[10px] text-slate-400 select-none">IPv6</span>
+                            <div className="flex-1 border-b border-dotted border-slate-200"></div>
+                            <span className="font-mono text-slate-500 overflow-hidden text-ellipsis max-w-[120px]" title={proxy.ipv6}>
+                              {proxy.ipv6}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </Table.Cell>
+                    <Table.Cell className="py-2.5 px-3">
+                      <div className="space-y-1 max-w-[160px]">
+                        <div className="flex items-center gap-2 whitespace-nowrap">
+                          <span className="text-[10px] text-slate-400 select-none">Hết hạn</span>
+                          <div className="flex-1 border-b border-dotted border-slate-200"></div>
+                          <span className={`font-semibold ${proxy.autoRenew ? "text-emerald-600" : "text-amber-600"}`}>
+                            {proxy.expiresAt ? format(new Date(proxy.expiresAt), 'dd/MM/yyyy HH:mm') : 'Vĩnh viễn'}
+                          </span>
+                        </div>
+                        {proxy.expiresAt && (
+                          <>
+                            <div className="flex items-center gap-2 whitespace-nowrap">
+                              <span className="text-[10px] text-slate-400 select-none">Còn lại</span>
+                              <div className="flex-1 border-b border-dotted border-slate-200"></div>
+                              <span className={`font-bold ${proxy.autoRenew ? "text-emerald-600" : "text-amber-600"}`}>
+                                {getCountdown(proxy.expiresAt)}
+                              </span>
+                            </div>
+                            {proxy.autoRenew && (
+                              <div className="flex items-center gap-2 whitespace-nowrap">
+                                <span className="text-[10px] text-slate-400 select-none">Gia hạn tự động</span>
+                                <div className="flex-1 border-b border-dotted border-slate-200"></div>
+                                <span className="text-emerald-600 font-bold flex items-center gap-0.5">
+                                  <Check className="w-3.5 h-3.5 shrink-0" />
+                                  Bật
+                                </span>
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </Table.Cell>
+                    <Table.Cell className="py-2.5 px-3">
+                      {getStatusChip(proxy.status)}
+                    </Table.Cell>
+                    <Table.Cell className="py-2.5 px-3">
+                      {proxy.comment ? (
+                        <div className="group relative cursor-pointer text-slate-400 hover:text-slate-600">
+                          <FileText className="w-4 h-4" />
+                          <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 hidden group-hover:block w-36 bg-slate-800 text-[10px] text-white p-2 rounded shadow-lg z-20 pointer-events-none leading-relaxed">
+                            {proxy.comment}
+                          </div>
+                        </div>
+                      ) : '-'}
+                    </Table.Cell>
+                    <Table.Cell className="py-2.5 px-3 text-right">
+                      <div className="inline-flex items-center gap-1">
+                        <button
+                          onClick={() => {
+                            const text = `${proxy.server?.host}:${proxy.port}:${proxy.username}:${proxy.password}`;
+                            copyToClipboard(text).then(success => {
+                              if (success) toast.success('Đã copy proxy');
+                            });
+                          }}
+                          className="inline-flex items-center justify-center p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg cursor-pointer transition-colors"
+                          title="Sao chép"
+                        >
+                          <Clipboard className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => checkGoogleMutation.mutate(proxy.id)}
+                          disabled={proxy.status !== 'ACTIVE' || checkGoogleMutation.isPending}
+                          className="inline-flex items-center justify-center p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 disabled:opacity-50 disabled:hover:bg-transparent rounded-lg cursor-pointer transition-colors"
+                          title="Kiểm tra Google"
+                        >
+                          {checkGoogleMutation.isPending && checkGoogleMutation.variables === proxy.id ? (
+                            <span className="w-3.5 h-3.5 border-2 border-blue-600/30 border-t-blue-600 rounded-full animate-spin"></span>
+                          ) : (
+                            <Search className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+                        <button
+                          onClick={() => rotateProxyMutation.mutate(proxy.id)}
+                          disabled={proxy.status !== 'ACTIVE' || proxy.ipType !== 'IPv6' || rotateProxyMutation.isPending}
+                          className="inline-flex items-center justify-center p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 disabled:opacity-50 disabled:hover:bg-transparent rounded-lg cursor-pointer transition-colors"
+                          title="Đổi IP (Rotate)"
+                        >
+                          {rotateProxyMutation.isPending && rotateProxyMutation.variables === proxy.id ? (
+                            <span className="w-3.5 h-3.5 border-2 border-emerald-600/30 border-t-emerald-600 rounded-full animate-spin"></span>
+                          ) : (
+                            <RefreshCw className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+                        <button
+                          onClick={() => setDeleteConfirmState({ isOpen: true, id: proxy.id })}
+                          className="inline-flex items-center justify-center p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg cursor-pointer transition-colors"
+                          title="Xóa Proxy"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </Table.Cell>
+                  </Table.Row>
+                ))}
+                {paginatedProxies.length === 0 && (
+                  <Table.Row>
+                    <Table.Cell colSpan={7} className="py-12 text-center text-slate-400 font-medium">
+                      Danh sách Proxy hiện đang trống.
+                    </Table.Cell>
+                  </Table.Row>
+                )}
+              </Table.Body>
+            </Table.Content>
+          </Table.ScrollContainer>
+        </Table>
+
+        {/* Compact Flat Pagination Footer */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-3 py-2.5 border-t border-slate-100 text-xs bg-slate-50/50">
+            <span className="text-slate-400 font-semibold">Trang {page} / {totalPages}</span>
+            <div className="flex items-center gap-1.5">
+              <Button
+                isDisabled={page <= 1}
+                onPress={() => setPage(page - 1)}
+                className="px-2.5 py-1 text-xs border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 font-bold h-7 min-w-0 rounded-lg cursor-pointer transition-all"
+              >
+                Trước
+              </Button>
+              <Button
+                isDisabled={page >= totalPages}
+                onPress={() => setPage(page + 1)}
+                className="px-2.5 py-1 text-xs border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 font-bold h-7 min-w-0 rounded-lg cursor-pointer transition-all"
+              >
+                Sau
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Modern Compact Overlay Modal for Deleting User Proxy */}
+      {deleteConfirmState.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+          <div className="bg-white border border-slate-200 rounded-xl w-full max-w-sm overflow-hidden shadow-lg flex flex-col">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50/50">
+              <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-1.5 text-danger">
+                <AlertTriangle className="w-4 h-4 shrink-0" />
+                Xác nhận xóa Proxy?
+              </h3>
+              <button 
+                onClick={() => setDeleteConfirmState({ isOpen: false, id: null })}
+                className="text-slate-400 hover:text-slate-600 cursor-pointer p-1 rounded-lg hover:bg-slate-100 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            {/* Modal Body */}
+            <div className="p-4 text-xs text-slate-600 font-medium leading-relaxed bg-white">
               Bạn có chắc chắn muốn xóa {deleteConfirmState.id ? 'proxy này' : `${selectedResources.length} proxy đã chọn`}? Thao tác này không thể hoàn tác và cấu hình proxy trên máy chủ sẽ bị xóa vĩnh viễn.
-            </p>
-          </TextContainer>
-        </Modal.Section>
-      </Modal>
-    </Card>
+            </div>
+            {/* Modal Footer */}
+            <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-slate-100 bg-slate-50/50">
+              <Button
+                size="sm"
+                onPress={() => setDeleteConfirmState({ isOpen: false, id: null })}
+                className="cursor-pointer font-bold text-xs h-8 px-3 rounded-lg border border-slate-200 bg-white text-slate-600"
+              >
+                Hủy bỏ
+              </Button>
+              <Button
+                size="sm"
+                variant="danger"
+                onPress={handleDeleteConfirm}
+                isDisabled={deleteConfirmState.id ? deleteMutation.isPending : bulkDeleteMutation.isPending}
+                className="cursor-pointer font-bold text-xs h-8 px-3 rounded-lg flex items-center gap-1"
+              >
+                {(deleteConfirmState.id ? deleteMutation.isPending : bulkDeleteMutation.isPending) && (
+                  <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                )}
+                Xác nhận xóa
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

@@ -4,19 +4,8 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { serverSchema, ServerSchema } from '../schemas/server.schema';
 import { useServers } from '@/hooks/use-servers';
-import { 
-  Form, 
-  FormLayout, 
-  TextField, 
-  Box,
-  Checkbox,
-  Text,
-  Tooltip,
-  Icon,
-  InlineStack,
-  Select
-} from "@shopify/polaris";
-import { InfoIcon } from "@shopify/polaris-icons";
+import { Input } from "@heroui/react";
+import { ChevronDown, Info } from "lucide-react";
 import { useCallback, forwardRef, useImperativeHandle, useEffect, useMemo } from 'react';
 import { Server } from '@prisma/client';
 import { useLocations } from '@/modules/locations/hooks/use-locations';
@@ -99,206 +88,319 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
     }));
 
     return (
-      <Form onSubmit={handleSubmit(onSubmit)}>
-        <Box padding="400">
-          <FormLayout>
-            <FormLayout.Group>
-              <Controller
-                name="name"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    label="Tên Máy chủ"
-                    autoComplete="off"
-                    placeholder="Ví dụ: US-West-01"
-                    value={field.value}
-                    onChange={field.onChange}
-                    error={errors.name?.message}
-                  />
-                )}
-              />
-              <Controller
-                name="host"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    label="Địa chỉ IP / Hostname"
-                    autoComplete="off"
-                    placeholder="Ví dụ: 1.2.3.4"
-                    value={field.value}
-                    onChange={field.onChange}
-                    error={errors.host?.message}
-                  />
-                )}
-              />
-            </FormLayout.Group>
+      <form onSubmit={handleSubmit(onSubmit)} className="p-4 space-y-4 text-xs">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Tên Máy chủ */}
+          <div className="space-y-1">
+            <label className="block text-[11px] font-semibold text-slate-500">Tên Máy chủ</label>
+            <Controller
+              name="name"
+              control={control}
+              render={({ field }) => (
+                <Input
+                  type="text"
+                  placeholder="Ví dụ: US-West-01"
+                  value={field.value}
+                  onChange={field.onChange}
+                  className={`w-full h-9 px-2.5 text-xs bg-white border rounded-lg outline-none transition-all duration-150 ${
+                    errors.name 
+                      ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/50' 
+                      : 'border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50'
+                  }`}
+                />
+              )}
+            />
+            {errors.name && (
+              <p className="mt-1 text-[10px] text-red-500 font-semibold">{errors.name.message}</p>
+            )}
+          </div>
 
-            <FormLayout.Group>
-              <Controller
-                name="port"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    label="Cổng SSH"
-                    type="number"
-                    autoComplete="off"
-                    placeholder="22"
-                    value={field.value?.toString()}
-                    onChange={(val) => field.onChange(parseInt(val))}
-                    error={errors.port?.message}
-                  />
-                )}
-              />
-              <Controller
-                name="username"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    label="Tài khoản SSH"
-                    autoComplete="username"
-                    placeholder="root"
-                    value={field.value}
-                    onChange={field.onChange}
-                    error={errors.username?.message}
-                  />
-                )}
-              />
-            </FormLayout.Group>
+          {/* Địa chỉ IP */}
+          <div className="space-y-1">
+            <label className="block text-[11px] font-semibold text-slate-500">Địa chỉ IP / Hostname</label>
+            <Controller
+              name="host"
+              control={control}
+              render={({ field }) => (
+                <Input
+                  type="text"
+                  placeholder="Ví dụ: 1.2.3.4"
+                  value={field.value}
+                  onChange={field.onChange}
+                  className={`w-full h-9 px-2.5 text-xs bg-white border rounded-lg outline-none transition-all duration-150 ${
+                    errors.host 
+                      ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/50' 
+                      : 'border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50'
+                  }`}
+                />
+              )}
+            />
+            {errors.host && (
+              <p className="mt-1 text-[10px] text-red-500 font-semibold">{errors.host.message}</p>
+            )}
+          </div>
+        </div>
 
-            <FormLayout.Group>
-              <Controller
-                name="password"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    label={server ? "Mật khẩu SSH (Để trống nếu không đổi)" : "Mật khẩu SSH"}
-                    type="password"
-                    autoComplete="current-password"
-                    placeholder="Mật khẩu"
-                    value={field.value}
-                    onChange={field.onChange}
-                    error={errors.password?.message}
-                  />
-                )}
-              />
-              <Controller
-                name="ipv6"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    label={
-                      <InlineStack gap="100">
-                        <Text as="span">IPv6 Prefix</Text>
-                        <Tooltip content="Nhập 4 cụm đầu của dải IPv6 được cấp (Ví dụ: 2001:19f0:4401:903)">
-                          <Icon source={InfoIcon} tone="subdued" />
-                        </Tooltip>
-                      </InlineStack>
-                    }
-                    autoComplete="off"
-                    placeholder="Ví dụ: 2001:19f0:4401:903"
-                    value={field.value}
-                    onChange={field.onChange}
-                    error={errors.ipv6?.message}
-                  />
-                )}
-              />
-            </FormLayout.Group>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Cổng SSH */}
+          <div className="space-y-1">
+            <label className="block text-[11px] font-semibold text-slate-500">Cổng SSH</label>
+            <Controller
+              name="port"
+              control={control}
+              render={({ field }) => (
+                <Input
+                  type="number"
+                  placeholder="22"
+                  value={field.value?.toString() || ''}
+                  onChange={(e) => field.onChange(parseInt(e.target.value) || 22)}
+                  className={`w-full h-9 px-2.5 text-xs bg-white border rounded-lg outline-none transition-all duration-150 ${
+                    errors.port 
+                      ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/50' 
+                      : 'border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50'
+                  }`}
+                />
+              )}
+            />
+            {errors.port && (
+              <p className="mt-1 text-[10px] text-red-500 font-semibold">{errors.port.message}</p>
+            )}
+          </div>
 
-            <FormLayout.Group>
-              <Controller
-                name="locationId"
-                control={control}
-                render={({ field }) => (
-                  <Select
-                    label="Vị trí máy chủ"
-                    options={locationOptions}
+          {/* Tài khoản SSH */}
+          <div className="space-y-1">
+            <label className="block text-[11px] font-semibold text-slate-500">Tài khoản SSH</label>
+            <Controller
+              name="username"
+              control={control}
+              render={({ field }) => (
+                <Input
+                  type="text"
+                  placeholder="root"
+                  value={field.value}
+                  onChange={field.onChange}
+                  className={`w-full h-9 px-2.5 text-xs bg-white border rounded-lg outline-none transition-all duration-150 ${
+                    errors.username 
+                      ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/50' 
+                      : 'border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50'
+                  }`}
+                />
+              )}
+            />
+            {errors.username && (
+              <p className="mt-1 text-[10px] text-red-500 font-semibold">{errors.username.message}</p>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Mật khẩu SSH */}
+          <div className="space-y-1">
+            <label className="block text-[11px] font-semibold text-slate-500 text-slate-500">
+              {server ? "Mật khẩu SSH (Để trống nếu không đổi)" : "Mật khẩu SSH"}
+            </label>
+            <Controller
+              name="password"
+              control={control}
+              render={({ field }) => (
+                <Input
+                  type="password"
+                  placeholder="Mật khẩu"
+                  value={field.value}
+                  onChange={field.onChange}
+                  className={`w-full h-9 px-2.5 text-xs bg-white border rounded-lg outline-none transition-all duration-150 ${
+                    errors.password 
+                      ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/50' 
+                      : 'border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50'
+                  }`}
+                />
+              )}
+            />
+            {errors.password && (
+              <p className="mt-1 text-[10px] text-red-500 font-semibold">{errors.password.message}</p>
+            )}
+          </div>
+
+          {/* IPv6 Prefix */}
+          <div className="space-y-1">
+            <div className="flex items-center gap-1">
+              <label className="block text-[11px] font-semibold text-slate-500">IPv6 Prefix</label>
+              <div className="group relative cursor-pointer text-slate-400 hover:text-slate-600">
+                <Info className="w-3 h-3" />
+                <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 hidden group-hover:block w-48 bg-slate-800 text-[9px] text-white p-2 rounded shadow-lg z-20 pointer-events-none leading-relaxed">
+                  Nhập 4 cụm đầu của dải IPv6 được cấp (Ví dụ: 2001:19f0:4401:903)
+                </div>
+              </div>
+            </div>
+            <Controller
+              name="ipv6"
+              control={control}
+              render={({ field }) => (
+                <Input
+                  type="text"
+                  placeholder="Ví dụ: 2001:19f0:4401:903"
+                  value={field.value}
+                  onChange={field.onChange}
+                  className={`w-full h-9 px-2.5 text-xs bg-white border rounded-lg outline-none transition-all duration-150 ${
+                    errors.ipv6 
+                      ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/50' 
+                      : 'border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50'
+                  }`}
+                />
+              )}
+            />
+            {errors.ipv6 && (
+              <p className="mt-1 text-[10px] text-red-500 font-semibold">{errors.ipv6.message}</p>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Vị trí máy chủ */}
+          <div className="space-y-1">
+            <label className="block text-[11px] font-semibold text-slate-500">Vị trí máy chủ</label>
+            <Controller
+              name="locationId"
+              control={control}
+              render={({ field }) => (
+                <div className="relative">
+                  <select
                     value={field.value || ''}
                     onChange={field.onChange}
-                    error={errors.locationId?.message}
-                  />
-                )}
-              />
-              <Controller
-                name="maxProxies"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    label="Số lượng Proxy tối đa"
-                    type="number"
-                    autoComplete="off"
-                    placeholder="100"
-                    value={field.value?.toString()}
-                    onChange={(val) => field.onChange(parseInt(val))}
-                    error={errors.maxProxies?.message}
-                  />
-                )}
-              />
-            </FormLayout.Group>
+                    className="w-full text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg h-9 px-3 outline-none cursor-pointer appearance-none transition-all duration-150"
+                  >
+                    {locationOptions.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                  <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-400">
+                    <ChevronDown className="w-3.5 h-3.5" />
+                  </div>
+                </div>
+              )}
+            />
+            {errors.locationId && (
+              <p className="mt-1 text-[10px] text-red-500 font-semibold">{errors.locationId.message}</p>
+            )}
+          </div>
 
-            <FormLayout.Group>
-              <Controller
-                name="startPort"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    label={
-                      <InlineStack gap="100">
-                        <Text as="span">Cổng bắt đầu</Text>
-                        <Tooltip content="Cổng mặc định khi tạo Proxy hàng loạt (Ví dụ: 10000)">
-                          <Icon source={InfoIcon} tone="subdued" />
-                        </Tooltip>
-                      </InlineStack>
-                    }
-                    type="number"
-                    autoComplete="off"
-                    placeholder="10000"
-                    value={field.value?.toString()}
-                    onChange={(val) => field.onChange(parseInt(val))}
-                    error={errors.startPort?.message}
-                  />
-                )}
-              />
-              <Controller
-                name="autoRotate"
-                control={control}
-                render={({ field }) => (
-                  <Checkbox
-                    label="Tự động xoay IPv6"
+          {/* Số lượng Proxy tối đa */}
+          <div className="space-y-1">
+            <label className="block text-[11px] font-semibold text-slate-500">Số lượng Proxy tối đa</label>
+            <Controller
+              name="maxProxies"
+              control={control}
+              render={({ field }) => (
+                <Input
+                  type="number"
+                  placeholder="100"
+                  value={field.value?.toString() || ''}
+                  onChange={(e) => field.onChange(parseInt(e.target.value) || 100)}
+                  className={`w-full h-9 px-2.5 text-xs bg-white border rounded-lg outline-none transition-all duration-150 ${
+                    errors.maxProxies 
+                      ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/50' 
+                      : 'border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50'
+                  }`}
+                />
+              )}
+            />
+            {errors.maxProxies && (
+              <p className="mt-1 text-[10px] text-red-500 font-semibold">{errors.maxProxies.message}</p>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Cổng bắt đầu */}
+          <div className="space-y-1">
+            <div className="flex items-center gap-1">
+              <label className="block text-[11px] font-semibold text-slate-500">Cổng bắt đầu</label>
+              <div className="group relative cursor-pointer text-slate-400 hover:text-slate-600">
+                <Info className="w-3 h-3" />
+                <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 hidden group-hover:block w-48 bg-slate-800 text-[9px] text-white p-2 rounded shadow-lg z-20 pointer-events-none leading-relaxed">
+                  Cổng mặc định khi tạo Proxy hàng loạt (Ví dụ: 10000)
+                </div>
+              </div>
+            </div>
+            <Controller
+              name="startPort"
+              control={control}
+              render={({ field }) => (
+                <Input
+                  type="number"
+                  placeholder="10000"
+                  value={field.value?.toString() || ''}
+                  onChange={(e) => field.onChange(parseInt(e.target.value) || 10000)}
+                  className={`w-full h-9 px-2.5 text-xs bg-white border rounded-lg outline-none transition-all duration-150 ${
+                    errors.startPort 
+                      ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/50' 
+                      : 'border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50'
+                  }`}
+                />
+              )}
+            />
+            {errors.startPort && (
+              <p className="mt-1 text-[10px] text-red-500 font-semibold">{errors.startPort.message}</p>
+            )}
+          </div>
+
+          {/* Tự động xoay IPv6 */}
+          <div className="flex items-center h-full pt-4">
+            <Controller
+              name="autoRotate"
+              control={control}
+              render={({ field }) => (
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
                     checked={field.value}
                     onChange={field.onChange}
+                    className="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500/50 cursor-pointer"
+                  />
+                  <span className="text-[11px] font-semibold text-slate-600">Tự động xoay IPv6</span>
+                </label>
+              )}
+            />
+          </div>
+        </div>
+
+        {isAutoRotate && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Chu kỳ xoay */}
+            <div className="space-y-1">
+              <div className="flex items-center gap-1">
+                <label className="block text-[11px] font-semibold text-slate-500">Chu kỳ xoay (Phút)</label>
+                <div className="group relative cursor-pointer text-slate-400 hover:text-slate-600">
+                  <Info className="w-3 h-3" />
+                  <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 hidden group-hover:block w-48 bg-slate-800 text-[9px] text-white p-2 rounded shadow-lg z-20 pointer-events-none leading-relaxed">
+                    Hệ thống sẽ tự động đổi toàn bộ IP Proxy sau mỗi X phút
+                  </div>
+                </div>
+              </div>
+              <Controller
+                name="rotationInterval"
+                control={control}
+                render={({ field }) => (
+                  <Input
+                    type="number"
+                    placeholder="60"
+                    value={field.value?.toString() || ''}
+                    onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                    className={`w-full h-9 px-2.5 text-xs bg-white border rounded-lg outline-none transition-all duration-150 ${
+                      errors.rotationInterval 
+                        ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/50' 
+                        : 'border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50'
+                    }`}
                   />
                 )}
               />
-            </FormLayout.Group>
-
-            {isAutoRotate && (
-              <FormLayout.Group>
-                <Controller
-                  name="rotationInterval"
-                  control={control}
-                  render={({ field }) => (
-                    <TextField
-                      label={
-                        <InlineStack gap="100">
-                          <Text as="span">Chu kỳ xoay (Phút)</Text>
-                          <Tooltip content="Hệ thống sẽ tự động đổi toàn bộ IP Proxy sau mỗi X phút">
-                            <Icon source={InfoIcon} tone="subdued" />
-                          </Tooltip>
-                        </InlineStack>
-                      }
-                      type="number"
-                      autoComplete="off"
-                      placeholder="60"
-                      value={field.value?.toString()}
-                      onChange={(val) => field.onChange(parseInt(val))}
-                    />
-                  )}
-                />
-              </FormLayout.Group>
-            )}
-          </FormLayout>
-        </Box>
-      </Form>
+              {errors.rotationInterval && (
+                <p className="mt-1 text-[10px] text-red-500 font-semibold">{errors.rotationInterval.message}</p>
+              )}
+            </div>
+          </div>
+        )}
+      </form>
     );
   }
 );

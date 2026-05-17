@@ -5,24 +5,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { bulkProxySchema, BulkProxySchema } from '../schemas/bulk-proxy.schema';
 import { useProxies } from '@/hooks/use-proxies';
 import { useServers } from '@/hooks/use-servers';
-import { 
-  FormLayout, 
-  TextField, 
-  Select, 
-  Popover,
-  DatePicker,
-  Box,
-  Icon,
-  Button,
-  BlockStack,
-  Text,
-  ButtonGroup,
-  Label,
-  Tooltip,
-  InlineStack,
-  Checkbox
-} from "@shopify/polaris";
-import { CalendarIcon, RefreshIcon, InfoIcon } from "@shopify/polaris-icons";
+import { Input } from "@heroui/react";
+import { RefreshCw, Info, ChevronDown, Calendar } from "lucide-react";
 import { useCallback, useState, useMemo, forwardRef, useImperativeHandle, useEffect } from 'react';
 import { format, addMinutes, addDays, addWeeks, addMonths, addYears } from 'date-fns';
 import { Proxy } from '@prisma/client';
@@ -61,10 +45,7 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
 
     const { bulkCreateMutation, updateMutation } = useProxies();
     const { servers } = useServers();
-    const [popoverActive, setPopoverActive] = useState(false);
     const [expirationOption, setExpirationOption] = useState('permanent');
-    const [viewMonth, setViewMonth] = useState(new Date().getMonth());
-    const [viewYear, setViewYear] = useState(new Date().getFullYear());
     
     const form = useForm<BulkProxySchema>({
       resolver: zodResolver(bulkProxySchema),
@@ -202,307 +183,397 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
           const tomorrow = addDays(new Date(), 1);
           form.setValue('expiresAt', tomorrow.toISOString());
         }
-        setPopoverActive(true);
       }
     }, [form]);
 
     return (
-      <Box padding="400">
-        <FormLayout>
-          {isAdmin && (
-            <FormLayout.Group>
-              <Controller
-                name="userId"
-                control={form.control}
-                render={({ field }) => (
-                  <Select
-                    label="Chủ sở hữu (User)"
-                    options={userOptions}
-                    onChange={field.onChange}
+      <form onSubmit={form.handleSubmit(onSubmit)} className="p-4 space-y-4 text-xs bg-white">
+        {isAdmin && (
+          <div className="space-y-1">
+            <label className="block text-[11px] font-semibold text-slate-500">Chủ sở hữu (User)</label>
+            <Controller
+              name="userId"
+              control={form.control}
+              render={({ field }) => (
+                <div className="relative">
+                  <select
                     value={field.value || ''}
-                    error={form.formState.errors.userId?.message}
-                  />
-                )}
-              />
-            </FormLayout.Group>
-          )}
+                    onChange={field.onChange}
+                    className="w-full text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg h-9 px-3 outline-none cursor-pointer appearance-none transition-all duration-150"
+                  >
+                    {userOptions.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                  <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-400">
+                    <ChevronDown className="w-3.5 h-3.5" />
+                  </div>
+                </div>
+              )}
+            />
+            {form.formState.errors.userId && (
+              <p className="mt-1 text-[10px] text-red-500 font-semibold">{form.formState.errors.userId.message}</p>
+            )}
+          </div>
+        )}
 
-          <FormLayout.Group>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Máy chủ đích */}
+          <div className="space-y-1">
+            <label className="block text-[11px] font-semibold text-slate-500">Máy chủ đích</label>
             <Controller
               name="serverId"
               control={form.control}
               render={({ field }) => (
-                <Select
-                  label="Máy chủ đích"
-                  options={serverOptions}
-                  onChange={field.onChange}
-                  value={field.value}
-                  error={form.formState.errors.serverId?.message}
-                  disabled={!!proxy}
-                />
+                <div className="relative">
+                  <select
+                    value={field.value}
+                    onChange={field.onChange}
+                    disabled={!!proxy}
+                    className="w-full text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg h-9 px-3 outline-none disabled:bg-slate-50 disabled:text-slate-400 cursor-pointer appearance-none transition-all duration-150"
+                  >
+                    {serverOptions.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                  <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-400">
+                    <ChevronDown className="w-3.5 h-3.5" />
+                  </div>
+                </div>
               )}
             />
+            {form.formState.errors.serverId && (
+              <p className="mt-1 text-[10px] text-red-500 font-semibold">{form.formState.errors.serverId.message}</p>
+            )}
+          </div>
+
+          {/* Số lượng Proxy */}
+          <div className="space-y-1">
+            <div className="flex items-center gap-1">
+              <label className="block text-[11px] font-semibold text-slate-500">Số lượng Proxy</label>
+              {!proxy && (
+                <div className="group relative cursor-pointer text-slate-400 hover:text-slate-600">
+                  <Info className="w-3 h-3" />
+                  <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 hidden group-hover:block w-48 bg-slate-800 text-[9px] text-white p-2 rounded shadow-lg z-20 pointer-events-none leading-relaxed">
+                    Tối đa 1000 proxy một lần tạo
+                  </div>
+                </div>
+              )}
+            </div>
             <Controller
               name="count"
               control={form.control}
               render={({ field }) => (
-                <TextField
-                  label={
-                    <InlineStack gap="100">
-                      <Text as="span">Số lượng Proxy</Text>
-                      {!proxy && (
-                        <Tooltip content="Tối đa 1000 proxy một lần tạo">
-                          <Icon source={InfoIcon} tone="subdued" />
-                        </Tooltip>
-                      )}
-                    </InlineStack>
-                  }
+                <Input
                   type="number"
-                  autoComplete="off"
                   placeholder="10"
-                  value={field.value?.toString()}
-                  onChange={(val) => field.onChange(parseInt(val))}
-                  error={form.formState.errors.count?.message}
+                  value={field.value?.toString() || ''}
+                  onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
                   disabled={!!proxy}
+                  className={`w-full h-9 px-2.5 text-xs bg-white border rounded-lg outline-none disabled:bg-slate-50 disabled:text-slate-400 transition-all duration-150 ${
+                    form.formState.errors.count 
+                      ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/50' 
+                      : 'border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50'
+                  }`}
                 />
               )}
             />
-          </FormLayout.Group>
+            {form.formState.errors.count && (
+              <p className="mt-1 text-[10px] text-red-500 font-semibold">{form.formState.errors.count.message}</p>
+            )}
+          </div>
+        </div>
 
-          <FormLayout.Group>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Cổng SSH / Cổng bắt đầu */}
+          <div className="space-y-1">
+            <div className="flex items-center gap-1">
+              <label className="block text-[11px] font-semibold text-slate-500">{proxy ? "Cổng (Port)" : "Cổng bắt đầu"}</label>
+              {!proxy && (
+                <div className="group relative cursor-pointer text-slate-400 hover:text-slate-600">
+                  <Info className="w-3 h-3" />
+                  <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 hidden group-hover:block w-48 bg-slate-800 text-[9px] text-white p-2 rounded shadow-lg z-20 pointer-events-none leading-relaxed">
+                    Các port sẽ được tăng dần từ cổng này
+                  </div>
+                </div>
+              )}
+            </div>
             <Controller
               name="startPort"
               control={form.control}
               render={({ field }) => (
-                <TextField
-                  label={
-                    <InlineStack gap="100">
-                      <Text as="span">{proxy ? "Cổng (Port)" : "Cổng bắt đầu"}</Text>
-                      {!proxy && (
-                        <Tooltip content="Các port sẽ được tăng dần từ cổng này">
-                          <Icon source={InfoIcon} tone="subdued" />
-                        </Tooltip>
-                      )}
-                    </InlineStack>
-                  }
+                <Input
                   type="number"
-                  autoComplete="off"
                   placeholder="10000"
-                  value={field.value?.toString()}
-                  onChange={(val) => field.onChange(parseInt(val))}
-                  error={form.formState.errors.startPort?.message}
+                  value={field.value?.toString() || ''}
+                  onChange={(e) => field.onChange(parseInt(e.target.value) || 10000)}
+                  className={`w-full h-9 px-2.5 text-xs bg-white border rounded-lg outline-none transition-all duration-150 ${
+                    form.formState.errors.startPort 
+                      ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/50' 
+                      : 'border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50'
+                  }`}
                 />
               )}
             />
-            <Controller
-              name="username"
-              control={form.control}
-              render={({ field }) => (
-                <TextField
-                  label="Tài khoản"
-                  autoComplete="off"
-                  placeholder="Ví dụ: user"
-                  value={field.value}
-                  onChange={field.onChange}
-                  error={form.formState.errors.username?.message}
-                  suffix={
-                    <div 
-                      style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }} 
-                      onClick={refreshRandom}
-                      title="Tạo ngẫu nhiên"
-                    >
-                      <Icon source={RefreshIcon} tone="subdued" />
-                    </div>
-                  }
-                />
-              )}
-            />
-          </FormLayout.Group>
+            {form.formState.errors.startPort && (
+              <p className="mt-1 text-[10px] text-red-500 font-semibold">{form.formState.errors.startPort.message}</p>
+            )}
+          </div>
 
-          <FormLayout.Group>
-            <Controller
-              name="password"
-              control={form.control}
-              render={({ field }) => (
-                <TextField
-                  label="Mật khẩu"
-                  type="text"
-                  autoComplete="off"
-                  placeholder="Mật khẩu"
-                  value={field.value}
-                  onChange={field.onChange}
-                  error={form.formState.errors.password?.message}
-                />
-              )}
-            />
-          </FormLayout.Group>
+          {/* Tài khoản */}
+          <div className="space-y-1">
+            <label className="block text-[11px] font-semibold text-slate-500">Tài khoản</label>
+            <div className="relative">
+              <Controller
+                name="username"
+                control={form.control}
+                render={({ field }) => (
+                  <Input
+                    type="text"
+                    placeholder="Ví dụ: user"
+                    value={field.value}
+                    onChange={field.onChange}
+                    className={`w-full h-9 pl-2.5 pr-8 text-xs bg-white border rounded-lg outline-none transition-all duration-150 ${
+                      form.formState.errors.username 
+                        ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/50' 
+                        : 'border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50'
+                    }`}
+                  />
+                )}
+              />
+              <button
+                type="button"
+                onClick={refreshRandom}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 hover:bg-slate-100 rounded-lg cursor-pointer transition-colors"
+                title="Tạo ngẫu nhiên"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            {form.formState.errors.username && (
+              <p className="mt-1 text-[10px] text-red-500 font-semibold">{form.formState.errors.username.message}</p>
+            )}
+          </div>
+        </div>
 
-          <FormLayout.Group>
+        {/* Mật khẩu */}
+        <div className="space-y-1">
+          <label className="block text-[11px] font-semibold text-slate-500">Mật khẩu</label>
+          <Controller
+            name="password"
+            control={form.control}
+            render={({ field }) => (
+              <Input
+                type="text"
+                placeholder="Mật khẩu"
+                value={field.value}
+                onChange={field.onChange}
+                className={`w-full h-9 px-2.5 text-xs bg-white border rounded-lg outline-none transition-all duration-150 ${
+                  form.formState.errors.password 
+                    ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/50' 
+                    : 'border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50'
+                }`}
+              />
+            )}
+          />
+          {form.formState.errors.password && (
+            <p className="mt-1 text-[10px] text-red-500 font-semibold">{form.formState.errors.password.message}</p>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Loại IP Outbound */}
+          <div className="space-y-1">
+            <label className="block text-[11px] font-semibold text-slate-500">Loại IP Outbound</label>
             <Controller
               name="ipType"
               control={form.control}
               render={({ field }) => (
-                <BlockStack gap="100">
-                  <Label id="ipType">Loại IP Outbound</Label>
-                  <ButtonGroup variant="segmented">
-                    <Button 
-                      pressed={field.value === 'IPv4'} 
-                      onClick={() => field.onChange('IPv4')}
-                      size="large"
-                    >
-                      IPv4
-                    </Button>
-                    <Button 
-                      pressed={field.value === 'IPv6'} 
-                      onClick={() => field.onChange('IPv6')}
-                      size="large"
-                    >
-                      IPv6
-                    </Button>
-                  </ButtonGroup>
-                </BlockStack>
+                <div className="grid grid-cols-2 gap-1 p-0.5 bg-slate-100 border border-slate-200 rounded-lg h-9">
+                  <button
+                    type="button"
+                    onClick={() => field.onChange('IPv4')}
+                    className={`text-xs font-bold rounded-md transition-all cursor-pointer ${
+                      field.value === 'IPv4'
+                        ? 'bg-white text-slate-800 shadow-sm border border-slate-200/50'
+                        : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                  >
+                    IPv4
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => field.onChange('IPv6')}
+                    className={`text-xs font-bold rounded-md transition-all cursor-pointer ${
+                      field.value === 'IPv6'
+                        ? 'bg-white text-slate-800 shadow-sm border border-slate-200/50'
+                        : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                  >
+                    IPv6
+                  </button>
+                </div>
               )}
             />
+          </div>
+
+          {/* Giao thức Proxy */}
+          <div className="space-y-1">
+            <label className="block text-[11px] font-semibold text-slate-500">Giao thức Proxy</label>
             <Controller
               name="proxyType"
               control={form.control}
               render={({ field }) => (
-                <BlockStack gap="100">
-                  <Label id="proxyType">Giao thức Proxy</Label>
-                  <ButtonGroup variant="segmented">
-                    <Button 
-                      pressed={field.value === 'HTTP'} 
-                      onClick={() => field.onChange('HTTP')}
-                    >
-                      HTTP
-                    </Button>
-                    <Button 
-                      pressed={field.value === 'SOCKS5'} 
-                      onClick={() => field.onChange('SOCKS5')}
-                    >
-                      SOCKS5
-                    </Button>
-                  </ButtonGroup>
-                </BlockStack>
+                <div className="grid grid-cols-2 gap-1 p-0.5 bg-slate-100 border border-slate-200 rounded-lg h-9">
+                  <button
+                    type="button"
+                    onClick={() => field.onChange('HTTP')}
+                    className={`text-xs font-bold rounded-md transition-all cursor-pointer ${
+                      field.value === 'HTTP'
+                        ? 'bg-white text-slate-800 shadow-sm border border-slate-200/50'
+                        : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                  >
+                    HTTP
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => field.onChange('SOCKS5')}
+                    className={`text-xs font-bold rounded-md transition-all cursor-pointer ${
+                      field.value === 'SOCKS5'
+                        ? 'bg-white text-slate-800 shadow-sm border border-slate-200/50'
+                        : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                  >
+                    SOCKS5
+                  </button>
+                </div>
               )}
             />
-          </FormLayout.Group>
+          </div>
+        </div>
 
-          <BlockStack gap="300">
-            <Select
-              label="Thời hạn sử dụng"
-              options={EXPIRATION_OPTIONS}
-              onChange={handleExpirationChange}
-              value={expirationOption}
-            />
-
-            {expirationOption === 'custom' && (
-              <Popover
-                active={popoverActive}
-                activator={
-                  <TextField
-                    label="Ngày hết hạn cụ thể"
-                    autoComplete="off"
-                    prefix={<Icon source={CalendarIcon} />}
-                    value={form.watch('expiresAt') ? format(new Date(form.watch('expiresAt') as string), 'dd/MM/yyyy HH:mm') : ''}
-                    onFocus={() => setPopoverActive(true)}
-                    placeholder="Chọn ngày hết hạn"
-                    readOnly
-                  />
-                }
-                onClose={() => setPopoverActive(false)}
+        {/* Thời hạn sử dụng */}
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <label className="block text-[11px] font-semibold text-slate-500">Thời hạn sử dụng</label>
+            <div className="relative">
+              <select
+                value={expirationOption}
+                onChange={(e) => handleExpirationChange(e.target.value)}
+                className="w-full text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg h-9 px-3 outline-none cursor-pointer appearance-none transition-all duration-150"
               >
-                <Box padding="400">
-                  <DatePicker
-                    month={viewMonth}
-                    year={viewYear}
-                    onChange={(date) => {
-                      const currentDate = new Date(form.getValues('expiresAt') || new Date());
-                      const newDate = new Date(date.start);
-                      newDate.setHours(currentDate.getHours());
-                      newDate.setMinutes(currentDate.getMinutes());
-                      newDate.setSeconds(currentDate.getSeconds());
-                      
-                      form.setValue('expiresAt', newDate.toISOString());
-                      setPopoverActive(false);
-                    }}
-                    onMonthChange={(month, year) => {
-                      setViewMonth(month);
-                      setViewYear(year);
-                    }}
-                    selected={form.watch('expiresAt') ? new Date(form.watch('expiresAt') as string) : new Date()}
-                    disableDatesBefore={new Date()}
-                  />
-                </Box>
-              </Popover>
-            )}
-            
-            {expirationOption !== 'permanent' && expirationOption !== 'custom' && (
-              <Box paddingInlineStart="100">
-                <InlineStack gap="100" align="start">
-                  <Text as="span" variant="bodyMd" tone="subdued">Sẽ hết hạn vào:</Text>
-                  <Text as="span" variant="bodyMd" fontWeight="medium">
-                    {form.watch('expiresAt') ? format(new Date(form.watch('expiresAt') as string), 'dd/MM/yyyy HH:mm') : '---'}
-                  </Text>
-                </InlineStack>
-              </Box>
-            )}
-          </BlockStack>
+                {EXPIRATION_OPTIONS.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+              <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-400">
+                <ChevronDown className="w-3.5 h-3.5" />
+              </div>
+            </div>
+          </div>
 
-          <FormLayout.Group>
-            {expirationOption !== 'permanent' && (
-              <>
+          {expirationOption === 'custom' && (
+            <div className="space-y-1">
+              <div className="flex items-center gap-1">
+                <label className="block text-[11px] font-semibold text-slate-500">Chọn ngày hết hạn</label>
+                <Calendar className="w-3 h-3 text-slate-400" />
+              </div>
+              <input
+                type="datetime-local"
+                min={format(new Date(), 'yyyy-MM-dd\'T\'HH:mm')}
+                value={form.watch('expiresAt') ? format(new Date(form.watch('expiresAt') as string), 'yyyy-MM-dd\'T\'HH:mm') : ''}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val) {
+                    form.setValue('expiresAt', new Date(val).toISOString());
+                  }
+                }}
+                className="w-full h-9 px-2.5 text-xs bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none transition-all duration-150 font-medium text-slate-600"
+              />
+            </div>
+          )}
+
+          {expirationOption !== 'permanent' && expirationOption !== 'custom' && (
+            <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-[11px] text-slate-500 font-semibold flex items-center gap-1.5">
+              <span>Sẽ hết hạn vào:</span>
+              <span className="text-slate-800 font-bold">
+                {form.watch('expiresAt') ? format(new Date(form.watch('expiresAt') as string), 'dd/MM/yyyy HH:mm') : '---'}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Tự động gia hạn */}
+        {expirationOption !== 'permanent' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start pt-2 border-t border-slate-100">
+            <div className="flex flex-col gap-1 pt-1.5">
+              <Controller
+                name="autoRenew"
+                control={form.control}
+                render={({ field }) => (
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={field.value}
+                      onChange={field.onChange}
+                      className="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500/50 cursor-pointer"
+                    />
+                    <span className="text-[11px] font-semibold text-slate-600">Tự động gia hạn</span>
+                  </label>
+                )}
+              />
+              <span className="text-[9px] text-slate-400 font-medium pl-6">
+                Tự động kéo dài thời gian khi sắp hết hạn (dưới 24h)
+              </span>
+            </div>
+
+            {form.watch('autoRenew') && (
+              <div className="space-y-1">
+                <label className="block text-[11px] font-semibold text-slate-500">Thời hạn gia hạn tự động</label>
                 <Controller
-                  name="autoRenew"
+                  name="renewalDuration"
                   control={form.control}
                   render={({ field }) => (
-                        <Checkbox
-                          label="Tự động gia hạn"
-                          helpText={
-                            <Text as="p" variant="bodyXs" tone="subdued">
-                              Tự động kéo dài thời gian khi sắp hết hạn (dưới 24h)
-                            </Text>
-                          }
-                          checked={field.value}
-                          onChange={field.onChange}
-                        />
+                    <div className="relative">
+                      <select
+                        value={field.value}
+                        onChange={field.onChange}
+                        className="w-full text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg h-9 px-3 outline-none cursor-pointer appearance-none transition-all duration-150"
+                      >
+                        {RENEWAL_OPTIONS.map(opt => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
+                      <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-400">
+                        <ChevronDown className="w-3.5 h-3.5" />
+                      </div>
+                    </div>
                   )}
                 />
-                {form.watch('autoRenew') && (
-                  <Controller
-                    name="renewalDuration"
-                    control={form.control}
-                    render={({ field }) => (
-                      <Select
-                        label="Thời hạn gia hạn tự động"
-                        options={RENEWAL_OPTIONS}
-                        onChange={field.onChange}
-                        value={field.value}
-                      />
-                    )}
-                  />
-                )}
-                {!form.watch('autoRenew') && <Box />}
-              </>
+              </div>
             )}
-          </FormLayout.Group>
+          </div>
+        )}
 
+        {/* Ghi chú */}
+        <div className="space-y-1">
+          <label className="block text-[11px] font-semibold text-slate-500">Ghi chú (Comment)</label>
           <Controller
             name="comment"
             control={form.control}
             render={({ field }) => (
-              <TextField
-                label="Ghi chú (Comment)"
-                autoComplete="off"
+              <textarea
                 placeholder="Ví dụ: Nuôi nick Facebook, chạy tool..."
                 value={field.value || ''}
                 onChange={field.onChange}
-                multiline={2}
+                rows={2}
+                className="w-full p-2.5 text-xs bg-white placeholder:text-slate-400 border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none transition-all duration-150 font-medium text-slate-600"
               />
             )}
           />
-        </FormLayout>
-      </Box>
+        </div>
+      </form>
     );
   }
 );
