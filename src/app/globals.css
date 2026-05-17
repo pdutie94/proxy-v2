@@ -64,3 +64,13 @@ body {
 .Polaris-IndexTable__TableCell {
 	vertical-align: top !important;
 }
+
+@layer components {
+  .kpi {
+    border-radius: calc(var(--radius) * 2);
+    padding: calc(var(--spacing) * 4);
+    flex-direction: column;
+    display: flex;
+    position: relative;
+  }
+}

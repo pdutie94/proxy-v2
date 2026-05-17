@@ -123,7 +123,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {stats.map((stat, index) => {
           return (
-            <div key={index} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-[sm_0_1px_2px_0_rgba(0,0,0,0.05)] flex flex-col justify-between min-h-[92px]">
+            <div key={index} className="bg-white border border-slate-200 card card--default kpi shadow-[sm_0_1px_2px_0_rgba(0,0,0,0.05)] min-h-[92px] justify-between">
               <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">{stat.title}</p>
               <div className="flex items-baseline justify-between mt-1">
                 <p className="text-2xl font-bold text-slate-900 tracking-tight leading-none">{stat.value}</p>
