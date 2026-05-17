@@ -139,12 +139,12 @@ export default function DashboardPage() {
       {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
         {/* Recent Activity */}
-        <div className="lg:col-span-2 bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="lg:col-span-2 space-y-3">
+          <div className="flex items-center justify-between pb-1">
             <h2 className="text-sm font-semibold text-slate-800">Hoạt động gần đây</h2>
           </div>
 
-          <div className="w-full">
+          <div className="w-full bg-white border border-slate-200 rounded-xl overflow-hidden shadow-[sm_0_1px_2px_0_rgba(0,0,0,0.05)]">
             <Table className="w-full text-left border-collapse">
               <Table.Content>
                 <Table.Header className="border-b border-slate-100 text-slate-400 text-[10px] font-bold uppercase tracking-wider bg-slate-50/50">
@@ -189,18 +189,18 @@ export default function DashboardPage() {
                 </Table.Body>
               </Table.Content>
             </Table>
-          </div>
 
-          <div className="flex justify-center border-t border-slate-100 pt-3">
-            <Link href="/dashboard/logs">
-              <Button
-                size="sm"
-                variant="outline"
-                className="text-slate-600 hover:bg-slate-100/70 border border-slate-200 bg-white font-semibold text-xs h-8 px-4 cursor-pointer rounded-lg"
-              >
-                Xem tất cả nhật ký
-              </Button>
-            </Link>
+            <div className="flex justify-center border-t border-slate-100 py-3 bg-slate-50/20">
+              <Link href="/dashboard/logs">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-slate-600 hover:bg-slate-100/70 border border-slate-200 bg-white font-semibold text-xs h-8 px-4 cursor-pointer rounded-lg"
+                >
+                  Xem tất cả nhật ký
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
 
