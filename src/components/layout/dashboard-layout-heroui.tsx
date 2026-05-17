@@ -329,12 +329,12 @@ export function DashboardLayoutHeroUI({ children }: DashboardLayoutHeroUIProps) 
               {/* Profile Dropdown */}
               <Dropdown>
                 <DropdownTrigger>
-                  <button className="flex items-center gap-1 p-0.5 rounded-full hover:bg-slate-50 transition-colors focus:outline-none">
+                  <div className="flex items-center gap-1 p-0.5 rounded-full hover:bg-slate-50 transition-colors cursor-pointer focus:outline-none">
                     <Avatar className="text-white font-bold bg-gradient-to-tr from-blue-500 to-sky-400 cursor-pointer w-7 h-7 flex items-center justify-center text-[10px] rounded-full">
                       <Avatar.Fallback>{initials}</Avatar.Fallback>
                     </Avatar>
                     <ChevronDown className="w-3.5 h-3.5 text-slate-400 hidden sm:block" />
-                  </button>
+                  </div>
                 </DropdownTrigger>
                 <Dropdown.Popover placement="bottom end" className="p-1 bg-white border border-slate-200 rounded-lg shadow-sm outline-none">
                   <Dropdown.Menu 
