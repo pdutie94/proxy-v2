@@ -1,40 +1,28 @@
 "use client";
 
-import { 
-  Page, 
-  Grid, 
-  Card, 
-  Text, 
-  BlockStack, 
-  Box,
-  Badge,
-  IndexTable,
-  Divider,
-  InlineStack,
-  Button,
-  Modal,
-  Scrollable,
-  ProgressBar,
-  Icon
-} from "@shopify/polaris";
-import { 
-  OrderIcon, 
-  ShieldCheckMarkIcon, 
-  PersonIcon,
-  ViewIcon,
-  DatabaseIcon,
-  CalendarTimeIcon
-} from "@shopify/polaris-icons";
 import { useServers } from "@/hooks/use-servers";
 import { useProxies } from "@/hooks/use-proxies";
 import { useUsers } from "@/hooks/use-users";
 import { useLogs } from "@/hooks/use-logs";
 import { useSystemHealth } from "@/hooks/use-system-health";
-import { IncomingIcon } from "@shopify/polaris-icons";
 import { formatDistanceToNow } from "date-fns";
 import { vi } from "date-fns/locale";
 import { useState, useMemo } from "react";
 import { ServerJob, Server, Proxy } from "@prisma/client";
+import { 
+  Server as ServerIcon, 
+  ShieldCheck, 
+  Users, 
+  Calendar, 
+  Eye, 
+  X, 
+  Database, 
+  Activity, 
+  Layers,
+  Cpu
+} from "lucide-react";
+import { Button } from "@heroui/react";
+import Link from "next/link";
 
 type LogEntry = ServerJob & {
   server?: Server | null;
@@ -56,26 +44,23 @@ export default function DashboardPage() {
     {
       title: "Máy chủ trực tuyến",
       value: `${onlineServers}/${servers.length}`,
-      icon: OrderIcon,
-      tone: "info" as const,
-      bg: "#E0F2FE",
-      iconColor: "#0369A1"
+      icon: ServerIcon,
+      iconColor: "text-blue-600",
+      iconBg: "bg-blue-50/80 border-blue-100"
     },
     {
       title: "Proxy hoạt động",
       value: activeProxies.toString(),
-      icon: ShieldCheckMarkIcon,
-      tone: "success" as const,
-      bg: "#DCFCE7",
-      iconColor: "#15803D"
+      icon: ShieldCheck,
+      iconColor: "text-green-600",
+      iconBg: "bg-green-50/80 border-green-100"
     },
     {
       title: "Tổng người dùng",
       value: users.length.toString(),
-      icon: PersonIcon,
-      tone: "attention" as const,
-      bg: "#FEF9C3",
-      iconColor: "#A16207"
+      icon: Users,
+      iconColor: "text-amber-600",
+      iconBg: "bg-amber-50/80 border-amber-100"
     }
   ];
 
@@ -95,205 +80,255 @@ export default function DashboardPage() {
 
   const getJobBadge = (status: string) => {
     switch (status) {
-      case 'COMPLETED': return <Badge tone="success">Thành công</Badge>;
-      case 'FAILED': return <Badge tone="critical">Thất bại</Badge>;
-      case 'ACTIVE': return <Badge tone="attention">Đang chạy</Badge>;
-      default: return <Badge tone="info">Đang chờ</Badge>;
+      case 'COMPLETED':
+        return (
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-50 text-green-700 border border-green-200/50">
+            Thành công
+          </span>
+        );
+      case 'FAILED':
+        return (
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-red-700 border border-red-200/50">
+            Thất bại
+          </span>
+        );
+      case 'ACTIVE':
+        return (
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200/50">
+            Đang chạy
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200/50">
+            Đang chờ
+          </span>
+        );
     }
   };
 
   return (
-    <Page title="Tổng quan hệ thống">
-      <Box paddingInline={{ xs: '400', sm: '0' }} paddingBlockEnd="400">
-        <BlockStack gap="500">
-          {/* KPI Cards */}
-          <Grid>
-            {stats.map((stat, index) => (
-              <Grid.Cell key={index} columnSpan={{ xs: 6, lg: 4, xl: 4 }}>
-                <Card>
-                  <BlockStack gap="200">
-                      <InlineStack gap="100" blockAlign="center">
-                        <div style={{ color: stat.iconColor, display: 'flex', width: '20px', height: '20px' }}>
-                          <Icon source={stat.icon} />
-                        </div>
-                        <Text as="h2" variant="bodyMd" fontWeight="medium" tone="subdued">
-                          {stat.title}
-                        </Text>
-                      </InlineStack>
-                      <Text as="p" variant="headingXl" fontWeight="bold">
-                        {stat.value}
-                      </Text>
-                    </BlockStack>
-                </Card>
-              </Grid.Cell>
-            ))}
-          </Grid>
-        <Grid>
-          {/* Recent Activity */}
-          <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 6, lg: 8, xl: 8 }}>
-            <Card>
-              <BlockStack gap="200">
-                <Text as="h2" variant="headingMd">Hoạt động gần đây</Text>
-                <IndexTable
-                  resourceName={{ singular: 'hoạt động', plural: 'hoạt động' }}
-                  itemCount={logs.length}
-                  headings={[
-                    { title: 'Thời gian' },
-                    { title: 'Sự kiện' },
-                    { title: 'Trạng thái', alignment: 'center' },
-                    { title: '', alignment: 'end' },
-                  ]}
-                  selectable={false}
-                >
-                  {logs.map((job: LogEntry, index: number) => (
-                    <IndexTable.Row id={job.id} key={job.id} position={index}>
-                      <IndexTable.Cell>
-                        <Text as="span" variant="bodyMd" tone="subdued">
-                          {formatDistanceToNow(new Date(job.createdAt), { addSuffix: true, locale: vi })}
-                        </Text>
-                      </IndexTable.Cell>
-                      <IndexTable.Cell>
-                        <InlineStack gap="200" blockAlign="center">
-                          <div style={{ width: '20px', height: '20px', color: '#637381' }}>
-                            <Icon source={CalendarTimeIcon} />
-                          </div>
-                          <Text as="span" fontWeight="medium">{getJobTitle(job)}</Text>
-                        </InlineStack>
-                      </IndexTable.Cell>
-                      <IndexTable.Cell>
-                        <InlineStack align="center">
-                          {getJobBadge(job.status)}
-                        </InlineStack>
-                      </IndexTable.Cell>
-                      <IndexTable.Cell>
-                        <InlineStack align="end">
-                          <Button 
-                            icon={ViewIcon} 
-                            variant="tertiary" 
-                            onClick={() => setSelectedLog(job)} 
-                          />
-                        </InlineStack>
-                      </IndexTable.Cell>
-                    </IndexTable.Row>
-                  ))}
-                    {logs.length === 0 && (
-                      <IndexTable.Row id="empty" position={0} disabled>
-                        <IndexTable.Cell colSpan={4}>
-                          <Box padding="400">
-                            <InlineStack align="center">
-                              <Text as="p" tone="subdued">Chưa có hoạt động nào</Text>
-                            </InlineStack>
-                          </Box>
-                        </IndexTable.Cell>
-                      </IndexTable.Row>
-                    )}
-                  </IndexTable>
-                <Divider />
-                <InlineStack align="center">
-                    <Button variant="tertiary" url="/dashboard/logs">Xem tất cả nhật ký</Button>
-                  </InlineStack>
-                </BlockStack>
-            </Card>
-          </Grid.Cell>
+    <div className="space-y-4">
+      {/* Title */}
+      <div>
+        <h1 className="text-lg font-semibold text-slate-900">Tổng quan hệ thống</h1>
+      </div>
 
-          {/* Server Resource Status */}
-          <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 6, lg: 4, xl: 4 }}>
-            <BlockStack gap="400">
-              <Card>
-                <BlockStack gap="300">
-                    <Text as="h2" variant="headingMd">Tài nguyên Server</Text>
-                    <BlockStack gap="400">
-                      {servers.length === 0 && <Text as="p" tone="subdued">Chưa có máy chủ nào</Text>}
-                      {servers.slice(0, 5).map((server) => {
-                        const proxyCount = proxies.filter(p => p.serverId === server.id).length;
-                        const percentage = Math.min(Math.round((proxyCount / server.maxProxies) * 100), 100);
-                        let progressTone: "success" | "critical" | undefined = "success";
-                        if (percentage > 85) progressTone = "critical";
-                        else if (percentage > 60) progressTone = undefined;
+      {/* KPI Cards Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {stats.map((stat, index) => {
+          const IconComponent = stat.icon;
+          return (
+            <div key={index} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center gap-4">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border ${stat.iconBg}`}>
+                <IconComponent className={`w-5 h-5 ${stat.iconColor}`} />
+              </div>
+              <div className="space-y-0.5">
+                <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">{stat.title}</p>
+                <p className="text-xl font-bold text-slate-900 tracking-tight">{stat.value}</p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
 
-                        return (
-                          <BlockStack gap="100" key={server.id}>
-                            <InlineStack align="space-between">
-                              <Text as="p" variant="bodyMd" fontWeight="medium">{server.name}</Text>
-                              <Text as="p" variant="bodyXs" tone="subdued">{proxyCount}/{server.maxProxies}</Text>
-                            </InlineStack>
-                            <ProgressBar progress={percentage} tone={progressTone} size="small" />
-                          </BlockStack>
-                        );
-                      })}
-                      {servers.length > 5 && (
-                        <Button variant="tertiary" url="/dashboard/servers">Xem thêm {`${servers.length - 5}`} máy chủ</Button>
-                      )}
-                    </BlockStack>
-                  </BlockStack>
-              </Card>
+      {/* Main Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+        {/* Recent Activity */}
+        <div className="lg:col-span-2 bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <h2 className="text-sm font-semibold text-slate-800">Hoạt động gần đây</h2>
+          </div>
 
-              <Card>
-                <BlockStack gap="300">
-                    <Text as="h2" variant="headingMd">Trạng thái dịch vụ</Text>
-                    <BlockStack gap="300">
-                      <InlineStack align="space-between">
-                        <InlineStack gap="200" blockAlign="center">
-                          <Icon source={DatabaseIcon} tone={healthData?.database === 'ONLINE' ? 'success' : 'critical'} />
-                          <Text as="p">Cơ sở dữ liệu</Text>
-                        </InlineStack>
-                        {isHealthLoading ? (
-                          <Badge tone="info">Đang kiểm tra...</Badge>
-                        ) : (
-                          <Badge tone={healthData?.database === 'ONLINE' ? 'success' : 'critical'}>
-                            {healthData?.database === 'ONLINE' ? 'Sẵn sàng' : 'Ngoại tuyến'}
-                          </Badge>
-                        )}
-                      </InlineStack>
-                      <InlineStack align="space-between">
-                        <InlineStack gap="200" blockAlign="center">
-                          <Icon source={IncomingIcon} tone={healthData?.redis === 'ONLINE' ? 'success' : 'critical'} />
-                          <Text as="p">Hàng chờ (Redis)</Text>
-                        </InlineStack>
-                        <Badge tone={healthData?.redis === 'ONLINE' ? 'success' : 'critical'}>
-                          {healthData?.redis === 'ONLINE' ? 'Kết nối' : 'Mất kết nối'}
-                        </Badge>
-                      </InlineStack>
-                      <InlineStack align="space-between">
-                        <InlineStack gap="200" blockAlign="center">
-                          <Icon source={OrderIcon} tone={healthData?.worker === 'ONLINE' ? 'success' : 'critical'} />
-                          <Text as="p">SSH Workers</Text>
-                        </InlineStack>
-                        <Badge tone={healthData?.worker === 'ONLINE' ? 'success' : 'critical'}>
-                          {healthData?.worker === 'ONLINE' ? 'Hoạt động' : 'Dừng'}
-                        </Badge>
-                      </InlineStack>
-                    </BlockStack>
-                  </BlockStack>
-              </Card>
-            </BlockStack>
-          </Grid.Cell>
-        </Grid>
-        </BlockStack>
-      </Box>
-      <Modal
-        open={!!selectedLog}
-        onClose={() => setSelectedLog(null)}
-        title={`Chi tiết: ${selectedLog ? getJobTitle(selectedLog) : ''}`}
-        size="large"
-      >
-        <Modal.Section>
-          <Box background="bg-surface-secondary" padding="400" borderRadius="200">
-            <Scrollable style={{ maxHeight: '500px' }}>
-              <pre style={{ 
-                margin: 0, 
-                whiteSpace: 'pre-wrap', 
-                wordBreak: 'break-all',
-                fontFamily: 'monospace',
-                fontSize: '12px',
-                lineHeight: '1.6'
-              }}>
-                {selectedLog?.logs || 'Không có dữ liệu nhật ký chi tiết.'}
+          <div className="w-full overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-slate-100 text-slate-400 text-[10px] font-bold uppercase tracking-wider bg-slate-50/50">
+                  <th className="py-2.5 px-3">Thời gian</th>
+                  <th className="py-2.5 px-3">Sự kiện</th>
+                  <th className="py-2.5 px-3 text-center">Trạng thái</th>
+                  <th className="py-2.5 px-3 text-right"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-xs">
+                {logs.map((job: LogEntry) => (
+                  <tr key={job.id} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="py-2.5 px-3 text-slate-500 whitespace-nowrap">
+                      {formatDistanceToNow(new Date(job.createdAt), { addSuffix: true, locale: vi })}
+                    </td>
+                    <td className="py-2.5 px-3 font-semibold text-slate-700">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <span>{getJobTitle(job)}</span>
+                      </div>
+                    </td>
+                    <td className="py-2.5 px-3 text-center">
+                      {getJobBadge(job.status)}
+                    </td>
+                    <td className="py-2.5 px-3 text-right">
+                      <button
+                        onClick={() => setSelectedLog(job)}
+                        className="inline-flex items-center justify-center p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer transition-colors"
+                        title="Xem chi tiết"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {logs.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="py-8 text-center text-slate-400 font-medium">
+                      Chưa có hoạt động nào
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="flex justify-center border-t border-slate-100 pt-3">
+            <Link href="/dashboard/logs">
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-slate-600 hover:bg-slate-100/70 border border-slate-200 bg-white font-semibold text-xs h-8 px-4 cursor-pointer rounded-lg"
+              >
+                Xem tất cả nhật ký
+              </Button>
+            </Link>
+          </div>
+        </div>
+
+        {/* Server Status & Service Health */}
+        <div className="space-y-4">
+          {/* Server resources */}
+          <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-4">
+            <h2 className="text-sm font-semibold text-slate-800">Tài nguyên Server</h2>
+            <div className="space-y-3">
+              {servers.length === 0 && <p className="text-xs text-slate-400 font-medium py-2">Chưa có máy chủ nào</p>}
+              {servers.slice(0, 5).map((server) => {
+                const proxyCount = proxies.filter(p => p.serverId === server.id).length;
+                const percentage = Math.min(Math.round((proxyCount / server.maxProxies) * 100), 100);
+                
+                return (
+                  <div key={server.id} className="space-y-1">
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="font-semibold text-slate-700">{server.name}</span>
+                      <span className="text-slate-400 font-bold">{proxyCount}/{server.maxProxies}</span>
+                    </div>
+                    {/* Compact progress bar */}
+                    <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                      <div 
+                        className={`h-full rounded-full transition-all duration-300 ${
+                          percentage > 85 ? 'bg-red-500' : percentage > 60 ? 'bg-amber-500' : 'bg-green-500'
+                        }`}
+                        style={{ width: `${percentage}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+              {servers.length > 5 && (
+                <div className="pt-2 border-t border-slate-50 flex justify-center">
+                  <Link href="/dashboard/servers">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-slate-500 font-semibold text-[11px] h-7 px-3 bg-slate-50 hover:bg-slate-100/70 border border-slate-100 cursor-pointer rounded-lg"
+                    >
+                      Xem thêm {servers.length - 5} máy chủ
+                    </Button>
+                  </Link>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Service health */}
+          <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-4">
+            <h2 className="text-sm font-semibold text-slate-800">Trạng thái dịch vụ</h2>
+            <div className="space-y-3.5">
+              {/* Database */}
+              <div className="flex justify-between items-center text-xs">
+                <div className="flex items-center gap-2 text-slate-600 font-semibold">
+                  <Database className={`w-4 h-4 shrink-0 ${healthData?.database === 'ONLINE' ? 'text-green-600' : 'text-red-500'}`} />
+                  <span>Cơ sở dữ liệu</span>
+                </div>
+                {isHealthLoading ? (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-600">
+                    Đang kiểm tra...
+                  </span>
+                ) : (
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                    healthData?.database === 'ONLINE' 
+                      ? 'bg-green-50 text-green-700 border border-green-200/50' 
+                      : 'bg-red-50 text-red-700 border border-red-200/50'
+                  }`}>
+                    {healthData?.database === 'ONLINE' ? 'Sẵn sàng' : 'Ngoại tuyến'}
+                  </span>
+                )}
+              </div>
+
+              {/* Redis */}
+              <div className="flex justify-between items-center text-xs">
+                <div className="flex items-center gap-2 text-slate-600 font-semibold">
+                  <Layers className={`w-4 h-4 shrink-0 ${healthData?.redis === 'ONLINE' ? 'text-green-600' : 'text-red-500'}`} />
+                  <span>Hàng chờ (Redis)</span>
+                </div>
+                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                  healthData?.redis === 'ONLINE' 
+                    ? 'bg-green-50 text-green-700 border border-green-200/50' 
+                    : 'bg-red-50 text-red-700 border border-red-200/50'
+                }`}>
+                  {healthData?.redis === 'ONLINE' ? 'Kết nối' : 'Mất kết nối'}
+                </span>
+              </div>
+
+              {/* Worker */}
+              <div className="flex justify-between items-center text-xs">
+                <div className="flex items-center gap-2 text-slate-600 font-semibold">
+                  <Cpu className={`w-4 h-4 shrink-0 ${healthData?.worker === 'ONLINE' ? 'text-green-600' : 'text-red-500'}`} />
+                  <span>SSH Workers</span>
+                </div>
+                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                  healthData?.worker === 'ONLINE' 
+                    ? 'bg-green-50 text-green-700 border border-green-200/50' 
+                    : 'bg-red-50 text-red-700 border border-red-200/50'
+                }`}>
+                  {healthData?.worker === 'ONLINE' ? 'Hoạt động' : 'Dừng'}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Modern Compact Log View Overlay Modal */}
+      {selectedLog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+          <div className="bg-white border border-slate-200 rounded-xl w-full max-w-2xl overflow-hidden shadow-lg flex flex-col max-h-[90vh]">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50/50">
+              <h3 className="text-sm font-semibold text-slate-800">
+                Chi tiết: {getJobTitle(selectedLog)}
+              </h3>
+              <button 
+                onClick={() => setSelectedLog(null)}
+                className="text-slate-400 hover:text-slate-600 cursor-pointer p-1 rounded-lg hover:bg-slate-100 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            {/* Modal Body */}
+            <div className="p-4 overflow-y-auto bg-slate-950 text-slate-200 font-mono text-[11px] leading-relaxed flex-1">
+              <pre className="whitespace-pre-wrap break-all">
+                {selectedLog.logs || 'Không có dữ liệu nhật ký chi tiết.'}
               </pre>
-            </Scrollable>
-          </Box>
-        </Modal.Section>
-      </Modal>
-    </Page>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

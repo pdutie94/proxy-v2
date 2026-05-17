@@ -1,27 +1,17 @@
 "use client";
 
-import { 
-  Page, 
-  Card, 
-  IndexTable, 
-  Text, 
-  Badge, 
-  Box,
-  Button,
-  Modal,
-  Scrollable,
-  InlineStack,
-  SkeletonBodyText,
-  IndexFilters,
-  IndexFiltersMode,
-  useBreakpoints,
-  Tooltip,
-} from "@shopify/polaris";
-import { ViewIcon, DeleteIcon } from "@shopify/polaris-icons";
 import { format } from "date-fns";
 import { useLogs } from "@/hooks/use-logs";
 import { useState, useCallback, useMemo } from "react";
 import { ServerJob, Server, Proxy } from "@prisma/client";
+import { 
+  Calendar, 
+  Eye, 
+  X, 
+  Trash2, 
+  Server as ServerIcon 
+} from "lucide-react";
+import { Button } from "@heroui/react";
 
 type LogEntry = ServerJob & {
   server?: Server | null;
@@ -30,7 +20,6 @@ type LogEntry = ServerJob & {
 
 export default function LogsPage() {
   const { logs, isLoading, clearLogs, isClearing } = useLogs(500); 
-  const { smDown } = useBreakpoints();
   const [selectedLog, setSelectedLog] = useState<LogEntry | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   
@@ -74,10 +63,30 @@ export default function LogsPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'COMPLETED': return <Badge tone="success">Thành công</Badge>;
-      case 'FAILED': return <Badge tone="critical">Thất bại</Badge>;
-      case 'ACTIVE': return <Badge tone="attention">Đang chạy</Badge>;
-      default: return <Badge tone="info">Đang chờ</Badge>;
+      case 'COMPLETED':
+        return (
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-50 text-green-700 border border-green-200/50">
+            Thành công
+          </span>
+        );
+      case 'FAILED':
+        return (
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-red-700 border border-red-200/50">
+            Thất bại
+          </span>
+        );
+      case 'ACTIVE':
+        return (
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200/50">
+            Đang chạy
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200/50">
+            Đang chờ
+          </span>
+        );
     }
   };
 
@@ -88,152 +97,222 @@ export default function LogsPage() {
 
   if (isLoading) {
     return (
-      <Page title="Nhật ký hệ thống">
-        <Card>
-          <Box padding="400">
-            <SkeletonBodyText lines={10} />
-          </Box>
-        </Card>
-      </Page>
+      <div className="space-y-4">
+        {/* Page Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 pb-3">
+          <div className="space-y-1">
+            <h1 className="text-lg font-semibold text-slate-900">Nhật ký hệ thống</h1>
+            <p className="text-xs text-slate-400">Đang tải lịch sử hoạt động...</p>
+          </div>
+        </div>
+
+        {/* Skeleton lines with pulse animation */}
+        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-3.5">
+          <div className="h-6 bg-slate-100/80 rounded w-1/4 animate-pulse mb-4" />
+          <div className="space-y-2.5">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="h-9 bg-slate-50 rounded-lg animate-pulse" />
+            ))}
+          </div>
+        </div>
+      </div>
     );
   }
 
-  const rowMarkup = paginatedLogs.map((log: LogEntry, index: number) => (
-    <IndexTable.Row id={log.id} key={log.id} position={index}>
-      <IndexTable.Cell>
-        <Text as="span" variant="bodyMd">
-          {format(new Date(log.createdAt), 'dd/MM/yyyy HH:mm:ss')}
-        </Text>
-      </IndexTable.Cell>
-      <IndexTable.Cell>
-        <Text as="span" fontWeight="medium">{getJobTitle(log)}</Text>
-      </IndexTable.Cell>
-      <IndexTable.Cell>{log.server?.name || '-'}</IndexTable.Cell>
-      <IndexTable.Cell>
-        {getStatusBadge(log.status)}
-      </IndexTable.Cell>
-      <IndexTable.Cell>
-        <InlineStack align="end" wrap={false}>
-          {smDown ? (
-            <Button 
-              icon={ViewIcon} 
-              variant="tertiary" 
-              onClick={() => setSelectedLog(log)}
-            />
-          ) : (
-            <Tooltip content="Xem chi tiết">
-              <Button 
-                icon={ViewIcon} 
-                variant="tertiary" 
-                onClick={() => setSelectedLog(log)}
-              />
-            </Tooltip>
-          )}
-        </InlineStack>
-      </IndexTable.Cell>
-    </IndexTable.Row>
-  ));
-
   return (
-    <Page 
-      title="Nhật ký hệ thống"
-      subtitle="Theo dõi chi tiết các hoạt động và tiến trình xử lý trên máy chủ"
-      primaryAction={{
-        content: 'Dọn dẹp nhật ký',
-        icon: DeleteIcon,
-        destructive: true,
-        onAction: () => setIsDeleteModalOpen(true),
-        disabled: logs.length === 0
-      }}
-    >
-      <Box paddingInline={{ xs: '400', sm: '0' }}>
-        <Card padding="0">
-          <IndexFilters
-            tabs={tabs}
-            selected={selectedTab}
-            onSelect={(index) => {
-              setSelectedTab(index);
-              setPage(1);
-            }}
-            onQueryChange={() => {}}
-            onQueryClear={() => {}}
-            mode={IndexFiltersMode.Filtering}
-            setMode={() => {}}
-            filters={[]}
-            onClearAll={() => {}}
-            hideFilters
-            hideQueryField
-          />
-          <IndexTable
-            resourceName={{ singular: 'nhật ký', plural: 'nhật ký' }}
-            itemCount={filteredLogs.length}
-            headings={[
-              { title: 'Thời gian' },
-              { title: 'Loại công việc' },
-              { title: 'Máy chủ' },
-              { title: 'Trạng thái' },
-              { title: 'Thao tác', alignment: 'end' },
-            ]}
-            selectable={false}
-            pagination={{
-              hasNext: page < totalPages,
-              hasPrevious: page > 1,
-              onNext: () => setPage(page + 1),
-              onPrevious: () => setPage(page - 1),
-            }}
-          >
-            {rowMarkup}
-          </IndexTable>
-        </Card>
-      </Box>
+    <div className="space-y-4">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h1 className="text-lg font-semibold text-slate-900">Nhật ký hệ thống</h1>
+          <p className="text-xs text-slate-400">Theo dõi chi tiết các hoạt động và tiến trình xử lý trên máy chủ</p>
+        </div>
+        <Button
+          variant="danger"
+          size="sm"
+          onPress={() => setIsDeleteModalOpen(true)}
+          isDisabled={logs.length === 0 || isClearing}
+          className="cursor-pointer font-bold text-xs h-9 px-3 flex items-center gap-1.5 self-start sm:self-auto rounded-lg"
+        >
+          <Trash2 className="w-3.5 h-3.5 shrink-0" />
+          Dọn dẹp nhật ký
+        </Button>
+      </div>
 
-      <Modal
-        open={!!selectedLog}
-        onClose={() => setSelectedLog(null)}
-        title={`Chi tiết công việc: ${selectedLog ? getJobTitle(selectedLog) : ''}`}
-        size="large"
-      >
-        <Modal.Section>
-          <Box background="bg-surface-secondary" padding="400" borderRadius="200">
-            <Scrollable style={{ maxHeight: '500px' }}>
-              <pre style={{ 
-                margin: 0, 
-                whiteSpace: 'pre-wrap', 
-                wordBreak: 'break-all',
-                fontFamily: 'monospace',
-                fontSize: '12px',
-                lineHeight: '1.5'
-              }}>
-                {selectedLog?.logs || 'Không có dữ liệu nhật ký chi tiết.'}
+      {/* Main Container */}
+      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
+        {/* Compact Filters Tabs */}
+        <div className="flex border-b border-slate-100 bg-slate-50/50 px-2 overflow-x-auto text-xs scrollbar-none">
+          {tabs.map((tab, index) => (
+            <button
+              key={tab.id}
+              onClick={() => {
+                setSelectedTab(index);
+                setPage(1);
+              }}
+              className={`px-4 py-2.5 border-b-2 font-semibold whitespace-nowrap cursor-pointer transition-all ${
+                selectedTab === index 
+                  ? 'border-blue-500 text-blue-600 font-bold' 
+                  : 'border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-200'
+              }`}
+            >
+              {tab.content}
+            </button>
+          ))}
+        </div>
+
+        {/* Table representation */}
+        <div className="w-full overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b border-slate-100 text-slate-400 text-[10px] font-bold uppercase tracking-wider bg-slate-50/50">
+                <th className="py-2.5 px-3">Thời gian</th>
+                <th className="py-2.5 px-3">Loại công việc</th>
+                <th className="py-2.5 px-3">Máy chủ</th>
+                <th className="py-2.5 px-3">Trạng thái</th>
+                <th className="py-2.5 px-3 text-right">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 text-xs">
+              {paginatedLogs.map((log: LogEntry) => (
+                <tr key={log.id} className="hover:bg-slate-50/80 transition-colors">
+                  <td className="py-2.5 px-3 text-slate-500 whitespace-nowrap">
+                    {format(new Date(log.createdAt), 'dd/MM/yyyy HH:mm:ss')}
+                  </td>
+                  <td className="py-2.5 px-3 font-semibold text-slate-700">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                      <span>{getJobTitle(log)}</span>
+                    </div>
+                  </td>
+                  <td className="py-2.5 px-3 text-slate-600 font-medium whitespace-nowrap">
+                    {log.server ? (
+                      <div className="flex items-center gap-1.5">
+                        <ServerIcon className="w-3 h-3 text-slate-400 shrink-0" />
+                        <span>{log.server.name}</span>
+                      </div>
+                    ) : (
+                      "-"
+                    )}
+                  </td>
+                  <td className="py-2.5 px-3">
+                    {getStatusBadge(log.status)}
+                  </td>
+                  <td className="py-2.5 px-3 text-right">
+                    <button
+                      onClick={() => setSelectedLog(log)}
+                      className="inline-flex items-center justify-center p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer transition-colors"
+                      title="Xem chi tiết"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {paginatedLogs.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="py-8 text-center text-slate-400 font-medium">
+                    Chưa có nhật ký nào phù hợp
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Compact Flat Pagination Footer */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-3 py-2.5 border-t border-slate-100 text-xs bg-slate-50/50">
+            <span className="text-slate-400 font-semibold">Trang {page} / {totalPages}</span>
+            <div className="flex items-center gap-1.5">
+              <Button
+                isDisabled={page <= 1}
+                onPress={() => setPage(page - 1)}
+                className="px-2.5 py-1 text-xs border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 font-bold h-7 min-w-0 rounded-lg cursor-pointer transition-all"
+              >
+                Trước
+              </Button>
+              <Button
+                isDisabled={page >= totalPages}
+                onPress={() => setPage(page + 1)}
+                className="px-2.5 py-1 text-xs border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 font-bold h-7 min-w-0 rounded-lg cursor-pointer transition-all"
+              >
+                Sau
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Modern Compact Log Details Overlay Modal */}
+      {selectedLog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+          <div className="bg-white border border-slate-200 rounded-xl w-full max-w-2xl overflow-hidden shadow-lg flex flex-col max-h-[90vh]">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50/50">
+              <h3 className="text-sm font-semibold text-slate-800">
+                Chi tiết công việc: {getJobTitle(selectedLog)}
+              </h3>
+              <button 
+                onClick={() => setSelectedLog(null)}
+                className="text-slate-400 hover:text-slate-600 cursor-pointer p-1 rounded-lg hover:bg-slate-100 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            {/* Modal Body */}
+            <div className="p-4 overflow-y-auto bg-slate-950 text-slate-200 font-mono text-[11px] leading-relaxed flex-1">
+              <pre className="whitespace-pre-wrap break-all">
+                {selectedLog.logs || 'Không có dữ liệu nhật ký chi tiết.'}
               </pre>
-            </Scrollable>
-          </Box>
-        </Modal.Section>
-      </Modal>
+            </div>
+          </div>
+        </div>
+      )}
 
-      <Modal
-        open={isDeleteModalOpen}
-        onClose={() => setIsDeleteModalOpen(false)}
-        title="Xác nhận dọn dẹp nhật ký?"
-        primaryAction={{
-          content: 'Xác nhận xóa sạch',
-          onAction: handleDeleteAll,
-          destructive: true,
-          loading: isClearing,
-        }}
-        secondaryActions={[
-          {
-            content: 'Hủy bỏ',
-            onAction: () => setIsDeleteModalOpen(false),
-          },
-        ]}
-      >
-        <Modal.Section>
-          <Text as="p">
-            Hành động này sẽ xóa vĩnh viễn toàn bộ lịch sử công việc trong cơ sở dữ liệu. Bạn có chắc chắn muốn thực hiện?
-          </Text>
-        </Modal.Section>
-      </Modal>
-    </Page>
+      {/* Delete Confirmation Overlay Modal */}
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+          <div className="bg-white border border-slate-200 rounded-xl w-full max-w-sm overflow-hidden shadow-lg flex flex-col">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50/50">
+              <h3 className="text-sm font-semibold text-slate-800">Xác nhận dọn dẹp nhật ký?</h3>
+              <button 
+                onClick={() => setIsDeleteModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 cursor-pointer p-1 rounded-lg hover:bg-slate-100 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            {/* Modal Body */}
+            <div className="p-4 text-xs text-slate-600 font-medium leading-relaxed">
+              Hành động này sẽ xóa vĩnh viễn toàn bộ lịch sử công việc trong cơ sở dữ liệu. Bạn có chắc chắn muốn thực hiện?
+            </div>
+            {/* Modal Footer */}
+            <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-slate-100 bg-slate-50/50">
+              <Button
+                size="sm"
+                onPress={() => setIsDeleteModalOpen(false)}
+                className="cursor-pointer font-bold text-xs h-8 px-3 rounded-lg border border-slate-200 bg-white text-slate-600"
+              >
+                Hủy bỏ
+              </Button>
+              <Button
+                size="sm"
+                variant="danger"
+                onPress={handleDeleteAll}
+                isDisabled={isClearing}
+                className="cursor-pointer font-bold text-xs h-8 px-3 rounded-lg flex items-center gap-1"
+              >
+                {isClearing && (
+                  <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                )}
+                Xác nhận xóa sạch
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
