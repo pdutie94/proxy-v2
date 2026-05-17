@@ -2,21 +2,8 @@
 
 import { useProxies } from '@/hooks/use-proxies';
 import { useServers } from '@/hooks/use-servers';
-import { Button, Table, Chip } from "@heroui/react";
-import { 
-  Clipboard, 
-  Download, 
-  Calendar, 
-  RefreshCw, 
-  Edit2, 
-  Trash2, 
-  Search, 
-  X, 
-  AlertTriangle, 
-  Check, 
-  ChevronDown, 
-  FileText 
-} from "lucide-react";
+import { Button, Table, Chip, Checkbox, Popover, PopoverTrigger, PopoverContent, Selection, Pagination } from "@heroui/react";
+import { Icon } from "@iconify/react";
 import { format } from "date-fns";
 import React, { useState, useCallback, useMemo } from 'react';
 import { JobProgressModal } from '@/components/jobs/job-progress-modal';
@@ -32,7 +19,7 @@ interface ProxyListProps {
   onAdd?: () => void;
 }
 
-export function ProxyList({ onEdit, onAdd }: ProxyListProps) {
+export function ProxyList({ onEdit }: ProxyListProps) {
   const { 
     proxies, 
     isLoading, 
@@ -48,46 +35,97 @@ export function ProxyList({ onEdit, onAdd }: ProxyListProps) {
   const canDelete = userRole === "ADMIN";
 
   const { servers } = useServers();
-  const [selectedResources, setSelectedResources] = useState<string[]>([]);
+  const [selectedKeys, setSelectedKeys] = useState<Selection>(new Set());
 
   // Filters State
   const [queryValue, setQueryValue] = useState('');
   const [selectedServerId, setSelectedServerId] = useState<string[]>([]);
-  const [itemStrings] = useState(['Tất cả', 'Hoạt động', 'Đang tạo', 'Lỗi']);
-  const [selectedTab, setSelectedTab] = useState(0);
+  const [expirationFilter, setExpirationFilter] = useState<'all' | 'active' | 'expired'>('all');
+  const [ipTypeFilter, setIpTypeFilter] = useState<string[]>([]);
+  const [userFilter, setUserFilter] = useState<string[]>([]);
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const itemsPerPage = 20;
 
-  const onHandleServerChange = useCallback((value: string[]) => {
-    setSelectedServerId(value);
-    setPage(1);
-    setSelectedResources([]);
-  }, []);
+  // Extract unique IP types and user emails dynamically
+  const uniqueIpTypes = useMemo(() => {
+    const types = new Set<string>();
+    (proxies as ProxyWithServer[])?.forEach(p => {
+      if (p.ipType) types.add(p.ipType);
+    });
+    return Array.from(types);
+  }, [proxies]);
+
+  const uniqueUserEmails = useMemo(() => {
+    const emails = new Set<string>();
+    (proxies as ProxyWithServer[])?.forEach(p => {
+      const email = p.user?.email || 'Hệ thống';
+      emails.add(email);
+    });
+    return Array.from(emails);
+  }, [proxies]);
+
+  // Column Visibility State ('status' is hidden by default)
+  const [visibleColumns, setVisibleColumns] = useState<string[]>([
+    'server',
+    'info',
+    'expiration',
+    'comment',
+    'user',
+    'actions',
+  ]);
+  const toggleColumn = (col: string) => {
+    setVisibleColumns(prev =>
+      prev.includes(col) ? prev.filter(c => c !== col) : [...prev, col]
+    );
+  };
+  const isColumnVisible = (col: string) => visibleColumns.includes(col);
+
+
   const onHandleQueryValueChange = useCallback((value: string) => {
     setQueryValue(value);
     setPage(1);
-    setSelectedResources([]);
+    setSelectedKeys(new Set());
   }, []);
 
   const [sortSelected, setSortSelected] = useState(['id desc']);
   const sortOptions = [
-    { label: 'ID', value: 'id asc', directionLabel: 'Cũ nhất' },
-    { label: 'ID', value: 'id desc', directionLabel: 'Mới nhất' },
-    { label: 'Port', value: 'port asc', directionLabel: 'Tăng dần' },
-    { label: 'Port', value: 'port desc', directionLabel: 'Giảm dần' },
-    { label: 'Hết hạn', value: 'expiresAt asc', directionLabel: 'Gần nhất' },
-    { label: 'Hết hạn', value: 'expiresAt desc', directionLabel: 'Xa nhất' },
+    { label: 'Mới nhất', value: 'id desc' },
+    { label: 'Cũ nhất', value: 'id asc' },
+    { label: 'Port tăng dần', value: 'port asc' },
+    { label: 'Port giảm dần', value: 'port desc' },
   ];
 
-  const filteredProxies = useMemo(() => {
-    const result = (proxies as ProxyWithServer[]).filter((proxy) => {
-      // Filter by dynamic tabs
-      const currentTabName = itemStrings[selectedTab];
-      if (currentTabName === 'Hoạt động' && proxy.status !== 'ACTIVE') return false;
-      if (currentTabName === 'Đang tạo' && proxy.status !== 'CREATING') return false;
-      if (currentTabName === 'Lỗi' && proxy.status !== 'ERROR') return false;
+  // Smart memos for premium filter button labels
+  const serverLabel = useMemo(() => {
+    const selectedNames = selectedServerId.map(id => servers.find(s => s.id === id)?.name || id);
+    if (selectedNames.length === 0) return "Máy chủ";
+    if (selectedNames.length <= 2) return `Máy chủ: ${selectedNames.join(', ')}`;
+    return `Máy chủ: ${selectedNames.slice(0, 2).join(', ')} (+${selectedNames.length - 2})`;
+  }, [selectedServerId, servers]);
 
+  const expirationLabel = useMemo(() => {
+    if (expirationFilter === 'all') return "Thời hạn";
+    return `Thời hạn: ${expirationFilter === 'active' ? 'Còn hạn' : 'Hết hạn'}`;
+  }, [expirationFilter]);
+
+  const ipTypeLabel = useMemo(() => {
+    if (ipTypeFilter.length === 0) return "Loại";
+    if (ipTypeFilter.length <= 2) return `Loại: ${ipTypeFilter.join(', ')}`;
+    return `Loại: ${ipTypeFilter.slice(0, 2).join(', ')} (+${ipTypeFilter.length - 2})`;
+  }, [ipTypeFilter]);
+
+  const userLabel = useMemo(() => {
+    if (userFilter.length === 0) return "Người dùng";
+    if (userFilter.length <= 2) return `Người dùng: ${userFilter.map(e => e.split('@')[0]).join(', ')}`;
+    return `Người dùng: ${userFilter.slice(0, 2).map(e => e.split('@')[0]).join(', ')} (+${userFilter.length - 2})`;
+  }, [userFilter]);
+
+  const hasActiveFilters = selectedServerId.length > 0 || expirationFilter !== 'all' || ipTypeFilter.length > 0 || userFilter.length > 0;
+
+  const filteredProxies = useMemo(() => {
+    const now = new Date();
+    const result = (proxies as ProxyWithServer[]).filter((proxy) => {
       const queryLower = queryValue.toLowerCase();
       if (queryValue && !proxy.port.toString().includes(queryValue) && !proxy.username.toLowerCase().includes(queryLower)) {
         return false;
@@ -95,6 +133,24 @@ export function ProxyList({ onEdit, onAdd }: ProxyListProps) {
 
       if (selectedServerId.length > 0 && !selectedServerId.includes(proxy.serverId)) {
         return false;
+      }
+
+      // Expiration Filter
+      if (expirationFilter === 'active') {
+        if (proxy.expiresAt && new Date(proxy.expiresAt) <= now) return false;
+      } else if (expirationFilter === 'expired') {
+        if (!proxy.expiresAt || new Date(proxy.expiresAt) > now) return false;
+      }
+
+      // IP Type Filter
+      if (ipTypeFilter.length > 0 && !ipTypeFilter.includes(proxy.ipType)) {
+        return false;
+      }
+
+      // User Filter
+      if (userFilter.length > 0) {
+        const email = proxy.user?.email || 'Hệ thống';
+        if (!userFilter.includes(email)) return false;
       }
 
       return true;
@@ -125,27 +181,23 @@ export function ProxyList({ onEdit, onAdd }: ProxyListProps) {
     }
 
     return result;
-  }, [proxies, selectedTab, queryValue, selectedServerId, sortSelected, itemStrings]);
+  }, [proxies, queryValue, selectedServerId, expirationFilter, ipTypeFilter, userFilter, sortSelected]);
 
   const totalPages = Math.ceil(filteredProxies.length / itemsPerPage);
   const startIndex = (page - 1) * itemsPerPage;
   const paginatedProxies = filteredProxies.slice(startIndex, startIndex + itemsPerPage);
 
-  // SELECTION LOGIC
-  const isAllSelected = paginatedProxies.length > 0 && paginatedProxies.every(p => selectedResources.includes(p.id));
-  const toggleSelectAll = () => {
-    if (isAllSelected) {
-      setSelectedResources(prev => prev.filter(id => !paginatedProxies.map(p => p.id).includes(id)));
-    } else {
-      setSelectedResources(prev => Array.from(new Set([...prev, ...paginatedProxies.map(p => p.id)])));
-    }
-  };
+  const startItem = filteredProxies.length === 0 ? 0 : (page - 1) * itemsPerPage + 1;
+  const endItem = Math.min(page * itemsPerPage, filteredProxies.length);
+  const pages = Array.from({length: totalPages}, (_, i) => i + 1);
 
-  const toggleSelectRow = (id: string) => {
-    setSelectedResources(prev => 
-      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
-    );
-  };
+  // SELECTION LOGIC
+  const selectedIds = useMemo(() => {
+    if (selectedKeys === 'all') {
+      return filteredProxies.map(p => p.id);
+    }
+    return Array.from(selectedKeys as Set<string>);
+  }, [selectedKeys, filteredProxies]);
 
   const [activeDeleteModal, setActiveDeleteModal] = useState(false);
   const [proxyToDelete, setProxyToDelete] = useState<string | null>(null);
@@ -165,9 +217,9 @@ export function ProxyList({ onEdit, onAdd }: ProxyListProps) {
 
   const confirmDelete = () => {
     if (isBulkDelete) {
-      bulkDeleteMutation.mutate(selectedResources, {
+      bulkDeleteMutation.mutate(selectedIds, {
         onSuccess: () => {
-          setSelectedResources([]);
+          setSelectedKeys(new Set());
           setActiveDeleteModal(false);
           toast.success('Xóa hàng loạt thành công');
         }
@@ -183,7 +235,7 @@ export function ProxyList({ onEdit, onAdd }: ProxyListProps) {
   };
 
   const handleCopyProxies = useCallback(() => {
-    const selectedProxies = filteredProxies.filter(p => selectedResources.includes(p.id));
+    const selectedProxies = filteredProxies.filter(p => selectedIds.includes(p.id));
     if (selectedProxies.length === 0) return;
     
     const text = selectedProxies.map(p => {
@@ -194,15 +246,15 @@ export function ProxyList({ onEdit, onAdd }: ProxyListProps) {
     copyToClipboard(text).then((success) => {
       if (success) {
         toast.success(`Đã copy ${selectedProxies.length} proxy vào bộ nhớ tạm`);
-        setSelectedResources([]);
+        setSelectedKeys(new Set());
       } else {
         toast.error('Không thể copy vào bộ nhớ tạm');
       }
     });
-  }, [selectedResources, filteredProxies]);
+  }, [selectedIds, filteredProxies]);
 
   const handleExportProxies = useCallback(() => {
-    const selectedProxies = filteredProxies.filter(p => selectedResources.includes(p.id));
+    const selectedProxies = filteredProxies.filter(p => selectedIds.includes(p.id));
     if (selectedProxies.length === 0) return;
     
     const text = selectedProxies.map(p => {
@@ -221,26 +273,26 @@ export function ProxyList({ onEdit, onAdd }: ProxyListProps) {
     URL.revokeObjectURL(url);
     
     toast.success(`Đã xuất ${selectedProxies.length} proxy ra file TXT`);
-    setSelectedResources([]);
-  }, [selectedResources, filteredProxies]);
+    setSelectedKeys(new Set());
+  }, [selectedIds, filteredProxies]);
 
   const [activeRenewModal, setActiveRenewModal] = useState(false);
   const [renewalDuration, setRenewalDuration] = useState('1m');
 
   const handleBulkRenew = () => {
-    bulkRenewMutation.mutate({ ids: selectedResources, duration: renewalDuration }, {
+    bulkRenewMutation.mutate({ ids: selectedIds, duration: renewalDuration }, {
       onSuccess: () => {
         setActiveRenewModal(false);
-        setSelectedResources([]);
+        setSelectedKeys(new Set());
         toast.success('Gia hạn hàng loạt thành công');
       }
     });
   };
 
   const handleBulkToggleAutoRenew = (status: boolean) => {
-    bulkUpdateAutoRenewMutation.mutate({ ids: selectedResources, autoRenew: status }, {
+    bulkUpdateAutoRenewMutation.mutate({ ids: selectedIds, autoRenew: status }, {
       onSuccess: () => {
-        setSelectedResources([]);
+        setSelectedKeys(new Set());
         toast.success('Cập nhật tự động gia hạn thành công');
       }
     });
@@ -285,286 +337,496 @@ export function ProxyList({ onEdit, onAdd }: ProxyListProps) {
   return (
     <div className="w-full">
       {/* Sleek Floating Batch Actions Bar */}
-      {selectedResources.length > 0 && (
-        <div className="flex flex-wrap items-center justify-between gap-2.5 p-3 mb-3 bg-blue-50 border border-blue-100 rounded-xl animate-fade-in text-xs font-semibold text-blue-800 shadow-sm">
+      {selectedIds.length > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-3 px-3 py-2 mb-3 bg-blue-50/50 border border-blue-200/50 rounded-lg animate-fade-in text-[13px] font-medium text-blue-700 shadow-none">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
-            <span>Đã chọn {selectedResources.length} proxy</span>
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+            </span>
+            <span>Đã chọn {selectedIds.length} proxy</span>
           </div>
           <div className="flex flex-wrap items-center gap-1.5">
             <Button
               size="sm"
               onPress={handleCopyProxies}
-              className="cursor-pointer h-7 px-2.5 bg-blue-100 hover:bg-blue-200 text-blue-700 font-bold rounded-lg flex items-center gap-1 border-0"
+              className="h-7 px-2.5 text-xs font-medium bg-white hover:bg-blue-50 border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-200 rounded-md transition-all flex items-center gap-1.5 cursor-pointer shadow-none"
             >
-              <Clipboard className="w-3.5 h-3.5 shrink-0" />
-              Copy
+              <Icon icon="lucide:clipboard" width={12} height={12} className="shrink-0" />
+              <span>Copy</span>
             </Button>
             <Button
               size="sm"
               onPress={handleExportProxies}
-              className="cursor-pointer h-7 px-2.5 bg-blue-100 hover:bg-blue-200 text-blue-700 font-bold rounded-lg flex items-center gap-1 border-0"
+              className="h-7 px-2.5 text-xs font-medium bg-white hover:bg-blue-50 border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-200 rounded-md transition-all flex items-center gap-1.5 cursor-pointer shadow-none"
             >
-              <Download className="w-3.5 h-3.5 shrink-0" />
-              Xuất file
+              <Icon icon="lucide:download" width={12} height={12} className="shrink-0" />
+              <span>Xuất file</span>
             </Button>
             <Button
               size="sm"
               onPress={() => setActiveRenewModal(true)}
-              className="cursor-pointer h-7 px-2.5 bg-blue-100 hover:bg-blue-200 text-blue-700 font-bold rounded-lg flex items-center gap-1 border-0"
+              className="h-7 px-2.5 text-xs font-medium bg-white hover:bg-blue-50 border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-200 rounded-md transition-all flex items-center gap-1.5 cursor-pointer shadow-none"
             >
-              <Calendar className="w-3.5 h-3.5 shrink-0" />
-              Gia hạn
+              <Icon icon="lucide:calendar" width={12} height={12} className="shrink-0" />
+              <span>Gia hạn</span>
             </Button>
             <Button
               size="sm"
               onPress={() => handleBulkToggleAutoRenew(true)}
-              className="cursor-pointer h-7 px-2.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 font-bold rounded-lg border-0"
+              className="h-7 px-2.5 text-xs font-medium bg-white hover:bg-emerald-50 border border-slate-200 text-slate-600 hover:text-emerald-600 hover:border-emerald-200 rounded-md transition-all flex items-center gap-1.5 cursor-pointer shadow-none"
             >
-              Bật gia hạn tự động
+              <Icon icon="lucide:toggle-right" width={12} height={12} className="text-emerald-500 shrink-0" />
+              <span>Bật tự động</span>
             </Button>
             <Button
               size="sm"
               onPress={() => handleBulkToggleAutoRenew(false)}
-              className="cursor-pointer h-7 px-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-lg border-0"
+              className="h-7 px-2.5 text-xs font-medium bg-white hover:bg-slate-100 border border-slate-200 text-slate-600 hover:text-slate-800 hover:border-slate-300 rounded-md transition-all flex items-center gap-1.5 cursor-pointer shadow-none"
             >
-              Tắt gia hạn tự động
+              <Icon icon="lucide:toggle-left" width={12} height={12} className="text-slate-400 shrink-0" />
+              <span>Tắt tự động</span>
             </Button>
             {canDelete && (
               <Button
                 size="sm"
                 onPress={handleBulkDeleteClick}
-                className="cursor-pointer h-7 px-2.5 bg-red-100 hover:bg-red-200 text-red-700 font-bold rounded-lg border-0"
+                className="h-7 px-2.5 text-xs font-semibold bg-red-50 hover:bg-red-100 border border-red-100 text-red-600 hover:text-red-700 rounded-md transition-all flex items-center gap-1.5 cursor-pointer shadow-none"
               >
-                Xóa
+                <Icon icon="lucide:trash-2" width={12} height={12} className="shrink-0" />
+                <span>Xóa</span>
               </Button>
             )}
             <button
-              onClick={() => setSelectedResources([])}
-              className="text-blue-500 hover:text-blue-700 cursor-pointer p-1 hover:bg-blue-100 rounded-lg transition-colors ml-1"
+              onClick={() => setSelectedKeys(new Set())}
+              className="text-slate-400 hover:text-slate-600 cursor-pointer p-1 hover:bg-slate-100 rounded-md transition-colors ml-1 animate-none flex items-center justify-center border-none bg-transparent"
             >
-              <X className="w-4 h-4" />
+              <Icon icon="lucide:x" width={14} height={14} />
             </button>
           </div>
         </div>
-      )}
-
-      {/* Sleek Ultra-Compact Filter & Search Bar */}
-      <div className="flex flex-col gap-2.5 mb-3 bg-white p-2.5 border border-slate-200 rounded-xl shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          {/* Tabs */}
-          <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
-            {itemStrings.map((tab, idx) => (
-              <button
-                key={tab}
-                onClick={() => {
-                  setSelectedTab(idx);
-                  setPage(1);
-                  setSelectedResources([]);
-                }}
-                className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer whitespace-nowrap ${
-                  selectedTab === idx
-                    ? 'bg-slate-100 text-slate-800'
-                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
-                }`}
-              >
-                {tab}
+      )}      {/* Flat Premium Toolbar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 mt-1">
+        {/* Left Side: Filter Dropdowns */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Server Filter Dropdown */}
+          <Popover>
+            <PopoverTrigger>
+              <button className={`h-8 px-2.5 text-xs font-semibold rounded-lg flex items-center gap-1.5 cursor-pointer outline-none transition-all duration-150 shadow-none ${
+                selectedServerId.length > 0 ? 'bg-blue-50/50 border border-blue-200 text-blue-600' : 'bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 text-slate-600'
+              }`}>
+                <Icon icon="lucide:server" width={14} height={14} className={selectedServerId.length > 0 ? 'text-blue-500' : 'text-slate-400'} />
+                <span>{serverLabel}</span>
+                <Icon icon="lucide:chevron-down" width={12} height={12} className={selectedServerId.length > 0 ? 'text-blue-400' : 'text-slate-400'} />
               </button>
-            ))}
-          </div>
-
-          {/* Right: Search, Server & Sort */}
-          <div className="flex flex-wrap items-center gap-2">
-            {/* Search Input */}
-            <div className="relative w-full sm:w-40">
-              <input
-                type="text"
-                placeholder="Tìm kiếm..."
-                value={queryValue}
-                onChange={(e) => onHandleQueryValueChange(e.target.value)}
-                className="w-full h-8 pl-8 pr-8 text-xs bg-white placeholder:text-slate-400 border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none transition-all duration-150"
-              />
-              <div className="absolute inset-y-0 left-2.5 flex items-center pointer-events-none text-slate-400">
-                <Search className="w-3.5 h-3.5 shrink-0" />
-              </div>
-              {queryValue && (
-                <button
-                  onClick={() => onHandleQueryValueChange('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full hover:bg-slate-100 cursor-pointer"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              )}
-            </div>
-
-            {/* Server Select Filter */}
-            <div className="relative">
-              <select
-                value={selectedServerId[0] || ''}
-                onChange={(e) => onHandleServerChange(e.target.value ? [e.target.value] : [])}
-                className="h-8 pl-3 pr-8 text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none cursor-pointer appearance-none transition-all duration-150"
-              >
-                <option value="">Tất cả máy chủ</option>
+            </PopoverTrigger>
+            <PopoverContent placement="bottom start" offset={8} className="p-3 w-56 flex flex-col gap-2 bg-white border border-slate-200 rounded-lg shadow-md">
+              <span className="text-xs font-semibold text-slate-500 mb-1">Lọc theo Máy chủ</span>
+              <div className="flex flex-col gap-2 max-h-40 overflow-y-auto">
                 {servers.map(s => (
-                  <option key={s.id} value={s.id}>{s.name}</option>
+                  <Checkbox
+                    key={s.id}
+                    isSelected={selectedServerId.includes(s.id)}
+                    onChange={(isSelected: boolean) => {
+                      if (!isSelected) {
+                        setSelectedServerId(selectedServerId.filter(id => id !== s.id));
+                      } else {
+                        setSelectedServerId([...selectedServerId, s.id]);
+                      }
+                      setPage(1);
+                    }}
+                    variant="secondary"
+                    className="flex items-center gap-2 cursor-pointer outline-none select-none"
+                  >
+                    <Checkbox.Control>
+                      <Checkbox.Indicator />
+                    </Checkbox.Control>
+                    <span className="text-xs text-slate-700 hover:text-slate-900">{s.name}</span>
+                  </Checkbox>
                 ))}
-              </select>
-              <div className="absolute inset-y-0 right-2.5 flex items-center pointer-events-none text-slate-400">
-                <ChevronDown className="w-3 h-3" />
+                {servers.length === 0 && (
+                  <span className="text-xs text-slate-400">Không có máy chủ</span>
+                )}
               </div>
-            </div>
+            </PopoverContent>
+          </Popover>
 
-            {/* Sort Select */}
-            <div className="relative">
-              <select
-                value={sortSelected[0]}
-                onChange={(e) => setSortSelected([e.target.value])}
-                className="h-8 pl-3 pr-8 text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none cursor-pointer appearance-none transition-all duration-150"
-              >
-                {sortOptions.map(opt => (
-                  <option key={opt.value} value={opt.value}>Sắp xếp: {opt.label} ({opt.directionLabel})</option>
+          {/* Expiration Filter Dropdown */}
+          <Popover>
+            <PopoverTrigger>
+              <button className={`h-8 px-2.5 text-xs font-semibold rounded-lg flex items-center gap-1.5 cursor-pointer outline-none transition-all duration-150 shadow-none ${
+                expirationFilter !== 'all' ? 'bg-blue-50/50 border border-blue-200 text-blue-600' : 'bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 text-slate-600'
+              }`}>
+                <Icon icon="lucide:calendar" width={14} height={14} className={expirationFilter !== 'all' ? 'text-blue-500' : 'text-slate-400'} />
+                <span>{expirationLabel}</span>
+                <Icon icon="lucide:chevron-down" width={12} height={12} className={expirationFilter !== 'all' ? 'text-blue-400' : 'text-slate-400'} />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent placement="bottom start" offset={8} className="p-2 w-40 flex flex-col bg-white border border-slate-200 rounded-lg shadow-md">
+              {[
+                { key: 'all', label: 'Tất cả' },
+                { key: 'active', label: 'Còn hạn' },
+                { key: 'expired', label: 'Hết hạn' }
+              ].map(opt => (
+                <button
+                  key={opt.key}
+                  onClick={() => {
+                    setExpirationFilter(opt.key as 'all' | 'active' | 'expired');
+                    setPage(1);
+                  }}
+                  className={`w-full text-left px-2 py-1.5 text-xs rounded transition-colors cursor-pointer border-none bg-transparent ${
+                    expirationFilter === opt.key
+                      ? 'bg-blue-50 text-blue-600 font-semibold'
+                      : 'text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </PopoverContent>
+          </Popover>
+
+          {/* IP Type Filter Dropdown */}
+          <Popover>
+            <PopoverTrigger>
+              <button className={`h-8 px-2.5 text-xs font-semibold rounded-lg flex items-center gap-1.5 cursor-pointer outline-none transition-all duration-150 shadow-none ${
+                ipTypeFilter.length > 0 ? 'bg-blue-50/50 border border-blue-200 text-blue-600' : 'bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 text-slate-600'
+              }`}>
+                <Icon icon="lucide:globe" width={14} height={14} className={ipTypeFilter.length > 0 ? 'text-blue-500' : 'text-slate-400'} />
+                <span>{ipTypeLabel}</span>
+                <Icon icon="lucide:chevron-down" width={12} height={12} className={ipTypeFilter.length > 0 ? 'text-blue-400' : 'text-slate-400'} />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent placement="bottom start" offset={8} className="p-3 w-40 flex flex-col gap-2 bg-white border border-slate-200 rounded-lg shadow-md">
+              <span className="text-xs font-semibold text-slate-500 mb-1">Lọc theo Loại IP</span>
+              <div className="flex flex-col gap-2">
+                {uniqueIpTypes.map(type => (
+                  <Checkbox
+                    key={type}
+                    isSelected={ipTypeFilter.includes(type)}
+                    onChange={(isSelected: boolean) => {
+                      if (!isSelected) {
+                        setIpTypeFilter(ipTypeFilter.filter(t => t !== type));
+                      } else {
+                        setIpTypeFilter([...ipTypeFilter, type]);
+                      }
+                      setPage(1);
+                    }}
+                    variant="secondary"
+                    className="flex items-center gap-2 cursor-pointer outline-none select-none"
+                  >
+                    <Checkbox.Control>
+                      <Checkbox.Indicator />
+                    </Checkbox.Control>
+                    <span className="text-xs text-slate-700 hover:text-slate-900">{type}</span>
+                  </Checkbox>
                 ))}
-              </select>
-              <div className="absolute inset-y-0 right-2.5 flex items-center pointer-events-none text-slate-400">
-                <ChevronDown className="w-3 h-3" />
+                {uniqueIpTypes.length === 0 && (
+                  <span className="text-xs text-slate-400">Không có loại IP</span>
+                )}
               </div>
+            </PopoverContent>
+          </Popover>
+
+          {/* User Filter Dropdown (ADMIN ONLY) */}
+          {userRole === 'ADMIN' && (
+            <Popover>
+              <PopoverTrigger>
+                <button className={`h-8 px-2.5 text-xs font-semibold rounded-lg flex items-center gap-1.5 cursor-pointer outline-none transition-all duration-150 shadow-none ${
+                  userFilter.length > 0 ? 'bg-blue-50/50 border border-blue-200 text-blue-600' : 'bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 text-slate-600'
+                }`}>
+                  <Icon icon="lucide:user" width={14} height={14} className={userFilter.length > 0 ? 'text-blue-500' : 'text-slate-400'} />
+                  <span>{userLabel}</span>
+                  <Icon icon="lucide:chevron-down" width={12} height={12} className={userFilter.length > 0 ? 'text-blue-400' : 'text-slate-400'} />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent placement="bottom start" offset={8} className="p-3 w-56 flex flex-col gap-2 bg-white border border-slate-200 rounded-lg shadow-md">
+                <span className="text-xs font-semibold text-slate-500 mb-1">Lọc theo Người dùng</span>
+                <div className="flex flex-col gap-2 max-h-40 overflow-y-auto">
+                  {uniqueUserEmails.map(email => (
+                    <Checkbox
+                      key={email}
+                      isSelected={userFilter.includes(email)}
+                      onChange={(isSelected: boolean) => {
+                        if (!isSelected) {
+                          setUserFilter(userFilter.filter(e => e !== email));
+                        } else {
+                          setUserFilter([...userFilter, email]);
+                        }
+                        setPage(1);
+                      }}
+                      variant="secondary"
+                      className="flex items-center gap-2 cursor-pointer outline-none select-none max-w-full"
+                    >
+                      <Checkbox.Control>
+                        <Checkbox.Indicator />
+                      </Checkbox.Control>
+                      <span className="text-xs text-slate-700 hover:text-slate-900 truncate" title={email}>{email}</span>
+                    </Checkbox>
+                  ))}
+                  {uniqueUserEmails.length === 0 && (
+                    <span className="text-xs text-slate-400">Không có người dùng</span>
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
+          )}
+
+          {/* Reset Filter Button */}
+          {hasActiveFilters && (
+            <button
+              onClick={() => {
+                setSelectedServerId([]);
+                setExpirationFilter('all');
+                setIpTypeFilter([]);
+                setUserFilter([]);
+                setPage(1);
+              }}
+              className="text-xs font-semibold text-blue-500 hover:text-blue-600 cursor-pointer transition-colors border-none bg-transparent ml-1"
+            >
+              Xóa lọc
+            </button>
+          )}
+        </div>
+
+        {/* Right Side: Search, Sort, Columns */}
+        <div className="flex items-center gap-2">
+          {/* Search Bar */}
+          <div className="relative w-full sm:w-56">
+            <input
+              type="text"
+              placeholder="Tìm kiếm..."
+              value={queryValue}
+              onChange={(e) => onHandleQueryValueChange(e.target.value)}
+              className="w-full h-8 pl-8 pr-8 text-xs bg-slate-100/60 hover:bg-slate-100 focus:bg-white placeholder:text-slate-400 border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none transition-all duration-150"
+            />
+            <div className="absolute inset-y-0 left-2.5 flex items-center pointer-events-none text-slate-400">
+              <Icon icon="lucide:search" width={14} height={14} />
             </div>
+            {queryValue && (
+              <button
+                onClick={() => onHandleQueryValueChange('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full hover:bg-slate-100 cursor-pointer bg-transparent border-none flex items-center justify-center"
+              >
+                <Icon icon="lucide:x" width={12} height={12} />
+              </button>
+            )}
           </div>
+
+          <Popover>
+            <PopoverTrigger>
+              <button className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-50 border border-slate-200 bg-white transition-all duration-150 cursor-pointer outline-none shadow-none" title="Sắp xếp">
+                <Icon icon="lucide:arrow-up-down" width={14} height={14} />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent placement="bottom end" offset={8} className="p-2 w-36 flex flex-col bg-white border border-slate-200 rounded-lg shadow-md z-50">
+              {sortOptions.map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => {
+                    setSortSelected([opt.value]);
+                    setPage(1);
+                  }}
+                  className={`w-full text-left px-2 py-1.5 text-xs rounded transition-colors cursor-pointer border-none bg-transparent ${
+                    sortSelected[0] === opt.value
+                      ? 'bg-blue-50 text-blue-600 font-semibold'
+                      : 'text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </PopoverContent>
+          </Popover>
+
+          {/* Columns Button (Icon Only) */}
+          <Popover>
+            <PopoverTrigger>
+              <button className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-50 border border-slate-200 bg-white transition-all duration-150 cursor-pointer outline-none shadow-none" title="Hiển thị cột">
+                <Icon icon="lucide:columns" width={14} height={14} />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent placement="bottom end" offset={8} className="p-3 w-48 flex flex-col gap-2 bg-white border border-slate-200 rounded-lg shadow-md">
+              <span className="text-xs font-semibold text-slate-500 mb-1">Chọn cột hiển thị</span>
+              <div className="flex flex-col gap-2">
+                {[
+                  { key: 'server', label: 'Máy chủ' },
+                  { key: 'info', label: 'Thông tin Proxy' },
+                  { key: 'expiration', label: 'Hết hạn' },
+                  { key: 'status', label: 'Trạng thái' },
+                  { key: 'comment', label: 'Ghi chú' },
+                  ...(userRole === 'ADMIN' ? [{ key: 'user', label: 'Người dùng' }] : []),
+                ].map(col => (
+                  <Checkbox
+                    key={col.key}
+                    isSelected={isColumnVisible(col.key)}
+                    onChange={() => toggleColumn(col.key)}
+                    variant="secondary"
+                    className="flex items-center gap-2 cursor-pointer outline-none select-none"
+                  >
+                    <Checkbox.Control>
+                      <Checkbox.Indicator />
+                    </Checkbox.Control>
+                    <span className="text-xs text-slate-700 hover:text-slate-900">{col.label}</span>
+                  </Checkbox>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
 
       {/* Proxies Table list */}
-      <div className="w-full border border-slate-200 rounded-xl bg-white overflow-hidden shadow-sm">
-        <Table className="w-full text-left border-collapse">
+        <Table>
           <Table.ScrollContainer>
-            <Table.Content aria-label="Danh sách Proxy">
-              <Table.Header className="border-b border-slate-100 text-slate-400 text-[10px] font-bold uppercase tracking-wider bg-slate-50">
-                <Table.Column className="py-2.5 px-3 w-8 text-center">
-                  <input
-                    type="checkbox"
-                    checked={isAllSelected}
-                    onChange={toggleSelectAll}
-                    className="w-3.5 h-3.5 rounded text-blue-600 border-slate-300 focus:ring-blue-500/50 cursor-pointer"
-                  />
+            <Table.Content
+              aria-label="Danh sách Proxy"
+              selectedKeys={selectedKeys}
+              selectionMode="multiple"
+              onSelectionChange={setSelectedKeys}
+            >
+              <Table.Header>
+                <Table.Column className="pr-0">
+                  <Checkbox
+                    aria-label="Select all"
+                    slot="selection"
+                  >
+                    <Checkbox.Control>
+                      <Checkbox.Indicator />
+                    </Checkbox.Control>
+                  </Checkbox>
                 </Table.Column>
-                <Table.Column isRowHeader className="py-2.5 px-3">Máy chủ</Table.Column>
-                <Table.Column className="py-2.5 px-3 w-60">Thông tin Proxy</Table.Column>
-                <Table.Column className="py-2.5 px-3 w-40">Hết hạn</Table.Column>
-                <Table.Column className="py-2.5 px-3">Trạng thái</Table.Column>
-                <Table.Column className="py-2.5 px-3">Ghi chú</Table.Column>
-                {userRole === 'ADMIN' && (
-                  <Table.Column className="py-2.5 px-3">Người dùng</Table.Column>
+                {isColumnVisible('server') && <Table.Column isRowHeader>Máy chủ</Table.Column>}
+                {isColumnVisible('info') && <Table.Column className="w-auto">Thông tin Proxy</Table.Column>}
+                {isColumnVisible('expiration') && <Table.Column className="w-40">Hết hạn</Table.Column>}
+                {isColumnVisible('status') && <Table.Column>Trạng thái</Table.Column>}
+                {isColumnVisible('comment') && <Table.Column>Ghi chú</Table.Column>}
+                {isColumnVisible('user') && userRole === 'ADMIN' && (
+                  <Table.Column>Người dùng</Table.Column>
                 )}
-                <Table.Column className="py-2.5 px-3 text-right">Thao tác</Table.Column>
+                <Table.Column className="text-end">Thao tác</Table.Column>
               </Table.Header>
-              <Table.Body className="divide-y divide-slate-100 text-xs">
+              <Table.Body>
                 {paginatedProxies.map((proxy: ProxyWithServer) => (
-                  <Table.Row key={proxy.id} className="hover:bg-slate-50/80 transition-colors border-b border-slate-100 last:border-b-0">
-                    <Table.Cell className="py-2.5 px-3 text-center">
-                      <input
-                        type="checkbox"
-                        checked={selectedResources.includes(proxy.id)}
-                        onChange={() => toggleSelectRow(proxy.id)}
-                        className="w-3.5 h-3.5 rounded text-blue-600 border-slate-300 focus:ring-blue-500/50 cursor-pointer"
-                      />
+                  <Table.Row key={proxy.id} id={proxy.id}>
+                    <Table.Cell className="pr-0 align-top">
+                      <Checkbox
+                        aria-label="Select row"
+                        slot="selection"
+                        variant="secondary"
+                      >
+                        <Checkbox.Control>
+                          <Checkbox.Indicator />
+                        </Checkbox.Control>
+                      </Checkbox>
                     </Table.Cell>
-                    <Table.Cell className="py-2.5 px-3 whitespace-nowrap">
-                      <div className="flex flex-col gap-0.5">
-                        <span className="font-bold text-slate-800">
-                          {proxy.server?.name || proxy.server?.host || 'Không xác định'}
-                        </span>
-                        <div className="flex items-center mt-0.5">
-                          <Chip size="sm" variant="soft" color="accent" className="font-semibold text-[9px] uppercase px-1 py-0 h-4">
-                            {proxy.ipType}
-                          </Chip>
-                        </div>
-                      </div>
-                    </Table.Cell>
-                    <Table.Cell className="py-2.5 px-3">
-                      <div className="space-y-1 py-1 max-w-[240px]">
-                        <div className="flex items-center gap-2 whitespace-nowrap">
-                          <span className="text-[10px] text-slate-400 select-none">IP:PORT</span>
-                          <div className="flex-1 border-b border-dotted border-slate-200"></div>
-                          <span className="font-mono font-bold text-slate-700">{proxy.server?.host}:{proxy.port}</span>
-                        </div>
-                        <div className="flex items-center gap-2 whitespace-nowrap">
-                          <span className="text-[10px] text-slate-400 select-none">Tài khoản</span>
-                          <div className="flex-1 border-b border-dotted border-slate-200"></div>
-                          <span className="font-mono font-semibold text-slate-600">{proxy.username}</span>
-                        </div>
-                        <div className="flex items-center gap-2 whitespace-nowrap">
-                          <span className="text-[10px] text-slate-400 select-none">Mật khẩu</span>
-                          <div className="flex-1 border-b border-dotted border-slate-200"></div>
-                          <span className="font-mono font-semibold text-slate-600">{proxy.password}</span>
-                        </div>
-                        <div className="flex items-center gap-2 whitespace-nowrap">
-                          <span className="text-[10px] text-slate-400 select-none">Loại</span>
-                          <div className="flex-1 border-b border-dotted border-slate-200"></div>
-                          <span className="text-[10px] font-bold text-slate-500 uppercase bg-slate-100 px-1 rounded">HTTPS/SOCKS5</span>
-                        </div>
-                        {proxy.ipv6 && (
-                          <div className="flex items-center gap-2 whitespace-nowrap">
-                            <span className="text-[10px] text-slate-400 select-none">IPv6</span>
-                            <div className="flex-1 border-b border-dotted border-slate-200"></div>
-                            <span className="font-mono text-slate-500 overflow-hidden text-ellipsis max-w-[120px]" title={proxy.ipv6}>
-                              {proxy.ipv6}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </Table.Cell>
-                    <Table.Cell className="py-2.5 px-3">
-                      <div className="space-y-1 max-w-[160px]">
-                        <div className="flex items-center gap-2 whitespace-nowrap">
-                          <span className="text-[10px] text-slate-400 select-none">Hết hạn</span>
-                          <div className="flex-1 border-b border-dotted border-slate-200"></div>
-                          <span className={`font-semibold ${proxy.autoRenew ? "text-emerald-600" : "text-amber-600"}`}>
-                            {proxy.expiresAt ? format(new Date(proxy.expiresAt), 'dd/MM/yyyy HH:mm') : 'Vĩnh viễn'}
+                    {isColumnVisible('server') && (
+                      <Table.Cell className="align-top text-[13px]">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="font-medium text-slate-800">
+                            {proxy.server?.name || proxy.server?.host || 'Không xác định'}
                           </span>
+                          <div className="flex items-center mt-0.5">
+                            <Chip size="sm" variant="soft" color="accent" className="font-medium text-xs px-1 py-0 h-4">
+                              {proxy.ipType}
+                            </Chip>
+                          </div>
                         </div>
-                        {proxy.expiresAt && (
-                          <>
+                      </Table.Cell>
+                    )}
+                    {isColumnVisible('info') && (
+                      <Table.Cell className="align-top text-[13px]">
+                        <div className="space-y-1 max-w-[350px]">
+                          <div className="flex items-center gap-2 whitespace-nowrap">
+                            <span className="text-slate-700 select-none">IP:PORT</span>
+                            <div className="flex-1 border-b border-dotted border-slate-300"></div>
+                            <span className="font-semibold text-slate-800">{proxy.server?.host}:{proxy.port}</span>
+                          </div>
+                          <div className="flex items-center gap-2 whitespace-nowrap">
+                            <span className="text-slate-700 select-none">Tài khoản</span>
+                            <div className="flex-1 border-b border-dotted border-slate-300"></div>
+                            <span className="font-semibold text-slate-800">{proxy.username}</span>
+                          </div>
+                          <div className="flex items-center gap-2 whitespace-nowrap">
+                            <span className="text-slate-700 select-none">Mật khẩu</span>
+                            <div className="flex-1 border-b border-dotted border-slate-300"></div>
+                            <span className="font-semibold text-slate-800">{proxy.password}</span>
+                          </div>
+                          <div className="flex items-center gap-2 whitespace-nowrap">
+                            <span className="text-slate-700 select-none">Loại</span>
+                            <div className="flex-1 border-b border-dotted border-slate-300"></div>
+                            <span className="font-semibold text-slate-800 uppercase bg-slate-100 px-1 rounded">HTTPS/SOCKS5</span>
+                          </div>
+                          {proxy.ipv6 && (
                             <div className="flex items-center gap-2 whitespace-nowrap">
-                              <span className="text-[10px] text-slate-400 select-none">Còn lại</span>
-                              <div className="flex-1 border-b border-dotted border-slate-200"></div>
-                              <span className={`font-bold ${proxy.autoRenew ? "text-emerald-600" : "text-amber-600"}`}>
-                                {getCountdown(proxy.expiresAt)}
+                              <span className="text-slate-700 select-none">IPv6</span>
+                              <div className="flex-1 border-b border-dotted border-slate-300"></div>
+                              <span className="text-slate-800 overflow-hidden text-ellipsis max-w-[200px]" title={proxy.ipv6}>
+                                {proxy.ipv6}
                               </span>
                             </div>
-                            {proxy.autoRenew && (
+                          )}
+                        </div>
+                      </Table.Cell>
+                    )}
+                    {isColumnVisible('expiration') && (
+                      <Table.Cell className="align-top text-[13px]">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2 whitespace-nowrap">
+                            <span className="text-slate-700 select-none">Hết hạn</span>
+                            <div className="flex-1 border-b border-dotted border-slate-300"></div>
+                            <span className={`font-medium ${proxy.autoRenew ? "text-emerald-600" : "text-amber-600"}`}>
+                              {proxy.expiresAt ? format(new Date(proxy.expiresAt), 'dd/MM/yyyy HH:mm') : 'Vĩnh viễn'}
+                            </span>
+                          </div>
+                          {proxy.expiresAt && (
+                            <>
                               <div className="flex items-center gap-2 whitespace-nowrap">
-                                <span className="text-[10px] text-slate-400 select-none">Gia hạn tự động</span>
-                                <div className="flex-1 border-b border-dotted border-slate-200"></div>
-                                <span className="text-emerald-600 font-bold flex items-center gap-0.5">
-                                  <Check className="w-3.5 h-3.5 shrink-0" />
-                                  Bật
+                                <span className="text-slate-700 select-none">Còn lại</span>
+                                <div className="flex-1 border-b border-dotted border-slate-300"></div>
+                                <span className={`font-medium ${proxy.autoRenew ? "text-emerald-600" : "text-amber-600"}`}>
+                                  {getCountdown(proxy.expiresAt)}
                                 </span>
                               </div>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </Table.Cell>
-                    <Table.Cell className="py-2.5 px-3">
-                      {proxy.status === 'ACTIVE' ? getStatusChip(proxy.status) : getStatusChip(proxy.status)}
-                    </Table.Cell>
-                    <Table.Cell className="py-2.5 px-3">
-                      {proxy.comment ? (
-                        <div className="group relative cursor-pointer text-slate-400 hover:text-slate-600">
-                          <FileText className="w-4 h-4" />
-                          <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 hidden group-hover:block w-36 bg-slate-800 text-[10px] text-white p-2 rounded shadow-lg z-20 pointer-events-none leading-relaxed">
-                            {proxy.comment}
-                          </div>
+                              {proxy.autoRenew && (
+                                <div className="flex items-center gap-2 whitespace-nowrap">
+                                  <span className="text-slate-700 select-none">Gia hạn tự động</span>
+                                  <div className="flex-1 border-b border-dotted border-slate-300"></div>
+                                  <span className="text-emerald-600 font-medium flex items-center gap-0.5">
+                                    <Icon icon="lucide:check" width={14} height={14} className="shrink-0" />
+                                  </span>
+                                </div>
+                              )}
+                            </>
+                          )}
                         </div>
-                      ) : '-'}
-                    </Table.Cell>
-                    {userRole === 'ADMIN' && (
-                      <Table.Cell className="py-2.5 px-3 max-w-[120px] overflow-hidden text-ellipsis whitespace-nowrap text-slate-600">
+                      </Table.Cell>
+                    )}
+                    {isColumnVisible('status') && (
+                      <Table.Cell className="align-top">
+                        {proxy.status === 'ACTIVE' ? getStatusChip(proxy.status) : getStatusChip(proxy.status)}
+                      </Table.Cell>
+                    )}
+                    {isColumnVisible('comment') && (
+                      <Table.Cell className="align-top">
+                        {proxy.comment ? (
+                          <div className="group relative cursor-pointer text-slate-400 hover:text-slate-600">
+                            <Icon icon="lucide:file-text" width={16} height={16} />
+                            <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 hidden group-hover:block w-36 bg-slate-800 text-[10px] text-white p-2 rounded shadow-lg z-20 pointer-events-none leading-relaxed">
+                              {proxy.comment}
+                            </div>
+                          </div>
+                        ) : '-'}
+                      </Table.Cell>
+                    )}
+                    {isColumnVisible('user') && userRole === 'ADMIN' && (
+                      <Table.Cell className="align-top max-w-[120px] overflow-hidden text-ellipsis whitespace-nowrap text-slate-600">
                         {proxy.user?.email || 'Hệ thống'}
                       </Table.Cell>
                     )}
-                    <Table.Cell className="py-2.5 px-3 text-right">
-                      <div className="inline-flex items-center gap-1">
+                    <Table.Cell className="align-top text-right">
+                      <div className="inline-flex items-center gap-1 justify-end">
+                        {/* Copy Proxy Button */}
                         <button
                           onClick={() => {
                             const host = proxy.server?.host || '0.0.0.0';
@@ -574,58 +836,76 @@ export function ProxyList({ onEdit, onAdd }: ProxyListProps) {
                               else toast.error('Lỗi khi copy');
                             });
                           }}
-                          className="inline-flex items-center justify-center p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg cursor-pointer transition-colors"
+                          className="w-7 h-7 rounded-md bg-transparent hover:bg-slate-100 text-slate-500 hover:text-slate-800 border-none flex items-center justify-center cursor-pointer transition-colors"
                           title="Sao chép Proxy (host:port:user:pass)"
                         >
-                          <Clipboard className="w-3.5 h-3.5" />
+                          <Icon icon="lucide:clipboard" width={14} height={14} />
                         </button>
-                        <button
-                          onClick={() => checkGoogleMutation.mutate(proxy.id, { onSuccess: (job) => setActiveJobId(job.id) })}
-                          disabled={proxy.status !== 'ACTIVE' || checkGoogleMutation.isPending}
-                          className="inline-flex items-center justify-center p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 disabled:opacity-50 disabled:hover:bg-transparent rounded-lg cursor-pointer transition-colors"
-                          title="Kiểm tra Google"
-                        >
-                          {checkGoogleMutation.isPending && checkGoogleMutation.variables === proxy.id ? (
-                            <span className="w-3.5 h-3.5 border-2 border-blue-600/30 border-t-blue-600 rounded-full animate-spin"></span>
-                          ) : (
-                            <Search className="w-3.5 h-3.5" />
-                          )}
-                        </button>
+
+                        {/* Rotate Button */}
                         <button
                           onClick={() => rotateProxyMutation.mutate(proxy.id, { onSuccess: (job) => setActiveJobId(job.id) })}
                           disabled={proxy.status !== 'ACTIVE' || rotateProxyMutation.isPending}
-                          className="inline-flex items-center justify-center p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 disabled:opacity-50 disabled:hover:bg-transparent rounded-lg cursor-pointer transition-colors"
+                          className="w-7 h-7 rounded-md bg-transparent hover:bg-emerald-50 text-slate-500 hover:text-emerald-600 border-none flex items-center justify-center cursor-pointer transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
                           title="Đổi IP (Rotate)"
                         >
                           {rotateProxyMutation.isPending && rotateProxyMutation.variables === proxy.id ? (
                             <span className="w-3.5 h-3.5 border-2 border-emerald-600/30 border-t-emerald-600 rounded-full animate-spin"></span>
                           ) : (
-                            <RefreshCw className="w-3.5 h-3.5" />
+                            <Icon icon="lucide:refresh-cw" width={14} height={14} />
                           )}
                         </button>
-                        <button
-                          onClick={() => onEdit(proxy)}
-                          className="inline-flex items-center justify-center p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer transition-colors"
-                          title="Chỉnh sửa"
-                        >
-                          <Edit2 className="w-3.5 h-3.5" />
-                        </button>
-                        {canDelete && (
-                          <button
-                            onClick={() => handleDeleteClick(proxy.id)}
-                            className="inline-flex items-center justify-center p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg cursor-pointer transition-colors"
-                            title="Xóa Proxy"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        )}
+
+                        {/* More Actions Popover */}
+                        <Popover>
+                          <PopoverTrigger>
+                            <button
+                              className="w-7 h-7 rounded-md bg-transparent hover:bg-slate-100 text-slate-500 hover:text-slate-800 border-none flex items-center justify-center cursor-pointer transition-colors"
+                              title="Thao tác khác"
+                            >
+                              <Icon icon="lucide:more-horizontal" width={14} height={14} />
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent placement="bottom end" offset={4} className="p-2.5 w-40 bg-white border border-slate-200 rounded-lg shadow-md flex flex-col gap-2 z-50">
+                            <button
+                              onClick={() => checkGoogleMutation.mutate(proxy.id, { onSuccess: (job) => setActiveJobId(job.id) })}
+                              disabled={proxy.status !== 'ACTIVE' || checkGoogleMutation.isPending}
+                              className="w-full text-left text-xs font-medium text-slate-600 hover:text-slate-900 flex items-center gap-2 cursor-pointer border-none bg-transparent p-0 m-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              {checkGoogleMutation.isPending && checkGoogleMutation.variables === proxy.id ? (
+                                <span className="w-3.5 h-3.5 border-2 border-blue-600/30 border-t-blue-600 rounded-full animate-spin shrink-0"></span>
+                              ) : (
+                                <Icon icon="lucide:search" width={13} height={13} className="text-slate-400 shrink-0" />
+                              )}
+                              <span>Kiểm tra Google</span>
+                            </button>
+
+                            <button
+                              onClick={() => onEdit(proxy)}
+                              className="w-full text-left text-xs font-medium text-slate-600 hover:text-slate-900 flex items-center gap-2 cursor-pointer border-none bg-transparent p-0 m-0"
+                            >
+                              <Icon icon="lucide:edit-2" width={13} height={13} className="text-slate-400 shrink-0" />
+                              <span>Chỉnh sửa</span>
+                            </button>
+
+                            {canDelete && (
+                              <button
+                                onClick={() => handleDeleteClick(proxy.id)}
+                                className="w-full text-left text-xs font-medium text-red-600 hover:text-red-700 flex items-center gap-2 cursor-pointer border-none bg-transparent p-0 m-0"
+                              >
+                                <Icon icon="lucide:trash-2" width={13} height={13} className="text-red-400 shrink-0" />
+                                <span>Xóa Proxy</span>
+                              </button>
+                            )}
+                          </PopoverContent>
+                        </Popover>
                       </div>
                     </Table.Cell>
                   </Table.Row>
                 ))}
                 {paginatedProxies.length === 0 && (
                   <Table.Row>
-                    <Table.Cell colSpan={userRole === 'ADMIN' ? 8 : 7} className="py-12 text-center text-slate-400 font-medium">
+                    <Table.Cell colSpan={visibleColumns.length + 2} className="py-12 text-center text-slate-400 font-medium">
                       Danh sách Proxy hiện đang trống.
                     </Table.Cell>
                   </Table.Row>
@@ -633,31 +913,46 @@ export function ProxyList({ onEdit, onAdd }: ProxyListProps) {
               </Table.Body>
             </Table.Content>
           </Table.ScrollContainer>
+          {totalPages > 1 && (
+            <Table.Footer>
+              <Pagination size="sm">
+                <Pagination.Summary>
+                  Hiển thị {startItem} - {endItem} trong tổng số {filteredProxies.length} kết quả
+                </Pagination.Summary>
+                <Pagination.Content>
+                  <Pagination.Item>
+                    <Pagination.Previous
+                      isDisabled={page <= 1}
+                      onPress={() => setPage(page - 1)}
+                    >
+                      <Pagination.PreviousIcon />
+                      Trước
+                    </Pagination.Previous>
+                  </Pagination.Item>
+                  {pages.map((p) => (
+                    <Pagination.Item key={p}>
+                      <Pagination.Link
+                        isActive={p === page}
+                        onPress={() => setPage(p)}
+                      >
+                        {p}
+                      </Pagination.Link>
+                    </Pagination.Item>
+                  ))}
+                  <Pagination.Item>
+                    <Pagination.Next
+                      isDisabled={page >= totalPages}
+                      onPress={() => setPage(page + 1)}
+                    >
+                      Sau
+                      <Pagination.NextIcon />
+                    </Pagination.Next>
+                  </Pagination.Item>
+                </Pagination.Content>
+              </Pagination>
+            </Table.Footer>
+          )}
         </Table>
-
-        {/* Compact Flat Pagination Footer */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between px-3 py-2.5 border-t border-slate-100 text-xs bg-slate-50/50">
-            <span className="text-slate-400 font-semibold">Trang {page} / {totalPages}</span>
-            <div className="flex items-center gap-1.5">
-              <Button
-                isDisabled={page <= 1}
-                onPress={() => setPage(page - 1)}
-                className="px-2.5 py-1 text-xs border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 font-bold h-7 min-w-0 rounded-lg cursor-pointer transition-all"
-              >
-                Trước
-              </Button>
-              <Button
-                isDisabled={page >= totalPages}
-                onPress={() => setPage(page + 1)}
-                className="px-2.5 py-1 text-xs border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 font-bold h-7 min-w-0 rounded-lg cursor-pointer transition-all"
-              >
-                Sau
-              </Button>
-            </div>
-          </div>
-        )}
-      </div>
 
       {/* Modern Compact Overlay Modal for Deleting Proxy */}
       {activeDeleteModal && (
@@ -666,20 +961,20 @@ export function ProxyList({ onEdit, onAdd }: ProxyListProps) {
             {/* Modal Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50/50">
               <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-1.5 text-danger">
-                <AlertTriangle className="w-4 h-4 shrink-0" />
+                <Icon icon="lucide:alert-triangle" className="w-4 h-4 shrink-0 text-red-500" />
                 {isBulkDelete ? "Xác nhận xóa hàng loạt?" : "Xác nhận xóa Proxy?"}
               </h3>
               <button 
                 onClick={() => setActiveDeleteModal(false)}
-                className="text-slate-400 hover:text-slate-600 cursor-pointer p-1 rounded-lg hover:bg-slate-100 transition-colors"
+                className="text-slate-400 hover:text-slate-600 cursor-pointer p-1 rounded-lg hover:bg-slate-100 transition-colors bg-transparent border-none flex items-center justify-center"
               >
-                <X className="w-4 h-4" />
+                <Icon icon="lucide:x" className="w-4 h-4" />
               </button>
             </div>
             {/* Modal Body */}
             <div className="p-4 text-xs text-slate-600 font-medium leading-relaxed bg-white">
               {isBulkDelete 
-                ? `Bạn có chắc chắn muốn xóa ${selectedResources.length} Proxy đã chọn? Cấu hình sẽ bị gỡ bỏ khỏi máy chủ và không thể khôi phục.`
+                ? `Bạn có chắc chắn muốn xóa ${selectedIds.length} Proxy đã chọn? Cấu hình sẽ bị gỡ bỏ khỏi máy chủ và không thể khôi phục.`
                 : "Bạn có chắc chắn muốn xóa Proxy này? Cấu hình sẽ bị gỡ bỏ khỏi máy chủ và không thể khôi phục."}
             </div>
             {/* Modal Footer */}
@@ -715,20 +1010,20 @@ export function ProxyList({ onEdit, onAdd }: ProxyListProps) {
             {/* Modal Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50/50">
               <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
-                <Calendar className="w-4 h-4 shrink-0 text-slate-500" />
+                <Icon icon="lucide:calendar" className="w-4 h-4 shrink-0 text-slate-500" />
                 Gia hạn Proxy hàng loạt
               </h3>
               <button 
                 onClick={() => setActiveRenewModal(false)}
-                className="text-slate-400 hover:text-slate-600 cursor-pointer p-1 rounded-lg hover:bg-slate-100 transition-colors"
+                className="text-slate-400 hover:text-slate-600 cursor-pointer p-1 rounded-lg hover:bg-slate-100 transition-colors bg-transparent border-none flex items-center justify-center"
               >
-                <X className="w-4 h-4" />
+                <Icon icon="lucide:x" className="w-4 h-4" />
               </button>
             </div>
             {/* Modal Body */}
             <div className="p-4 space-y-3.5 text-xs bg-white">
               <p className="text-slate-600 font-medium leading-relaxed">
-                Chọn thời gian gia hạn cho <b>{selectedResources.length}</b> proxy đã chọn:
+                Chọn thời gian gia hạn cho <b>{selectedIds.length}</b> proxy đã chọn:
               </p>
               <div className="relative">
                 <select
@@ -745,7 +1040,7 @@ export function ProxyList({ onEdit, onAdd }: ProxyListProps) {
                   <option value="1y">1 năm</option>
                 </select>
                 <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-400">
-                  <ChevronDown className="w-3.5 h-3.5" />
+                  <Icon icon="lucide:chevron-down" className="w-3.5 h-3.5" />
                 </div>
               </div>
             </div>
