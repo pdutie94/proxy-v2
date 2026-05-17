@@ -144,63 +144,61 @@ export default function DashboardPage() {
             <h2 className="text-sm font-semibold text-slate-800">Hoạt động gần đây</h2>
           </div>
 
-          <div className="w-full bg-white border border-slate-200 rounded-xl overflow-hidden shadow-[sm_0_1px_2px_0_rgba(0,0,0,0.05)]">
-            <Table className="w-full text-left border-collapse">
-              <Table.Content>
-                <Table.Header className="border-b border-slate-100 text-slate-400 text-[10px] font-bold uppercase tracking-wider bg-slate-50/50">
-                  <Table.Column className="py-2.5 px-3">Thời gian</Table.Column>
-                  <Table.Column className="py-2.5 px-3">Sự kiện</Table.Column>
-                  <Table.Column className="py-2.5 px-3 text-center">Trạng thái</Table.Column>
-                  <Table.Column className="py-2.5 px-3 text-right"></Table.Column>
-                </Table.Header>
-                <Table.Body className="divide-y divide-slate-100 text-xs">
-                  {logs.map((job: LogEntry) => (
-                    <Table.Row key={job.id} className="hover:bg-slate-50/80 transition-colors border-b border-slate-100 last:border-b-0">
-                      <Table.Cell className="py-2.5 px-3 text-slate-500 whitespace-nowrap">
-                        {formatDistanceToNow(new Date(job.createdAt), { addSuffix: true, locale: vi })}
-                      </Table.Cell>
-                      <Table.Cell className="py-2.5 px-3 font-semibold text-slate-700">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                          <span>{getJobTitle(job)}</span>
-                        </div>
-                      </Table.Cell>
-                      <Table.Cell className="py-2.5 px-3 text-center">
-                        {getJobBadge(job.status)}
-                      </Table.Cell>
-                      <Table.Cell className="py-2.5 px-3 text-right">
-                        <button
-                          onClick={() => setSelectedLog(job)}
-                          className="inline-flex items-center justify-center p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer transition-colors"
-                          title="Xem chi tiết"
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                        </button>
-                      </Table.Cell>
-                    </Table.Row>
-                  ))}
-                  {logs.length === 0 && (
-                    <Table.Row>
-                      <Table.Cell colSpan={4} className="py-8 text-center text-slate-400 font-medium">
-                        Chưa có hoạt động nào
-                      </Table.Cell>
-                    </Table.Row>
-                  )}
-                </Table.Body>
-              </Table.Content>
-            </Table>
+          <Table className="w-full text-left border-collapse">
+            <Table.Content>
+              <Table.Header className="border-b border-slate-100 text-slate-400 text-[10px] font-bold uppercase tracking-wider bg-slate-50/50">
+                <Table.Column className="py-2.5 px-3">Thời gian</Table.Column>
+                <Table.Column className="py-2.5 px-3">Sự kiện</Table.Column>
+                <Table.Column className="py-2.5 px-3 text-center">Trạng thái</Table.Column>
+                <Table.Column className="py-2.5 px-3 text-right"></Table.Column>
+              </Table.Header>
+              <Table.Body className="divide-y divide-slate-100 text-xs">
+                {logs.map((job: LogEntry) => (
+                  <Table.Row key={job.id} className="hover:bg-slate-50/80 transition-colors border-b border-slate-100 last:border-b-0">
+                    <Table.Cell className="py-2.5 px-3 text-slate-500 whitespace-nowrap">
+                      {formatDistanceToNow(new Date(job.createdAt), { addSuffix: true, locale: vi })}
+                    </Table.Cell>
+                    <Table.Cell className="py-2.5 px-3 font-semibold text-slate-700">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <span>{getJobTitle(job)}</span>
+                      </div>
+                    </Table.Cell>
+                    <Table.Cell className="py-2.5 px-3 text-center">
+                      {getJobBadge(job.status)}
+                    </Table.Cell>
+                    <Table.Cell className="py-2.5 px-3 text-right">
+                      <button
+                        onClick={() => setSelectedLog(job)}
+                        className="inline-flex items-center justify-center p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer transition-colors"
+                        title="Xem chi tiết"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                      </button>
+                    </Table.Cell>
+                  </Table.Row>
+                ))}
+                {logs.length === 0 && (
+                  <Table.Row>
+                    <Table.Cell colSpan={4} className="py-8 text-center text-slate-400 font-medium">
+                      Chưa có hoạt động nào
+                    </Table.Cell>
+                  </Table.Row>
+                )}
+              </Table.Body>
+            </Table.Content>
+          </Table>
 
-            <div className="flex justify-center border-t border-slate-100 py-3 bg-slate-50/20">
-              <Link href="/dashboard/logs">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="text-slate-600 hover:bg-slate-100/70 border border-slate-200 bg-white font-semibold text-xs h-8 px-4 cursor-pointer rounded-lg"
-                >
-                  Xem tất cả nhật ký
-                </Button>
-              </Link>
-            </div>
+          <div className="flex justify-center pt-2">
+            <Link href="/dashboard/logs">
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-slate-600 hover:bg-slate-100/70 border border-slate-200 bg-white font-semibold text-xs h-8 px-4 cursor-pointer rounded-lg shadow-sm"
+              >
+                Xem tất cả nhật ký
+              </Button>
+            </Link>
           </div>
         </div>
 
