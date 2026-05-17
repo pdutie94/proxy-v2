@@ -162,10 +162,10 @@ export function DashboardLayoutHeroUI({ children }: DashboardLayoutHeroUIProps) 
                 <button
                   key={idx}
                   onClick={() => handleNavigation(item.url)}
-                  className={`w-full flex items-center gap-3 px-2 py-1.5 text-sm font-semibold rounded-xl transition-all duration-200 group ${
+                  className={`w-full flex items-center gap-3 px-2 py-1.5 text-sm font-semibold rounded-xl transition-all duration-200 group cursor-pointer ${
                     item.active
                       ? "bg-slate-100 text-slate-900"
-                      : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                      : "text-slate-500 hover:bg-slate-100/70 hover:text-slate-900"
                   }`}
                 >
                   <Icon className={`w-4 h-4 shrink-0 transition-colors ${
@@ -225,10 +225,10 @@ export function DashboardLayoutHeroUI({ children }: DashboardLayoutHeroUIProps) 
                     <button
                       key={idx}
                       onClick={() => handleNavigation(item.url)}
-                      className={`w-full flex items-center gap-3 px-2 py-1.5 text-sm font-semibold rounded-xl transition-all duration-200 ${
+                      className={`w-full flex items-center gap-3 px-2 py-1.5 text-sm font-semibold rounded-xl transition-all duration-200 cursor-pointer ${
                         item.active
                           ? "bg-slate-100 text-slate-900"
-                          : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                          : "text-slate-500 hover:bg-slate-100/70 hover:text-slate-900"
                       }`}
                     >
                       <Icon className={`w-4 h-4 shrink-0 transition-colors ${
