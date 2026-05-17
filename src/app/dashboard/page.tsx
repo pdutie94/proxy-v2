@@ -145,48 +145,50 @@ export default function DashboardPage() {
           </div>
 
           <Table className="w-full text-left border-collapse">
-            <Table.Content>
-              <Table.Header className="border-b border-slate-100 text-slate-400 text-[10px] font-bold uppercase tracking-wider bg-slate-50/50">
-                <Table.Column className="py-2.5 px-3">Thời gian</Table.Column>
-                <Table.Column className="py-2.5 px-3">Sự kiện</Table.Column>
-                <Table.Column className="py-2.5 px-3 text-center">Trạng thái</Table.Column>
-                <Table.Column className="py-2.5 px-3 text-right"></Table.Column>
-              </Table.Header>
-              <Table.Body className="divide-y divide-slate-100 text-xs">
-                {logs.map((job: LogEntry) => (
-                  <Table.Row key={job.id} className="hover:bg-slate-50/80 transition-colors border-b border-slate-100 last:border-b-0">
-                    <Table.Cell className="py-2.5 px-3 text-slate-500 whitespace-nowrap">
-                      {formatDistanceToNow(new Date(job.createdAt), { addSuffix: true, locale: vi })}
-                    </Table.Cell>
-                    <Table.Cell className="py-2.5 px-3 font-semibold text-slate-700">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                        <span>{getJobTitle(job)}</span>
-                      </div>
-                    </Table.Cell>
-                    <Table.Cell className="py-2.5 px-3 text-center">
-                      {getJobBadge(job.status)}
-                    </Table.Cell>
-                    <Table.Cell className="py-2.5 px-3 text-right">
-                      <button
-                        onClick={() => setSelectedLog(job)}
-                        className="inline-flex items-center justify-center p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer transition-colors"
-                        title="Xem chi tiết"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                      </button>
-                    </Table.Cell>
-                  </Table.Row>
-                ))}
-                {logs.length === 0 && (
-                  <Table.Row>
-                    <Table.Cell colSpan={4} className="py-8 text-center text-slate-400 font-medium">
-                      Chưa có hoạt động nào
-                    </Table.Cell>
-                  </Table.Row>
-                )}
-              </Table.Body>
-            </Table.Content>
+            <Table.ScrollContainer>
+              <Table.Content aria-label="Hoạt động gần đây">
+                <Table.Header className="border-b border-slate-100 text-slate-400 text-[10px] font-bold uppercase tracking-wider bg-slate-50">
+                  <Table.Column isRowHeader className="py-2.5 px-3">Thời gian</Table.Column>
+                  <Table.Column className="py-2.5 px-3">Sự kiện</Table.Column>
+                  <Table.Column className="py-2.5 px-3 text-center">Trạng thái</Table.Column>
+                  <Table.Column className="py-2.5 px-3 text-right"></Table.Column>
+                </Table.Header>
+                <Table.Body className="divide-y divide-slate-100 text-xs">
+                  {logs.map((job: LogEntry) => (
+                    <Table.Row key={job.id} className="hover:bg-slate-50/80 transition-colors border-b border-slate-100 last:border-b-0">
+                      <Table.Cell className="py-2.5 px-3 text-slate-500 whitespace-nowrap">
+                        {formatDistanceToNow(new Date(job.createdAt), { addSuffix: true, locale: vi })}
+                      </Table.Cell>
+                      <Table.Cell className="py-2.5 px-3 font-semibold text-slate-700">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <span>{getJobTitle(job)}</span>
+                        </div>
+                      </Table.Cell>
+                      <Table.Cell className="py-2.5 px-3 text-center">
+                        {getJobBadge(job.status)}
+                      </Table.Cell>
+                      <Table.Cell className="py-2.5 px-3 text-right">
+                        <button
+                          onClick={() => setSelectedLog(job)}
+                          className="inline-flex items-center justify-center p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer transition-colors"
+                          title="Xem chi tiết"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                        </button>
+                      </Table.Cell>
+                    </Table.Row>
+                  ))}
+                  {logs.length === 0 && (
+                    <Table.Row>
+                      <Table.Cell colSpan={4} className="py-8 text-center text-slate-400 font-medium">
+                        Chưa có hoạt động nào
+                      </Table.Cell>
+                    </Table.Row>
+                  )}
+                </Table.Body>
+              </Table.Content>
+            </Table.ScrollContainer>
           </Table>
 
           <div className="flex justify-center pt-2">
