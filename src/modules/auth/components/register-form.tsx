@@ -8,6 +8,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import { Input, Button } from "@heroui/react";
+import { CheckCircle2 } from "lucide-react";
 
 export function RegisterForm() {
   const router = useRouter();
@@ -33,17 +35,19 @@ export function RegisterForm() {
   if (isSuccess) {
     return (
       <div className="w-full max-w-md p-8 bg-white border border-slate-200 rounded-xl shadow-sm text-center">
-        <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl">✓</div>
+        <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+          <CheckCircle2 className="w-8 h-8 shrink-0" />
+        </div>
         <h2 className="text-2xl font-bold text-slate-900 mb-2">Đăng ký thành công!</h2>
-        <p className="text-slate-600 mb-8 leading-relaxed">
+        <p className="text-slate-600 mb-8 leading-relaxed text-sm font-medium">
           Chúng tôi đã gửi một email xác nhận tới địa chỉ của bạn. Vui lòng kiểm tra hộp thư (bao gồm cả thư rác) để kích hoạt tài khoản.
         </p>
-        <button 
+        <Button 
           onClick={() => router.push('/login')}
-          className="w-full py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors"
+          className="w-full h-9 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 cursor-pointer transition-colors flex items-center justify-center"
         >
           Đi tới Đăng nhập
-        </button>
+        </Button>
       </div>
     );
   }
@@ -52,65 +56,71 @@ export function RegisterForm() {
     <div className="w-full max-w-md p-8 bg-white border border-slate-200 rounded-xl shadow-sm">
       <div className="mb-8 text-center">
         <h1 className="text-2xl font-bold text-slate-900">Đăng ký tài khoản</h1>
-        <p className="text-slate-500 mt-2">Bắt đầu trải nghiệm dịch vụ Proxy cao cấp</p>
+        <p className="text-slate-500 mt-2 text-sm font-medium">Bắt đầu trải nghiệm dịch vụ Proxy cao cấp</p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div>
-          <label className="block text-xs font-medium text-slate-600 mb-1.5">Địa chỉ Email</label>
-          <input
+        <div className="space-y-1.5">
+          <label className="block text-xs font-semibold text-slate-600">Địa chỉ Email</label>
+          <Input
             {...register('email')}
             type="email"
             placeholder="your@email.com"
-            className={`w-full h-10 px-3 text-sm border rounded-md outline-none transition-all focus:ring-2 focus:ring-blue-500/20 ${
-              errors.email ? 'border-red-500 focus:border-red-500' : 'border-slate-300 focus:border-blue-500'
+            className={`w-full h-9 px-3 text-sm bg-white border rounded-lg outline-none transition-colors duration-150 ${
+              errors.email 
+                ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500' 
+                : 'border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
             }`}
           />
-          {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>}
+          {errors.email && <p className="mt-1 text-xs text-red-500 font-medium">{errors.email.message}</p>}
         </div>
 
-        <div>
-          <label className="block text-xs font-medium text-slate-600 mb-1.5">Mật khẩu</label>
-          <input
+        <div className="space-y-1.5">
+          <label className="block text-xs font-semibold text-slate-600">Mật khẩu</label>
+          <Input
             {...register('password')}
             type="password"
             placeholder="••••••••"
-            className={`w-full h-10 px-3 text-sm border rounded-md outline-none transition-all focus:ring-2 focus:ring-blue-500/20 ${
-              errors.password ? 'border-red-500 focus:border-red-500' : 'border-slate-300 focus:border-blue-500'
+            className={`w-full h-9 px-3 text-sm bg-white border rounded-lg outline-none transition-colors duration-150 ${
+              errors.password 
+                ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500' 
+                : 'border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
             }`}
           />
-          {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>}
+          {errors.password && <p className="mt-1 text-xs text-red-500 font-medium">{errors.password.message}</p>}
         </div>
 
-        <div>
-          <label className="block text-xs font-medium text-slate-600 mb-1.5">Xác nhận mật khẩu</label>
-          <input
+        <div className="space-y-1.5">
+          <label className="block text-xs font-semibold text-slate-600">Xác nhận mật khẩu</label>
+          <Input
             {...register('confirmPassword')}
             type="password"
             placeholder="••••••••"
-            className={`w-full h-10 px-3 text-sm border rounded-md outline-none transition-all focus:ring-2 focus:ring-blue-500/20 ${
-              errors.confirmPassword ? 'border-red-500 focus:border-red-500' : 'border-slate-300 focus:border-blue-500'
+            className={`w-full h-9 px-3 text-sm bg-white border rounded-lg outline-none transition-colors duration-150 ${
+              errors.confirmPassword 
+                ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500' 
+                : 'border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
             }`}
           />
-          {errors.confirmPassword && <p className="mt-1 text-xs text-red-500">{errors.confirmPassword.message}</p>}
+          {errors.confirmPassword && <p className="mt-1 text-xs text-red-500 font-medium">{errors.confirmPassword.message}</p>}
         </div>
 
-        <button
+        <Button
           type="submit"
-          disabled={loading}
-          className="w-full h-10 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm rounded-md transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+          isDisabled={loading}
+          className="w-full h-9 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-lg mt-2 cursor-pointer transition-colors duration-150 flex items-center justify-center gap-2"
         >
-          {loading ? (
+          {loading && (
             <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-          ) : null}
+          )}
           Đăng ký ngay
-        </button>
+        </Button>
       </form>
 
       <div className="mt-6 pt-6 border-t border-slate-100 text-center">
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-slate-500 font-medium">
           Đã có tài khoản?{' '}
-          <Link href="/login" className="text-blue-600 hover:underline font-medium">
+          <Link href="/login" className="text-blue-600 hover:underline font-bold">
             Đăng nhập
           </Link>
         </p>

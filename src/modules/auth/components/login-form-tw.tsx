@@ -8,13 +8,19 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import { Input, Button } from "@heroui/react";
+import { Eye, EyeOff } from "lucide-react";
 
 export function LoginForm() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  
   const { register, handleSubmit, formState: { errors } } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
   });
+
+  const toggleVisibility = () => setIsVisible(!isVisible);
 
   const onSubmit = async (data: LoginInput) => {
     setLoading(true);
@@ -66,55 +72,68 @@ export function LoginForm() {
     <div className="w-full max-w-md p-8 bg-white border border-slate-200 rounded-xl shadow-sm">
       <div className="mb-8 text-center">
         <h1 className="text-2xl font-bold text-slate-900">Chào mừng trở lại</h1>
-        <p className="text-slate-500 mt-2">Đăng nhập để quản lý Proxy của bạn</p>
+        <p className="text-slate-500 mt-2 text-sm font-medium">Đăng nhập để quản lý Proxy của bạn</p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div>
-          <label className="block text-xs font-medium text-slate-600 mb-1.5">Địa chỉ Email</label>
-          <input
+        <div className="space-y-1.5">
+          <label className="block text-xs font-semibold text-slate-600">Địa chỉ Email</label>
+          <Input
             {...register('email')}
             type="email"
             placeholder="admin@example.com"
-            className={`w-full h-10 px-3 text-sm border rounded-md outline-none transition-all focus:ring-2 focus:ring-blue-500/20 ${
-              errors.email ? 'border-red-500 focus:border-red-500' : 'border-slate-300 focus:border-blue-500'
+            className={`w-full h-9 px-3 text-sm bg-white border rounded-lg outline-none transition-colors duration-150 ${
+              errors.email 
+                ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500' 
+                : 'border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
             }`}
           />
-          {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>}
+          {errors.email && <p className="mt-1 text-xs text-red-500 font-medium">{errors.email.message}</p>}
         </div>
 
-        <div>
-          <div className="flex justify-between mb-1.5">
-            <label className="block text-xs font-medium text-slate-600">Mật khẩu</label>
-            <a href="#" className="text-xs text-blue-600 hover:underline">Quên mật khẩu?</a>
+        <div className="space-y-1.5">
+          <div className="flex justify-between items-center">
+            <label className="block text-xs font-semibold text-slate-600">Mật khẩu</label>
+            <a href="#" className="text-xs text-blue-600 hover:underline font-semibold">Quên mật khẩu?</a>
           </div>
-          <input
-            {...register('password')}
-            type="password"
-            placeholder="••••••••"
-            className={`w-full h-10 px-3 text-sm border rounded-md outline-none transition-all focus:ring-2 focus:ring-blue-500/20 ${
-              errors.password ? 'border-red-500 focus:border-red-500' : 'border-slate-300 focus:border-blue-500'
-            }`}
-          />
-          {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>}
+          <div className="relative">
+            <Input
+              {...register('password')}
+              type={isVisible ? "text" : "password"}
+              placeholder="••••••••"
+              className={`w-full h-9 pl-3 pr-10 text-sm bg-white border rounded-lg outline-none transition-colors duration-150 ${
+                errors.password 
+                  ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500' 
+                  : 'border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
+              }`}
+            />
+            <button 
+              type="button" 
+              onClick={toggleVisibility} 
+              className="absolute right-3 top-1/2 -translate-y-1/2 focus:outline-none cursor-pointer text-slate-400 hover:text-slate-600 flex items-center justify-center p-0.5 rounded-full"
+            >
+              {isVisible ? <EyeOff className="w-4 h-4 shrink-0" /> : <Eye className="w-4 h-4 shrink-0" />}
+            </button>
+          </div>
+          {errors.password && <p className="mt-1 text-xs text-red-500 font-medium">{errors.password.message}</p>}
         </div>
 
-        <button
+        <Button
           type="submit"
-          disabled={loading}
-          className="w-full h-10 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm rounded-md transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+          isDisabled={loading}
+          className="w-full h-9 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-lg mt-2 cursor-pointer transition-colors duration-150 flex items-center justify-center gap-2"
         >
-          {loading ? (
+          {loading && (
             <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-          ) : null}
+          )}
           Đăng nhập ngay
-        </button>
+        </Button>
       </form>
 
       <div className="mt-6 pt-6 border-t border-slate-100 text-center">
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-slate-500 font-medium">
           Chưa có tài khoản?{' '}
-          <Link href="/register" className="text-blue-600 hover:underline font-medium">
+          <Link href="/register" className="text-blue-600 hover:underline font-bold">
             Đăng ký ngay
           </Link>
         </p>
