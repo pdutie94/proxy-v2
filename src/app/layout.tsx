@@ -3,7 +3,6 @@ import "./globals.css";
 import { Toaster } from "sonner";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { SessionProvider } from "next-auth/react";
-import { PolarisProvider } from "@/components/providers/polaris-provider";
 
 export const metadata: Metadata = {
   title: "ProxyV2 - Hệ thống Quản lý Proxy Chuyên nghiệp",
@@ -20,15 +19,11 @@ export default function RootLayout({
       <body>
         <SessionProvider>
           <QueryProvider>
-            <PolarisProvider>
-              {children}
-              <Toaster richColors position="top-right" />
-            </PolarisProvider>
+            {children}
+            <Toaster richColors position="top-right" />
           </QueryProvider>
         </SessionProvider>
       </body>
     </html>
   );
 }
-
-

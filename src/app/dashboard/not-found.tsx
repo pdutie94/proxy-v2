@@ -1,8 +1,9 @@
 "use client";
 
-import { Page, EmptyState } from "@shopify/polaris";
+import { Button } from "@heroui/react";
 import { useRouter } from "next/navigation";
 import { useCallback } from "react";
+import { HelpCircle } from "lucide-react";
 
 export default function DashboardNotFound() {
   const router = useRouter();
@@ -16,21 +17,35 @@ export default function DashboardNotFound() {
   }, [router]);
 
   return (
-    <Page>
-      <EmptyState
-        heading="The page you’re looking for can’t be found"
-        action={{
-          content: 'Back to overview',
-          onAction: handleGoHome,
-        }}
-        secondaryAction={{
-          content: 'Go back',
-          onAction: handleGoBack,
-        }}
-        image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png"
-      >
-        <p>Check the web address and try again, or use the navigation to find what you need.</p>
-      </EmptyState>
-    </Page>
+    <div className="flex flex-col items-center justify-center min-h-[60vh] p-6 text-center space-y-5 bg-white border border-slate-200 rounded-xl max-w-md mx-auto my-12 shadow-sm">
+      <div className="p-4 bg-slate-50 rounded-full border border-slate-100">
+        <HelpCircle className="w-12 h-12 text-slate-400" />
+      </div>
+      
+      <div className="space-y-2">
+        <h1 className="text-base font-bold text-slate-800">Không tìm thấy trang bạn yêu cầu</h1>
+        <p className="text-xs text-slate-500 font-medium leading-relaxed max-w-xs mx-auto">
+          Vui lòng kiểm tra lại đường dẫn hoặc sử dụng menu điều hướng để tìm trang bạn cần.
+        </p>
+      </div>
+
+      <div className="flex items-center gap-2 pt-2">
+        <Button
+          size="sm"
+          onPress={handleGoBack}
+          className="cursor-pointer font-bold text-xs h-9 px-4 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+        >
+          Quay lại
+        </Button>
+        <Button
+          size="sm"
+          variant="primary"
+          onPress={handleGoHome}
+          className="cursor-pointer font-bold text-xs h-9 px-4 rounded-lg"
+        >
+          Về trang chủ
+        </Button>
+      </div>
+    </div>
   );
 }

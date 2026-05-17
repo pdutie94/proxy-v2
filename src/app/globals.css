@@ -1,10 +1,6 @@
 @import "tailwindcss";
 @import "@heroui/styles";
 @source "../../node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}";
-@import "@shopify/polaris/build/esm/styles.css";
-
-
-/* Polaris Base Overrides */
 
 html,
 body {
@@ -13,56 +9,14 @@ body {
 	font-family:
 		-apple-system, BlinkMacSystemFont, "San Francisco", "Segoe UI", Roboto,
 		"Helvetica Neue", sans-serif;
-	background-color: #f6f6f7;
+	background-color: #f8fafc;
 	margin: 0;
 	padding: 0;
 }
 
-:root {
-	--p-font-size-md: 14px;
-	--p-font-size-sm: 12px;
-	--p-font-size-xs: 12px;
-}
-
-/* Ensure Toaster doesn't clash with Polaris */
+/* Ensure Toaster has consistent typography */
 .sonner-toast {
 	font-family: inherit !important;
-}
-
-/* Fix for Polaris layout shifts in Next.js */
-.Polaris-Frame__Main {
-	min-height: 100vh;
-}
-.Polaris-Header__TitleWrapper {
-	padding-top: 0 !important;
-	margin-top: 0 !important;
-}
-
-/* Fix for Polaris icon and navigation alignment */
-.Polaris-Icon {
-	display: flex !important;
-	align-items: center !important;
-	justify-content: center !important;
-}
-
-.Polaris-Navigation__Item {
-	align-items: center !important;
-}
-
-.Polaris-Navigation__Text {
-	display: flex !important;
-	align-items: center !important;
-}
-
-/* Ensure icons in inputs are centered */
-.Polaris-TextField__Prefix {
-	display: flex !important;
-	align-items: center !important;
-}
-
-/* Fix IndexTable cell vertical alignment to top */
-.Polaris-IndexTable__TableCell {
-	vertical-align: top !important;
 }
 
 @layer components {
