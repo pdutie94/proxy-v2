@@ -16,7 +16,8 @@ import {
   useBreakpoints,
   IndexFilters,
   useSetIndexFiltersMode,
-  ChoiceList
+  ChoiceList,
+  EmptyState
 } from "@shopify/polaris";
 import { 
   DeleteIcon, 

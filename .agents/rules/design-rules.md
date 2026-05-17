@@ -2,7 +2,7 @@
 trigger: always_on
 ---
 
-# 🎨 Proxy Dashboard UI Design Rules (Flat Modern Compact System)
+# 🎨 Proxy Dashboard UI Design Rules (HeroUI Flat Modern Compact System)
 
 ## 1. Design Philosophy
 
@@ -11,8 +11,9 @@ trigger: always_on
 - Functional-first, minimal visual noise
 - Consistency > aesthetics
 - Không dùng khoảng trắng lớn kiểu “landing page”
-- **BẮT BUỘC: Sử dụng Shopify Polaris (Components & Icons)**
-- **KHÔNG: Sử dụng TailwindCSS hay Lucide Icons**
+- **BẮT BUỘC: Sử dụng HeroUI (React Components) & Lucide Icons**
+- **KHÔNG: Sử dụng Shopify Polaris hoặc Polaris Icons cho các giao diện mới**
+- **Sử dụng Tailwind CSS v4 kết hợp với HeroUI làm mặc định**
 
 ---
 
@@ -43,7 +44,7 @@ Danger: #EF4444
 
 ### Page Structure
 
-[Sidebar]  
+[Sidebar (HeroUI & Lucide)]  
 [Header (compact)]  
 [Content]
 
@@ -77,14 +78,12 @@ Muted: text-xs text-slate-500
 
 ## 6. Card System (Flat Compact)
 
-- bg-white
-- border border-slate-200
-- rounded-md
-- p-3
+- Sử dụng HeroUI `<Card shadow="none" className="border border-slate-200 rounded-md bg-white p-3">`
+- Hoặc sử dụng `div` trơn với class Tailwind: `bg-white border border-slate-200 rounded-md p-3`
 
 Rules:
 
-- No heavy shadows (optional shadow-sm only)
+- No heavy shadows (luôn set `shadow="none"` hoặc tối đa `shadow="sm"`)
 - No large padding
 - Cards are data containers only
 
@@ -92,16 +91,17 @@ Rules:
 
 ## 7. Table System (CORE COMPONENT)
 
-- Header: bg-slate-50
-- Row padding: py-2 px-3
+- Sử dụng HeroUI `<Table removeWrapper selectionMode="none" ...>`
+- Cấu trúc table: `<TableHeader>`, `<TableColumn>`, `<TableBody>`, `<TableRow>`, `<TableCell>`
+- Row padding: custom padding nhỏ (`py-2 px-3` hoặc `h-10` max) để đảm bảo mật độ thông tin cao.
 - Font: text-sm
-- Borders: horizontal only
+- Borders: horizontal border bottom (`border-b border-slate-100`)
 - Hover: bg-slate-50
 
 Rules:
 
 - Dense layout
-- No boxed tables
+- No boxed tables (luôn dùng `removeWrapper` để tránh shadow wrapper to của HeroUI)
 - No shadows
 
 ---
@@ -110,42 +110,39 @@ Rules:
 
 Input:
 
+- Sử dụng HeroUI `<Input size="sm" radius="sm" variant="bordered" classNames={{ inputWrapper: "h-9 border-slate-300" }} ...>`
 - h-9
 - text-sm
-- border border-slate-300
-- rounded-md
-- px-2.5
 - focus:ring-1 focus:ring-blue-500
 
 Label:
 
-- text-xs text-slate-600
-- mb-1
+- Render label riêng bằng `<label className="block text-xs font-medium text-slate-600 mb-1">`
+- Hoặc set `labelPlacement="outside"` trong HeroUI Input.
 
 ---
 
 ## 9. Button System (SMALL SIZE)
 
+Sử dụng HeroUI `<Button size="sm" radius="sm" ...>`
+
 Primary:
 
+- `color="primary"` (mặc định xanh dương)
 - h-9 px-3
 - text-sm
-- bg-blue-600 text-white
-- hover:bg-blue-700
-- rounded-md
 
 Secondary:
 
+- `variant="bordered"` hoặc `variant="flat"`
 - h-9 px-3
 - text-sm
-- bg-white border border-slate-300
-- text-slate-700
 
 Danger:
 
+- `color="danger"`
 - h-9 px-3
 - text-sm
-- bg-red-600 text-white
 
 ---
 
@@ -154,6 +151,7 @@ Danger:
 - Width: 220–240px
 - Font: text-sm
 - Padding: small
+- Sử dụng Lucide Icons làm icon chỉ định.
 
 Active state:
 

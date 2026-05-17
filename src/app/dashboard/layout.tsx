@@ -1,4 +1,4 @@
-import { DashboardContainer } from '@/components/layout/dashboard-container';
+import { DashboardLayoutHeroUI } from '@/components/layout/dashboard-layout-heroui';
 
 export default function DashboardLayout({
   children,
@@ -6,8 +6,9 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <DashboardContainer>
+    <DashboardLayoutHeroUI>
       {children}
-    </DashboardContainer>
+    </DashboardLayoutHeroUI>
   );
 }
+

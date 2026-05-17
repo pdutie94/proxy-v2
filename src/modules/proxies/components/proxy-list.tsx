@@ -25,7 +25,6 @@ import {
 } from "@shopify/polaris";
 import { DeleteIcon, EditIcon, RefreshIcon, ClipboardIcon, SearchIcon, NoteIcon, ExportIcon, CalendarIcon, CheckIcon } from "@shopify/polaris-icons";
 import { format } from "date-fns";
-import { Proxy } from '@prisma/client';
 import React, { useState, useCallback, useMemo } from 'react';
 import { JobProgressModal } from '@/components/jobs/job-progress-modal';
 import { toast } from 'sonner';
@@ -36,7 +35,7 @@ import { getCountdown } from '@/utils/date';
 import { ProxyWithServer, AuthUser } from '@/types';
 
 interface ProxyListProps {
-  onEdit: (proxy: any) => void;
+  onEdit: (proxy: ProxyWithServer) => void;
   onAdd?: () => void;
 }
 
