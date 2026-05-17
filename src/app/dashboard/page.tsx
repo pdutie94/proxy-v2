@@ -21,7 +21,7 @@ import {
   Layers,
   Cpu
 } from "lucide-react";
-import { Button } from "@heroui/react";
+import { Button, Table } from "@heroui/react";
 import Link from "next/link";
 
 type LogEntry = ServerJob & {
@@ -40,29 +40,34 @@ export default function DashboardPage() {
   const activeProxies = useMemo(() => proxies.filter(p => p.status === 'ACTIVE').length, [proxies]);
   const onlineServers = useMemo(() => servers.filter(s => s.status === 'ONLINE').length, [servers]);
 
-  const stats = [
-    {
-      title: "Máy chủ trực tuyến",
-      value: `${onlineServers}/${servers.length}`,
-      icon: ServerIcon,
-      iconColor: "text-blue-600",
-      iconBg: "bg-blue-50/80 border-blue-100"
-    },
-    {
-      title: "Proxy hoạt động",
-      value: activeProxies.toString(),
-      icon: ShieldCheck,
-      iconColor: "text-green-600",
-      iconBg: "bg-green-50/80 border-green-100"
-    },
-    {
-      title: "Tổng người dùng",
-      value: users.length.toString(),
-      icon: Users,
-      iconColor: "text-amber-600",
-      iconBg: "bg-amber-50/80 border-amber-100"
-    }
-  ];
+  const stats = useMemo(() => {
+    const serverPercentage = servers.length > 0 ? Math.round((onlineServers / servers.length) * 100) : 0;
+    const proxyPercentage = proxies.length > 0 ? Math.round((activeProxies / proxies.length) * 100) : 0;
+
+    return [
+      {
+        title: "Máy chủ trực tuyến",
+        value: `${onlineServers}/${servers.length}`,
+        badgeText: `↑ ${serverPercentage}%`,
+        badgeBg: "bg-green-50/70 border-green-200/50",
+        badgeColor: "text-green-600"
+      },
+      {
+        title: "Proxy hoạt động",
+        value: activeProxies.toString(),
+        badgeText: `↑ ${proxyPercentage}%`,
+        badgeBg: "bg-green-50/70 border-green-200/50",
+        badgeColor: "text-green-600"
+      },
+      {
+        title: "Tổng người dùng",
+        value: users.length.toString(),
+        badgeText: "👥 Member",
+        badgeBg: "bg-blue-50/70 border-blue-200/50",
+        badgeColor: "text-blue-600"
+      }
+    ];
+  }, [onlineServers, servers.length, activeProxies, proxies.length, users.length]);
 
   const getJobTitle = (job: LogEntry) => {
     switch (job.type) {
@@ -117,15 +122,14 @@ export default function DashboardPage() {
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {stats.map((stat, index) => {
-          const IconComponent = stat.icon;
           return (
-            <div key={index} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center gap-4">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border ${stat.iconBg}`}>
-                <IconComponent className={`w-5 h-5 ${stat.iconColor}`} />
-              </div>
-              <div className="space-y-0.5">
-                <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">{stat.title}</p>
-                <p className="text-xl font-bold text-slate-900 tracking-tight">{stat.value}</p>
+            <div key={index} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-[sm_0_1px_2px_0_rgba(0,0,0,0.05)] flex flex-col justify-between min-h-[92px]">
+              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">{stat.title}</p>
+              <div className="flex items-baseline justify-between mt-1">
+                <p className="text-2xl font-bold text-slate-900 tracking-tight leading-none">{stat.value}</p>
+                <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold ${stat.badgeBg} ${stat.badgeColor}`}>
+                  {stat.badgeText}
+                </span>
               </div>
             </div>
           );
@@ -140,32 +144,30 @@ export default function DashboardPage() {
             <h2 className="text-sm font-semibold text-slate-800">Hoạt động gần đây</h2>
           </div>
 
-          <div className="w-full overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-slate-100 text-slate-400 text-[10px] font-bold uppercase tracking-wider bg-slate-50/50">
-                  <th className="py-2.5 px-3">Thời gian</th>
-                  <th className="py-2.5 px-3">Sự kiện</th>
-                  <th className="py-2.5 px-3 text-center">Trạng thái</th>
-                  <th className="py-2.5 px-3 text-right"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-xs">
+          <div className="w-full">
+            <Table className="w-full text-left border-collapse">
+              <Table.Header className="border-b border-slate-100 text-slate-400 text-[10px] font-bold uppercase tracking-wider bg-slate-50/50">
+                <Table.Column className="py-2.5 px-3">Thời gian</Table.Column>
+                <Table.Column className="py-2.5 px-3">Sự kiện</Table.Column>
+                <Table.Column className="py-2.5 px-3 text-center">Trạng thái</Table.Column>
+                <Table.Column className="py-2.5 px-3 text-right"></Table.Column>
+              </Table.Header>
+              <Table.Body className="divide-y divide-slate-100 text-xs">
                 {logs.map((job: LogEntry) => (
-                  <tr key={job.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-2.5 px-3 text-slate-500 whitespace-nowrap">
+                  <Table.Row key={job.id} className="hover:bg-slate-50/80 transition-colors border-b border-slate-100 last:border-b-0">
+                    <Table.Cell className="py-2.5 px-3 text-slate-500 whitespace-nowrap">
                       {formatDistanceToNow(new Date(job.createdAt), { addSuffix: true, locale: vi })}
-                    </td>
-                    <td className="py-2.5 px-3 font-semibold text-slate-700">
+                    </Table.Cell>
+                    <Table.Cell className="py-2.5 px-3 font-semibold text-slate-700">
                       <div className="flex items-center gap-2">
                         <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                         <span>{getJobTitle(job)}</span>
                       </div>
-                    </td>
-                    <td className="py-2.5 px-3 text-center">
+                    </Table.Cell>
+                    <Table.Cell className="py-2.5 px-3 text-center">
                       {getJobBadge(job.status)}
-                    </td>
-                    <td className="py-2.5 px-3 text-right">
+                    </Table.Cell>
+                    <Table.Cell className="py-2.5 px-3 text-right">
                       <button
                         onClick={() => setSelectedLog(job)}
                         className="inline-flex items-center justify-center p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer transition-colors"
@@ -173,18 +175,18 @@ export default function DashboardPage() {
                       >
                         <Eye className="w-3.5 h-3.5" />
                       </button>
-                    </td>
-                  </tr>
+                    </Table.Cell>
+                  </Table.Row>
                 ))}
                 {logs.length === 0 && (
-                  <tr>
-                    <td colSpan={4} className="py-8 text-center text-slate-400 font-medium">
+                  <Table.Row>
+                    <Table.Cell colSpan={4} className="py-8 text-center text-slate-400 font-medium">
                       Chưa có hoạt động nào
-                    </td>
-                  </tr>
+                    </Table.Cell>
+                  </Table.Row>
                 )}
-              </tbody>
-            </table>
+              </Table.Body>
+            </Table>
           </div>
 
           <div className="flex justify-center border-t border-slate-100 pt-3">

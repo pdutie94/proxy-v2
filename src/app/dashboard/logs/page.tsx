@@ -11,7 +11,7 @@ import {
   Trash2, 
   Server as ServerIcon 
 } from "lucide-react";
-import { Button } from "@heroui/react";
+import { Button, Table } from "@heroui/react";
 
 type LogEntry = ServerJob & {
   server?: Server | null;
@@ -162,30 +162,28 @@ export default function LogsPage() {
         </div>
 
         {/* Table representation */}
-        <div className="w-full overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b border-slate-100 text-slate-400 text-[10px] font-bold uppercase tracking-wider bg-slate-50/50">
-                <th className="py-2.5 px-3">Thời gian</th>
-                <th className="py-2.5 px-3">Loại công việc</th>
-                <th className="py-2.5 px-3">Máy chủ</th>
-                <th className="py-2.5 px-3">Trạng thái</th>
-                <th className="py-2.5 px-3 text-right">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 text-xs">
+        <div className="w-full">
+          <Table className="w-full text-left border-collapse">
+            <Table.Header className="border-b border-slate-100 text-slate-400 text-[10px] font-bold uppercase tracking-wider bg-slate-50/50">
+              <Table.Column className="py-2.5 px-3">Thời gian</Table.Column>
+              <Table.Column className="py-2.5 px-3">Loại công việc</Table.Column>
+              <Table.Column className="py-2.5 px-3">Máy chủ</Table.Column>
+              <Table.Column className="py-2.5 px-3">Trạng thái</Table.Column>
+              <Table.Column className="py-2.5 px-3 text-right">Thao tác</Table.Column>
+            </Table.Header>
+            <Table.Body className="divide-y divide-slate-100 text-xs">
               {paginatedLogs.map((log: LogEntry) => (
-                <tr key={log.id} className="hover:bg-slate-50/80 transition-colors">
-                  <td className="py-2.5 px-3 text-slate-500 whitespace-nowrap">
+                <Table.Row key={log.id} className="hover:bg-slate-50/80 transition-colors border-b border-slate-100 last:border-b-0">
+                  <Table.Cell className="py-2.5 px-3 text-slate-500 whitespace-nowrap">
                     {format(new Date(log.createdAt), 'dd/MM/yyyy HH:mm:ss')}
-                  </td>
-                  <td className="py-2.5 px-3 font-semibold text-slate-700">
+                  </Table.Cell>
+                  <Table.Cell className="py-2.5 px-3 font-semibold text-slate-700">
                     <div className="flex items-center gap-2">
                       <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                       <span>{getJobTitle(log)}</span>
                     </div>
-                  </td>
-                  <td className="py-2.5 px-3 text-slate-600 font-medium whitespace-nowrap">
+                  </Table.Cell>
+                  <Table.Cell className="py-2.5 px-3 text-slate-600 font-medium whitespace-nowrap">
                     {log.server ? (
                       <div className="flex items-center gap-1.5">
                         <ServerIcon className="w-3 h-3 text-slate-400 shrink-0" />
@@ -194,11 +192,11 @@ export default function LogsPage() {
                     ) : (
                       "-"
                     )}
-                  </td>
-                  <td className="py-2.5 px-3">
+                  </Table.Cell>
+                  <Table.Cell className="py-2.5 px-3">
                     {getStatusBadge(log.status)}
-                  </td>
-                  <td className="py-2.5 px-3 text-right">
+                  </Table.Cell>
+                  <Table.Cell className="py-2.5 px-3 text-right">
                     <button
                       onClick={() => setSelectedLog(log)}
                       className="inline-flex items-center justify-center p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer transition-colors"
@@ -206,18 +204,18 @@ export default function LogsPage() {
                     >
                       <Eye className="w-3.5 h-3.5" />
                     </button>
-                  </td>
-                </tr>
+                  </Table.Cell>
+                </Table.Row>
               ))}
               {paginatedLogs.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="py-8 text-center text-slate-400 font-medium">
+                <Table.Row>
+                  <Table.Cell colSpan={5} className="py-8 text-center text-slate-400 font-medium">
                     Chưa có nhật ký nào phù hợp
-                  </td>
-                </tr>
+                  </Table.Cell>
+                </Table.Row>
               )}
-            </tbody>
-          </table>
+            </Table.Body>
+          </Table>
         </div>
 
         {/* Compact Flat Pagination Footer */}
