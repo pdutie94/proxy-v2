@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Server, Location } from '@prisma/client';
-import { toast } from 'sonner';
+import { toast } from '@heroui/react';
 
 export type ServerWithLocation = Server & {
   location?: Location | null;
@@ -43,7 +43,7 @@ export function useServers() {
       toast.success('Đã thêm máy chủ');
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
+      toast.danger(error instanceof Error ? error.message : 'Có lỗi xảy ra');
     },
   });
 
@@ -63,7 +63,7 @@ export function useServers() {
       toast.success('Đã cập nhật máy chủ');
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
+      toast.danger(error instanceof Error ? error.message : 'Có lỗi xảy ra');
     },
   });
 
@@ -80,7 +80,7 @@ export function useServers() {
       toast.success('Đã xóa máy chủ');
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
+      toast.danger(error instanceof Error ? error.message : 'Có lỗi xảy ra');
     },
   });
 
@@ -98,7 +98,7 @@ export function useServers() {
       toast.success('Đã bắt đầu thiết lập máy chủ');
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
+      toast.danger(error instanceof Error ? error.message : 'Có lỗi xảy ra');
     },
   });
 
@@ -117,7 +117,7 @@ export function useServers() {
       toast.success('Đã bắt đầu Reset máy chủ');
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
+      toast.danger(error instanceof Error ? error.message : 'Có lỗi xảy ra');
     },
   });
 
@@ -135,7 +135,7 @@ export function useServers() {
       toast.success('Đã bắt đầu đồng bộ cổng');
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
+      toast.danger(error instanceof Error ? error.message : 'Có lỗi xảy ra');
     },
   });
 

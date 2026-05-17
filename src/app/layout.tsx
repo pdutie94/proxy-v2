@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { Toaster } from "sonner";
+import { ToastProvider } from "@heroui/react";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { SessionProvider } from "next-auth/react";
 
@@ -26,7 +26,7 @@ export default function RootLayout({
         <SessionProvider>
           <QueryProvider>
             {children}
-            <Toaster richColors position="top-right" />
+            <ToastProvider placement="bottom" />
           </QueryProvider>
         </SessionProvider>
       </body>

@@ -9,7 +9,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { locationSchema, LocationInput } from '../schemas/location.schema';
 import { createLocationAction, deleteLocationAction } from '../actions/location.action';
-import { toast } from 'sonner';
+import { toast } from '@heroui/react';
 
 interface Location {
   id: string;
@@ -56,7 +56,7 @@ export function LocationManagement({ initialLocations }: LocationManagementProps
       setIsModalOpen(false);
       reset();
     } else {
-      toast.error(result.message || 'Có lỗi xảy ra');
+      toast.danger(result.message || 'Có lỗi xảy ra');
     }
   };
 
@@ -70,7 +70,7 @@ export function LocationManagement({ initialLocations }: LocationManagementProps
       setLocations(locations.filter(l => l.id !== deleteLoc.id));
       setDeleteLoc(null);
     } else {
-      toast.error(result.message || 'Có lỗi xảy ra');
+      toast.danger(result.message || 'Có lỗi xảy ra');
     }
     setIsDeleting(null);
   }, [deleteLoc, locations]);

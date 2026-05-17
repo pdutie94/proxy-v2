@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@heroui/react';
 
 export default function VerifyEmailPage() {
   const [code, setCode] = useState('');
@@ -10,7 +10,7 @@ export default function VerifyEmailPage() {
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
     if (code.length !== 6) {
-      toast.error("Vui lòng nhập mã gồm 6 chữ số");
+      toast.danger("Vui lòng nhập mã OTP gồm 6 chữ số");
       return;
     }
 
@@ -28,10 +28,10 @@ export default function VerifyEmailPage() {
         // Force refresh session by reloading or redirecting to proxies page
         window.location.href = '/user/proxies';
       } else {
-        toast.error(data.message || "Xác thực thất bại");
+        toast.danger(data.message || "Xác thực thất bại");
       }
     } catch {
-      toast.error("Lỗi kết nối");
+      toast.danger("Lỗi kết nối");
     } finally {
       setIsLoading(false);
     }

@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { User } from '@prisma/client';
-import { toast } from 'sonner';
+import { toast } from '@heroui/react';
 
 export function useUsers() {
   const queryClient = useQueryClient();
@@ -31,7 +31,7 @@ export function useUsers() {
       toast.success('Đã thêm người dùng thành công');
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
+      toast.danger(error instanceof Error ? error.message : 'Có lỗi xảy ra');
     },
   });
 
@@ -51,7 +51,7 @@ export function useUsers() {
       toast.success('Đã cập nhật người dùng');
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
+      toast.danger(error instanceof Error ? error.message : 'Có lỗi xảy ra');
     },
   });
 
@@ -68,7 +68,7 @@ export function useUsers() {
       toast.success('Đã khóa tài khoản người dùng');
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
+      toast.danger(error instanceof Error ? error.message : 'Có lỗi xảy ra');
     },
   });
 
@@ -85,7 +85,7 @@ export function useUsers() {
       toast.success('Đã khôi phục tài khoản người dùng');
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
+      toast.danger(error instanceof Error ? error.message : 'Có lỗi xảy ra');
     },
   });
 

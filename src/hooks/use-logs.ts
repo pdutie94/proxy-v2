@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { toast } from '@heroui/react';
 
 export function useLogs(limit = 10, serverId?: string) {
   const queryClient = useQueryClient();
@@ -31,7 +31,7 @@ export function useLogs(limit = 10, serverId?: string) {
       toast.success('Đã dọn dẹp toàn bộ nhật ký');
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
+      toast.danger(error instanceof Error ? error.message : 'Có lỗi xảy ra');
     }
   });
 

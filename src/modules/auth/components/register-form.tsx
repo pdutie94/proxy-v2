@@ -8,7 +8,7 @@ import { registerAction } from '../actions/register.action';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { toast } from 'sonner';
+import { toast } from '@heroui/react';
 import { Input, Button } from "@heroui/react";
 
 
@@ -29,7 +29,7 @@ export function RegisterForm() {
       setIsSuccess(true);
       toast.success(result.message);
     } else {
-      toast.error(result.message);
+      toast.danger(result.message);
     }
   };
 

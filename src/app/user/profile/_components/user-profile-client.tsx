@@ -4,7 +4,7 @@ import { Icon } from '@iconify/react';
 import { Button, Card } from '@heroui/react';
 
 import { useState, useCallback } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@heroui/react';
 import { updateProfileAction } from '@/modules/auth/actions/profile.action';
 
 interface User {
@@ -32,7 +32,7 @@ export function UserProfileClient({ user }: UserProfileClientProps) {
 
   const handleSave = useCallback(async () => {
     if (newPassword && newPassword !== confirmPassword) {
-      toast.error('Mật khẩu mới không khớp!');
+      toast.danger('Mật khẩu mới không khớp!');
       return;
     }
 
@@ -51,10 +51,10 @@ export function UserProfileClient({ user }: UserProfileClientProps) {
         setNewPassword('');
         setConfirmPassword('');
       } else {
-        toast.error(result.message);
+        toast.danger(result.message);
       }
     } catch {
-      toast.error('Có lỗi xảy ra khi cập nhật hồ sơ.');
+      toast.danger('Có lỗi xảy ra khi cập nhật hồ sơ.');
     } finally {
       setLoading(false);
     }

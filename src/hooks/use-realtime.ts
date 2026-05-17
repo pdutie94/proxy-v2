@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@heroui/react';
 import { useQueryClient } from '@tanstack/react-query';
 
 interface JobEventData {
@@ -33,9 +33,9 @@ export function useRealtime() {
           if (data.status === 'COMPLETED') {
             toast.success(data.message);
           } else if (data.status === 'FAILED') {
-            toast.error(data.message);
+            toast.danger(data.message);
           } else if (data.status === 'ACTIVE') {
-            toast.info(data.message);
+            toast(data.message);
           }
 
           // Cập nhật lại UI bằng cách làm mới data React Query

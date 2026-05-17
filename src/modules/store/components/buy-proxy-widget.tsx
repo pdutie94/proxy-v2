@@ -5,7 +5,7 @@ import { useSession } from 'next-auth/react';
 import { Modal } from '@/components/ui/modal';
 import { LoginForm } from '@/modules/auth/components/login-form-tw';
 import { RegisterForm } from '@/modules/auth/components/register-form';
-import { toast } from 'sonner';
+import { toast } from '@heroui/react';
 import { createPendingOrderAction, payOrderAction } from '../actions/purchase.action';
 import { useRouter } from 'next/navigation';
 import { CustomSelect } from '@/components/ui/custom-select';
@@ -95,10 +95,10 @@ export function BuyProxyWidget() {
         setOrderId(result.orderId);
         setModal('checkout');
       } else {
-        toast.error(result.message || 'Lỗi khi tạo đơn hàng');
+        toast.danger(result.message || 'Lỗi khi tạo đơn hàng');
       }
     } catch {
-      toast.error('Có lỗi xảy ra.');
+      toast.danger('Có lỗi xảy ra.');
     } finally {
       setLoading(false);
     }
@@ -118,7 +118,7 @@ export function BuyProxyWidget() {
         router.push('/user/proxies');
         router.refresh();
       } else {
-        toast.error(result.message);
+        toast.danger(result.message);
         if (result.message?.includes('Số dư')) {
            setModal(null);
            setOrderId(null);
@@ -126,7 +126,7 @@ export function BuyProxyWidget() {
         }
       }
     } catch {
-      toast.error('Có lỗi xảy ra khi thanh toán.');
+      toast.danger('Có lỗi xảy ra khi thanh toán.');
     } finally {
       setLoading(false);
     }

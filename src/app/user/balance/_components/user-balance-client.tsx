@@ -4,7 +4,7 @@ import { Icon } from '@iconify/react';
 import { Button, Card } from '@heroui/react';
 
 import { addTestBalanceAction } from '@/modules/auth/actions/test-balance.action';
-import { toast } from 'sonner';
+import { toast } from '@heroui/react';
 import { useState } from 'react';
 
 interface UserBalanceClientProps {
@@ -26,7 +26,7 @@ export function UserBalanceClient({ user }: UserBalanceClientProps) {
       if (res.success) {
         toast.success(res.message);
       } else {
-        toast.error(res.message);
+        toast.danger(res.message);
       }
     } finally {
       setLoading(false);

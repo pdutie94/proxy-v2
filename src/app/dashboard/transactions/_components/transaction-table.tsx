@@ -4,7 +4,7 @@ import { Icon } from '@iconify/react';
 import { Table, Chip, Button, Popover, PopoverTrigger, PopoverContent, Pagination } from '@heroui/react';
 import { format } from 'date-fns';
 import { approveTransactionAction, rejectTransactionAction } from '@/modules/wallet/actions/admin-transaction.action';
-import { toast } from 'sonner';
+import { toast } from '@heroui/react';
 import { useState } from 'react';
 
 import { TransactionWithUser } from '@/types';
@@ -46,7 +46,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
       if (result.success) {
         toast.success(result.message);
       } else {
-        toast.error(result.message);
+        toast.danger(result.message);
       }
     } finally {
       setLoadingId(null);
@@ -60,7 +60,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
       if (result.success) {
         toast.success(result.message);
       } else {
-        toast.error(result.message);
+        toast.danger(result.message);
       }
     } finally {
       setLoadingId(null);

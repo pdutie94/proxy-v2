@@ -3,7 +3,7 @@
 import { Table, Chip } from '@heroui/react';
 import { Clipboard, FileText, Eye } from 'lucide-react';
 import { format } from 'date-fns';
-import { toast } from 'sonner';
+import { toast } from '@heroui/react';
 import { ProxyWithServer } from '@/types';
 import { copyToClipboard } from '@/utils/clipboard';
 import { getCountdown } from '@/utils/date';
@@ -20,7 +20,7 @@ export function UserProxyTable({ proxies }: UserProxyTableProps) {
     const text = `${proxy.server.host}:${proxy.port}:${proxy.username}:${proxy.password}`;
     copyToClipboard(text).then(success => {
       if (success) toast.success('Đã sao chép Proxy!');
-      else toast.error('Lỗi khi sao chép');
+      else toast.danger('Lỗi khi sao chép');
     });
   };
 

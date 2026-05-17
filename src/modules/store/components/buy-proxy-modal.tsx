@@ -4,7 +4,7 @@ import { Icon } from '@iconify/react';
 import { useState, useMemo } from 'react';
 import { Button } from '@heroui/react';
 
-import { toast } from 'sonner';
+import { toast } from '@heroui/react';
 import { createPendingOrderAction, payOrderAction } from '../actions/purchase.action';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
@@ -79,7 +79,7 @@ export function BuyProxyModal({ open, onClose }: BuyProxyModalProps) {
           setOrderId(result.orderId);
           setStep(1);
         } else {
-          toast.error(result.message || 'Lỗi khi tạo đơn hàng');
+          toast.danger(result.message || 'Lỗi khi tạo đơn hàng');
         }
         return;
       }
@@ -97,7 +97,7 @@ export function BuyProxyModal({ open, onClose }: BuyProxyModalProps) {
         router.refresh(); 
       } 
       else { 
-        toast.error(result.message); 
+        toast.danger(result.message); 
         if (result.message?.includes('Số dư')) {
            onClose();
            setStep(0);
@@ -106,7 +106,7 @@ export function BuyProxyModal({ open, onClose }: BuyProxyModalProps) {
         }
       }
     } catch { 
-      toast.error('Có lỗi xảy ra khi thanh toán.'); 
+      toast.danger('Có lỗi xảy ra khi thanh toán.'); 
     } finally { 
       setLoading(false); 
     }

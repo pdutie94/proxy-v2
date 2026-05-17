@@ -8,7 +8,7 @@ import { Server } from '@prisma/client';
 import { useState, useCallback, useMemo } from 'react';
 import { JobProgressModal } from '@/components/jobs/job-progress-modal';
 import { useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { toast } from '@heroui/react';
 
 interface ServerListProps {
   onEdit: (server: Server) => void;
@@ -46,7 +46,19 @@ export function ServerList({ onEdit, onAdd }: ServerListProps) {
       prev.includes(col) ? prev.filter(c => c !== col) : [...prev, col]
     );
   };
+
   const isColumnVisible = (col: string) => visibleColumns.includes(col);
+
+  const renderedColumnsCount = useMemo(() => {
+    let count = 1; // Actions (Thao tác) column is always rendered
+    if (isColumnVisible('name')) count++;
+    if (isColumnVisible('host')) count++;
+    if (isColumnVisible('location')) count++;
+    if (isColumnVisible('status')) count++;
+    if (isColumnVisible('maxProxies')) count++;
+    if (isColumnVisible('lastPort')) count++;
+    return count;
+  }, [visibleColumns]);
 
   const statusOptions = [
     { label: 'Trực tuyến', value: 'ONLINE' },
@@ -537,7 +549,7 @@ export function ServerList({ onEdit, onAdd }: ServerListProps) {
               ))}
               {paginatedServers.length === 0 && (
                 <Table.Row>
-                  <Table.Cell colSpan={7} className="py-12 text-center text-slate-400 font-medium">
+                  <Table.Cell colSpan={renderedColumnsCount} className="py-12 text-center text-slate-400 font-medium">
                     Không tìm thấy máy chủ nào.
                   </Table.Cell>
                 </Table.Row>

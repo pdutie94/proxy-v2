@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { toast } from '@heroui/react';
 
 export function useSubnets(serverId: string) {
   const queryClient = useQueryClient();
@@ -29,7 +29,7 @@ export function useSubnets(serverId: string) {
       queryClient.invalidateQueries({ queryKey: ['subnets', serverId] });
       toast.success('Đã thêm subnet thành công');
     },
-    onError: (error) => toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra'),
+    onError: (error) => toast.danger(error instanceof Error ? error.message : 'Có lỗi xảy ra'),
   });
 
   const deleteMutation = useMutation({
@@ -45,7 +45,7 @@ export function useSubnets(serverId: string) {
       queryClient.invalidateQueries({ queryKey: ['subnets', serverId] });
       toast.success('Đã xóa subnet');
     },
-    onError: (error) => toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra'),
+    onError: (error) => toast.danger(error instanceof Error ? error.message : 'Có lỗi xảy ra'),
   });
 
   const updateStatusMutation = useMutation({
@@ -62,7 +62,7 @@ export function useSubnets(serverId: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['subnets', serverId] });
     },
-    onError: (error) => toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra'),
+    onError: (error) => toast.danger(error instanceof Error ? error.message : 'Có lỗi xảy ra'),
   });
 
   return {

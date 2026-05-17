@@ -7,7 +7,7 @@ import { Icon } from "@iconify/react";
 import { format } from "date-fns";
 import React, { useState, useCallback, useMemo } from 'react';
 import { JobProgressModal } from '@/components/jobs/job-progress-modal';
-import { toast } from 'sonner';
+import { toast } from '@heroui/react';
 import { useSession } from 'next-auth/react';
 import { copyToClipboard } from '@/utils/clipboard';
 import { getCountdown } from '@/utils/date';
@@ -82,6 +82,16 @@ export function ProxyList({ onEdit }: ProxyListProps) {
   };
   const isColumnVisible = (col: string) => visibleColumns.includes(col);
 
+  const renderedColumnsCount = useMemo(() => {
+    let count = 2; // Selection checkbox + Thao tác (Actions)
+    if (isColumnVisible('server')) count++;
+    if (isColumnVisible('info')) count++;
+    if (isColumnVisible('expiration')) count++;
+    if (isColumnVisible('status')) count++;
+    if (isColumnVisible('comment')) count++;
+    if (isColumnVisible('user') && userRole === 'ADMIN') count++;
+    return count;
+  }, [visibleColumns, userRole]);
 
   const onHandleQueryValueChange = useCallback((value: string) => {
     setQueryValue(value);
@@ -249,7 +259,7 @@ export function ProxyList({ onEdit }: ProxyListProps) {
         toast.success(`Đã copy ${selectedProxies.length} proxy vào bộ nhớ tạm`);
         setSelectedKeys(new Set());
       } else {
-        toast.error('Không thể copy vào bộ nhớ tạm');
+        toast.danger('Không thể copy vào bộ nhớ tạm');
       }
     });
   }, [selectedIds, filteredProxies]);
@@ -316,19 +326,19 @@ export function ProxyList({ onEdit }: ProxyListProps) {
     switch (status) {
       case 'ACTIVE':
         return (
-          <Chip size="sm" variant="soft" color="success" className="font-semibold text-[10px] uppercase">
+          <Chip size="sm" variant="soft" color="success" className="font-medium text-[10px] uppercase">
             Hoạt động
           </Chip>
         );
       case 'CREATING':
         return (
-          <Chip size="sm" variant="soft" color="warning" className="font-semibold text-[10px] uppercase animate-pulse">
+          <Chip size="sm" variant="soft" color="warning" className="font-medium text-[10px] uppercase animate-pulse">
             Đang tạo
           </Chip>
         );
       default:
         return (
-          <Chip size="sm" variant="soft" color="danger" className="font-semibold text-[10px] uppercase">
+          <Chip size="sm" variant="soft" color="danger" className="font-medium text-[10px] uppercase">
             Lỗi
           </Chip>
         );
@@ -345,56 +355,56 @@ export function ProxyList({ onEdit }: ProxyListProps) {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
             </span>
-            <span>Đã chọn {selectedIds.length} proxy</span>
+            <span className="text-sm font-medium">Đã chọn {selectedIds.length} proxy</span>
           </div>
           <div className="flex flex-wrap items-center gap-1.5">
             <Button
               size="sm"
               onPress={handleCopyProxies}
-              className="h-7 px-2.5 text-xs font-medium bg-white hover:bg-blue-50 border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-200 rounded-md transition-all flex items-center gap-1.5 cursor-pointer shadow-none"
+              className="h-7 px-2.5 text-sm font-medium bg-white hover:bg-blue-50 border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-200 rounded-md transition-all flex items-center gap-1.5 cursor-pointer shadow-none"
             >
-              <Icon icon="lucide:clipboard" width={12} height={12} className="shrink-0" />
+              <Icon icon="lucide:clipboard" width={14} height={14} className="shrink-0" />
               <span>Copy</span>
             </Button>
             <Button
               size="sm"
               onPress={handleExportProxies}
-              className="h-7 px-2.5 text-xs font-medium bg-white hover:bg-blue-50 border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-200 rounded-md transition-all flex items-center gap-1.5 cursor-pointer shadow-none"
+              className="h-7 px-2.5 text-sm font-medium bg-white hover:bg-blue-50 border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-200 rounded-md transition-all flex items-center gap-1.5 cursor-pointer shadow-none"
             >
-              <Icon icon="lucide:download" width={12} height={12} className="shrink-0" />
+              <Icon icon="lucide:download" width={14} height={14} className="shrink-0" />
               <span>Xuất file</span>
             </Button>
             <Button
               size="sm"
               onPress={() => setActiveRenewModal(true)}
-              className="h-7 px-2.5 text-xs font-medium bg-white hover:bg-blue-50 border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-200 rounded-md transition-all flex items-center gap-1.5 cursor-pointer shadow-none"
+              className="h-7 px-2.5 text-sm font-medium bg-white hover:bg-blue-50 border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-200 rounded-md transition-all flex items-center gap-1.5 cursor-pointer shadow-none"
             >
-              <Icon icon="lucide:calendar" width={12} height={12} className="shrink-0" />
+              <Icon icon="lucide:calendar" width={14} height={14} className="shrink-0" />
               <span>Gia hạn</span>
             </Button>
             <Button
               size="sm"
               onPress={() => handleBulkToggleAutoRenew(true)}
-              className="h-7 px-2.5 text-xs font-medium bg-white hover:bg-emerald-50 border border-slate-200 text-slate-600 hover:text-emerald-600 hover:border-emerald-200 rounded-md transition-all flex items-center gap-1.5 cursor-pointer shadow-none"
+              className="h-7 px-2.5 text-sm font-medium bg-white hover:bg-emerald-50 border border-slate-200 text-slate-600 hover:text-emerald-600 hover:border-emerald-200 rounded-md transition-all flex items-center gap-1.5 cursor-pointer shadow-none"
             >
-              <Icon icon="lucide:toggle-right" width={12} height={12} className="text-emerald-500 shrink-0" />
+              <Icon icon="lucide:toggle-right" width={14} height={14} className="text-emerald-500 shrink-0" />
               <span>Bật tự động</span>
             </Button>
             <Button
               size="sm"
               onPress={() => handleBulkToggleAutoRenew(false)}
-              className="h-7 px-2.5 text-xs font-medium bg-white hover:bg-slate-100 border border-slate-200 text-slate-600 hover:text-slate-800 hover:border-slate-300 rounded-md transition-all flex items-center gap-1.5 cursor-pointer shadow-none"
+              className="h-7 px-2.5 text-sm font-medium bg-white hover:bg-slate-100 border border-slate-200 text-slate-600 hover:text-slate-800 hover:border-slate-300 rounded-md transition-all flex items-center gap-1.5 cursor-pointer shadow-none"
             >
-              <Icon icon="lucide:toggle-left" width={12} height={12} className="text-slate-400 shrink-0" />
+              <Icon icon="lucide:toggle-left" width={14} height={14} className="text-slate-400 shrink-0" />
               <span>Tắt tự động</span>
             </Button>
             {canDelete && (
               <Button
                 size="sm"
                 onPress={handleBulkDeleteClick}
-                className="h-7 px-2.5 text-xs font-semibold bg-red-50 hover:bg-red-100 border border-red-100 text-red-600 hover:text-red-700 rounded-md transition-all flex items-center gap-1.5 cursor-pointer shadow-none"
+                className="h-7 px-2.5 text-sm font-medium bg-red-50 hover:bg-red-100 border border-red-100 text-red-600 hover:text-red-700 rounded-md transition-all flex items-center gap-1.5 cursor-pointer shadow-none"
               >
-                <Icon icon="lucide:trash-2" width={12} height={12} className="shrink-0" />
+                <Icon icon="lucide:trash-2" width={14} height={14} className="shrink-0" />
                 <span>Xóa</span>
               </Button>
             )}
@@ -413,16 +423,15 @@ export function ProxyList({ onEdit }: ProxyListProps) {
           {/* Server Filter Dropdown */}
           <Popover>
             <PopoverTrigger>
-              <button className={`h-8 px-2.5 text-xs font-semibold rounded-lg flex items-center gap-1.5 cursor-pointer outline-none transition-all duration-150 shadow-none ${
+              <button className={`h-8 px-2.5 text-sm font-medium rounded-lg flex items-center gap-1.5 cursor-pointer outline-none transition-all duration-150 shadow-none ${
                 selectedServerId.length > 0 ? 'bg-blue-50/50 border border-blue-200 text-blue-600' : 'bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 text-slate-600'
               }`}>
-                <Icon icon="lucide:server" width={14} height={14} className={selectedServerId.length > 0 ? 'text-blue-500' : 'text-slate-400'} />
+                <Icon icon="lucide:server" width={16} height={16} className={selectedServerId.length > 0 ? 'text-blue-500' : 'text-slate-400'} />
                 <span>{serverLabel}</span>
-                <Icon icon="lucide:chevron-down" width={12} height={12} className={selectedServerId.length > 0 ? 'text-blue-400' : 'text-slate-400'} />
+                <Icon icon="lucide:chevron-down" width={14} height={14} className={selectedServerId.length > 0 ? 'text-blue-400' : 'text-slate-400'} />
               </button>
             </PopoverTrigger>
-            <PopoverContent placement="bottom start" offset={8} className="p-3 w-56 flex flex-col gap-2 bg-white border border-slate-200 rounded-lg shadow-md">
-              <span className="text-xs font-semibold text-slate-500 mb-1">Lọc theo Máy chủ</span>
+            <PopoverContent placement="bottom start" offset={8} className="p-3 w-40 flex flex-col gap-2 bg-white border border-slate-200 rounded-lg shadow-md">
               <div className="flex flex-col gap-2 max-h-40 overflow-y-auto">
                 {servers.map(s => (
                   <Checkbox
@@ -442,11 +451,11 @@ export function ProxyList({ onEdit }: ProxyListProps) {
                     <Checkbox.Control>
                       <Checkbox.Indicator />
                     </Checkbox.Control>
-                    <span className="text-xs text-slate-700 hover:text-slate-900">{s.name}</span>
+                    <span className="text-sm text-slate-700 hover:text-slate-900">{s.name}</span>
                   </Checkbox>
                 ))}
                 {servers.length === 0 && (
-                  <span className="text-xs text-slate-400">Không có máy chủ</span>
+                  <span className="text-sm text-slate-400">Không có máy chủ</span>
                 )}
               </div>
             </PopoverContent>
@@ -455,12 +464,12 @@ export function ProxyList({ onEdit }: ProxyListProps) {
           {/* Expiration Filter Dropdown */}
           <Popover>
             <PopoverTrigger>
-              <button className={`h-8 px-2.5 text-xs font-semibold rounded-lg flex items-center gap-1.5 cursor-pointer outline-none transition-all duration-150 shadow-none ${
+              <button className={`h-8 px-2.5 text-sm font-medium rounded-lg flex items-center gap-1.5 cursor-pointer outline-none transition-all duration-150 shadow-none ${
                 expirationFilter !== 'all' ? 'bg-blue-50/50 border border-blue-200 text-blue-600' : 'bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 text-slate-600'
               }`}>
-                <Icon icon="lucide:calendar" width={14} height={14} className={expirationFilter !== 'all' ? 'text-blue-500' : 'text-slate-400'} />
+                <Icon icon="lucide:calendar" width={16} height={16} className={expirationFilter !== 'all' ? 'text-blue-500' : 'text-slate-400'} />
                 <span>{expirationLabel}</span>
-                <Icon icon="lucide:chevron-down" width={12} height={12} className={expirationFilter !== 'all' ? 'text-blue-400' : 'text-slate-400'} />
+                <Icon icon="lucide:chevron-down" width={14} height={14} className={expirationFilter !== 'all' ? 'text-blue-400' : 'text-slate-400'} />
               </button>
             </PopoverTrigger>
             <PopoverContent placement="bottom start" offset={8} className="p-2 w-40 flex flex-col bg-white border border-slate-200 rounded-lg shadow-md">
@@ -475,9 +484,9 @@ export function ProxyList({ onEdit }: ProxyListProps) {
                     setExpirationFilter(opt.key as 'all' | 'active' | 'expired');
                     setPage(1);
                   }}
-                  className={`w-full text-left px-2 py-1.5 text-xs rounded transition-colors cursor-pointer border-none bg-transparent ${
+                  className={`w-full text-left px-2 py-1.5 text-sm rounded transition-colors cursor-pointer border-none bg-transparent ${
                     expirationFilter === opt.key
-                      ? 'bg-blue-50 text-blue-600 font-semibold'
+                      ? 'bg-blue-50 text-blue-600 font-medium'
                       : 'text-slate-600 hover:bg-slate-50'
                   }`}
                 >
@@ -490,16 +499,15 @@ export function ProxyList({ onEdit }: ProxyListProps) {
           {/* IP Type Filter Dropdown */}
           <Popover>
             <PopoverTrigger>
-              <button className={`h-8 px-2.5 text-xs font-semibold rounded-lg flex items-center gap-1.5 cursor-pointer outline-none transition-all duration-150 shadow-none ${
+              <button className={`h-8 px-2.5 text-sm font-medium rounded-lg flex items-center gap-1.5 cursor-pointer outline-none transition-all duration-150 shadow-none ${
                 ipTypeFilter.length > 0 ? 'bg-blue-50/50 border border-blue-200 text-blue-600' : 'bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 text-slate-600'
               }`}>
-                <Icon icon="lucide:globe" width={14} height={14} className={ipTypeFilter.length > 0 ? 'text-blue-500' : 'text-slate-400'} />
+                <Icon icon="lucide:globe" width={16} height={16} className={ipTypeFilter.length > 0 ? 'text-blue-500' : 'text-slate-400'} />
                 <span>{ipTypeLabel}</span>
-                <Icon icon="lucide:chevron-down" width={12} height={12} className={ipTypeFilter.length > 0 ? 'text-blue-400' : 'text-slate-400'} />
+                <Icon icon="lucide:chevron-down" width={14} height={14} className={ipTypeFilter.length > 0 ? 'text-blue-400' : 'text-slate-400'} />
               </button>
             </PopoverTrigger>
             <PopoverContent placement="bottom start" offset={8} className="p-3 w-40 flex flex-col gap-2 bg-white border border-slate-200 rounded-lg shadow-md">
-              <span className="text-xs font-semibold text-slate-500 mb-1">Lọc theo Loại IP</span>
               <div className="flex flex-col gap-2">
                 {uniqueIpTypes.map(type => (
                   <Checkbox
@@ -519,11 +527,11 @@ export function ProxyList({ onEdit }: ProxyListProps) {
                     <Checkbox.Control>
                       <Checkbox.Indicator />
                     </Checkbox.Control>
-                    <span className="text-xs text-slate-700 hover:text-slate-900">{type}</span>
+                    <span className="text-sm text-slate-700 hover:text-slate-900">{type}</span>
                   </Checkbox>
                 ))}
                 {uniqueIpTypes.length === 0 && (
-                  <span className="text-xs text-slate-400">Không có loại IP</span>
+                  <span className="text-sm text-slate-400">Không có loại IP</span>
                 )}
               </div>
             </PopoverContent>
@@ -533,16 +541,15 @@ export function ProxyList({ onEdit }: ProxyListProps) {
           {userRole === 'ADMIN' && (
             <Popover>
               <PopoverTrigger>
-                <button className={`h-8 px-2.5 text-xs font-semibold rounded-lg flex items-center gap-1.5 cursor-pointer outline-none transition-all duration-150 shadow-none ${
+                <button className={`h-8 px-2.5 text-sm font-medium rounded-lg flex items-center gap-1.5 cursor-pointer outline-none transition-all duration-150 shadow-none ${
                   userFilter.length > 0 ? 'bg-blue-50/50 border border-blue-200 text-blue-600' : 'bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 text-slate-600'
                 }`}>
-                  <Icon icon="lucide:user" width={14} height={14} className={userFilter.length > 0 ? 'text-blue-500' : 'text-slate-400'} />
+                  <Icon icon="lucide:user" width={16} height={16} className={userFilter.length > 0 ? 'text-blue-500' : 'text-slate-400'} />
                   <span>{userLabel}</span>
-                  <Icon icon="lucide:chevron-down" width={12} height={12} className={userFilter.length > 0 ? 'text-blue-400' : 'text-slate-400'} />
+                  <Icon icon="lucide:chevron-down" width={14} height={14} className={userFilter.length > 0 ? 'text-blue-400' : 'text-slate-400'} />
                 </button>
               </PopoverTrigger>
               <PopoverContent placement="bottom start" offset={8} className="p-3 w-56 flex flex-col gap-2 bg-white border border-slate-200 rounded-lg shadow-md">
-                <span className="text-xs font-semibold text-slate-500 mb-1">Lọc theo Người dùng</span>
                 <div className="flex flex-col gap-2 max-h-40 overflow-y-auto">
                   {uniqueUserEmails.map(email => (
                     <Checkbox
@@ -562,11 +569,11 @@ export function ProxyList({ onEdit }: ProxyListProps) {
                       <Checkbox.Control>
                         <Checkbox.Indicator />
                       </Checkbox.Control>
-                      <span className="text-xs text-slate-700 hover:text-slate-900 truncate" title={email}>{email}</span>
+                      <span className="text-sm text-slate-700 hover:text-slate-900 truncate" title={email}>{email}</span>
                     </Checkbox>
                   ))}
                   {uniqueUserEmails.length === 0 && (
-                    <span className="text-xs text-slate-400">Không có người dùng</span>
+                    <span className="text-sm text-slate-400">Không có người dùng</span>
                   )}
                 </div>
               </PopoverContent>
@@ -583,7 +590,7 @@ export function ProxyList({ onEdit }: ProxyListProps) {
                 setUserFilter([]);
                 setPage(1);
               }}
-              className="text-xs font-semibold text-blue-500 hover:text-blue-600 cursor-pointer transition-colors border-none bg-transparent ml-1"
+              className="text-sm font-medium text-red-600 hover:text-red-700 cursor-pointer transition-colors border-none bg-transparent ml-1"
             >
               Xóa lọc
             </button>
@@ -599,17 +606,17 @@ export function ProxyList({ onEdit }: ProxyListProps) {
               placeholder="Tìm kiếm..."
               value={queryValue}
               onChange={(e) => onHandleQueryValueChange(e.target.value)}
-              className="w-full h-8 pl-8 pr-8 text-xs bg-slate-100/60 hover:bg-slate-100 focus:bg-white placeholder:text-slate-400 border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none transition-all duration-150"
+              className="w-full h-8 pl-8 pr-8 text-sm bg-slate-100/60 hover:bg-slate-100 focus:bg-white placeholder:text-slate-400 border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none transition-all duration-150"
             />
             <div className="absolute inset-y-0 left-2.5 flex items-center pointer-events-none text-slate-400">
-              <Icon icon="lucide:search" width={14} height={14} />
+              <Icon icon="lucide:search" width={16} height={16} />
             </div>
             {queryValue && (
               <button
                 onClick={() => onHandleQueryValueChange('')}
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full hover:bg-slate-100 cursor-pointer bg-transparent border-none flex items-center justify-center"
               >
-                <Icon icon="lucide:x" width={12} height={12} />
+                <Icon icon="lucide:x" width={14} height={14} />
               </button>
             )}
           </div>
@@ -617,7 +624,7 @@ export function ProxyList({ onEdit }: ProxyListProps) {
           <Popover>
             <PopoverTrigger>
               <button className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-50 border border-slate-200 bg-white transition-all duration-150 cursor-pointer outline-none shadow-none" title="Sắp xếp">
-                <Icon icon="lucide:arrow-up-down" width={14} height={14} />
+                <Icon icon="lucide:arrow-up-down" width={16} height={16} />
               </button>
             </PopoverTrigger>
             <PopoverContent placement="bottom end" offset={8} className="p-2 w-36 flex flex-col bg-white border border-slate-200 rounded-lg shadow-md z-50">
@@ -628,9 +635,9 @@ export function ProxyList({ onEdit }: ProxyListProps) {
                     setSortSelected([opt.value]);
                     setPage(1);
                   }}
-                  className={`w-full text-left px-2 py-1.5 text-xs rounded transition-colors cursor-pointer border-none bg-transparent ${
+                  className={`w-full text-left px-2 py-1.5 text-sm rounded transition-colors cursor-pointer border-none bg-transparent ${
                     sortSelected[0] === opt.value
-                      ? 'bg-blue-50 text-blue-600 font-semibold'
+                      ? 'bg-blue-50 text-blue-600 font-medium'
                       : 'text-slate-600 hover:bg-slate-50'
                   }`}
                 >
@@ -644,11 +651,11 @@ export function ProxyList({ onEdit }: ProxyListProps) {
           <Popover>
             <PopoverTrigger>
               <button className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-50 border border-slate-200 bg-white transition-all duration-150 cursor-pointer outline-none shadow-none" title="Hiển thị cột">
-                <Icon icon="lucide:columns" width={14} height={14} />
+                <Icon icon="lucide:columns" width={16} height={16} />
               </button>
             </PopoverTrigger>
             <PopoverContent placement="bottom end" offset={8} className="p-3 w-48 flex flex-col gap-2 bg-white border border-slate-200 rounded-lg shadow-md">
-              <span className="text-xs font-semibold text-slate-500 mb-1">Chọn cột hiển thị</span>
+              <span className="text-sm font-medium text-slate-500 mb-1">Chọn cột hiển thị</span>
               <div className="flex flex-col gap-2">
                 {[
                   { key: 'server', label: 'Máy chủ' },
@@ -668,7 +675,7 @@ export function ProxyList({ onEdit }: ProxyListProps) {
                     <Checkbox.Control>
                       <Checkbox.Indicator />
                     </Checkbox.Control>
-                    <span className="text-xs text-slate-700 hover:text-slate-900">{col.label}</span>
+                    <span className="text-sm text-slate-700 hover:text-slate-900">{col.label}</span>
                   </Checkbox>
                 ))}
               </div>
@@ -842,7 +849,7 @@ export function ProxyList({ onEdit }: ProxyListProps) {
                             const text = `${host}:${proxy.port}:${proxy.username}:${proxy.password}`;
                             copyToClipboard(text).then(success => {
                               if (success) toast.success('Đã copy proxy');
-                              else toast.error('Lỗi khi copy');
+                              else toast.danger('Lỗi khi copy');
                             });
                           }}
                           className="w-7 h-7 rounded-md bg-transparent hover:bg-slate-100 text-slate-500 hover:text-slate-800 border-none flex items-center justify-center cursor-pointer transition-colors"
@@ -925,7 +932,7 @@ export function ProxyList({ onEdit }: ProxyListProps) {
                 ))}
                 {paginatedProxies.length === 0 && (
                   <Table.Row>
-                    <Table.Cell colSpan={visibleColumns.length + 2} className="py-12 text-center text-slate-400 font-medium">
+                    <Table.Cell colSpan={renderedColumnsCount} className="py-12 text-center text-slate-400 font-medium">
                       Danh sách Proxy hiện đang trống.
                     </Table.Cell>
                   </Table.Row>
@@ -980,7 +987,7 @@ export function ProxyList({ onEdit }: ProxyListProps) {
           <div className="bg-white border border-slate-200 rounded-xl w-full max-w-sm overflow-hidden shadow-lg flex flex-col">
             {/* Modal Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50/50">
-              <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-1.5 text-danger">
+              <h3 className="text-sm font-medium text-slate-800 flex items-center gap-1.5 text-danger">
                 <Icon icon="lucide:alert-triangle" className="w-4 h-4 shrink-0 text-red-500" />
                 {isBulkDelete ? "Xác nhận xóa hàng loạt?" : "Xác nhận xóa Proxy?"}
               </h3>
@@ -1029,7 +1036,7 @@ export function ProxyList({ onEdit }: ProxyListProps) {
           <div className="bg-white border border-slate-200 rounded-xl w-full max-w-sm overflow-hidden shadow-lg flex flex-col">
             {/* Modal Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50/50">
-              <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
+              <h3 className="text-sm font-medium text-slate-800 flex items-center gap-1.5">
                 <Icon icon="lucide:calendar" className="w-4 h-4 shrink-0 text-slate-500" />
                 Gia hạn Proxy hàng loạt
               </h3>
@@ -1049,7 +1056,7 @@ export function ProxyList({ onEdit }: ProxyListProps) {
                 <select
                   value={renewalDuration}
                   onChange={(e) => setRenewalDuration(e.target.value)}
-                  className="w-full text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg h-9 px-3 outline-none cursor-pointer appearance-none transition-all duration-150"
+                  className="w-full text-xs font-medium text-slate-600 bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg h-9 px-3 outline-none cursor-pointer appearance-none transition-all duration-150"
                 >
                   <option value="1d">1 ngày</option>
                   <option value="3d">3 ngày</option>

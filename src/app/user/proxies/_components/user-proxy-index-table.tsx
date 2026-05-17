@@ -4,7 +4,7 @@ import { Table, Chip, Button, Checkbox, Popover, PopoverTrigger, PopoverContent,
 import { Icon } from "@iconify/react";
 import { format } from "date-fns";
 import React, { useState, useCallback, useMemo } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@heroui/react';
 import { copyToClipboard } from '@/utils/clipboard';
 import { getCountdown } from '@/utils/date';
 import { ProxyWithServer } from '@/types';
@@ -58,6 +58,16 @@ export function UserProxyIndexTable({ proxies: initialProxies }: UserProxyIndexT
   const isColumnVisible = useCallback((columnKey: string) => {
     return visibleColumns.includes(columnKey);
   }, [visibleColumns]);
+
+  const renderedColumnsCount = useMemo(() => {
+    let count = 2; // Selection checkbox + Thao tác (Actions)
+    if (isColumnVisible('server')) count++;
+    if (isColumnVisible('info')) count++;
+    if (isColumnVisible('expiration')) count++;
+    if (isColumnVisible('status')) count++;
+    if (isColumnVisible('comment')) count++;
+    return count;
+  }, [visibleColumns, isColumnVisible]);
 
   const toggleColumn = useCallback((columnKey: string) => {
     setVisibleColumns(prev => 
@@ -635,7 +645,7 @@ export function UserProxyIndexTable({ proxies: initialProxies }: UserProxyIndexT
                 ))}
                 {paginatedProxies.length === 0 && (
                   <Table.Row>
-                    <Table.Cell colSpan={2 + visibleColumns.length} className="py-12 text-center text-slate-400 font-medium">
+                    <Table.Cell colSpan={renderedColumnsCount} className="py-12 text-center text-slate-400 font-medium">
                       Danh sách Proxy hiện đang trống.
                     </Table.Cell>
                   </Table.Row>

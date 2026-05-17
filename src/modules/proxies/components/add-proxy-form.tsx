@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { bulkProxySchema, BulkProxySchema } from '../schemas/bulk-proxy.schema';
 import { useProxies } from '@/hooks/use-proxies';
 import { useServers } from '@/hooks/use-servers';
-import { Input } from "@heroui/react";
+import { Input, Select, ListBox, NumberField } from "@heroui/react";
 
 import { useCallback, useState, useMemo, forwardRef, useImperativeHandle, useEffect } from 'react';
 import { format, addMinutes, addDays, addWeeks, addMonths, addYears } from 'date-fns';
@@ -191,29 +191,48 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
       <form onSubmit={form.handleSubmit(onSubmit)} className="p-4 space-y-4 text-xs bg-white">
         {isAdmin && (
           <div className="space-y-1">
-            <label className="block text-[11px] font-semibold text-slate-500">Chủ sở hữu (User)</label>
+            <label className="block text-sm font-medium text-slate-500">Chủ sở hữu (User)</label>
             <Controller
               name="userId"
               control={form.control}
               render={({ field }) => (
-                <div className="relative">
-                  <select
-                    value={field.value || ''}
-                    onChange={field.onChange}
-                    className="w-full text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg h-9 px-3 outline-none cursor-pointer appearance-none transition-all duration-150"
-                  >
-                    {userOptions.map(opt => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </select>
-                  <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-400">
-                    <Icon icon="lucide:chevron-down" className="w-3.5 h-3.5"  />
-                  </div>
-                </div>
+                <Select
+                  selectedKey={field.value || ''}
+                  onSelectionChange={(key) => field.onChange(key as string)}
+                  className="w-full"
+                >
+                  <Select.Trigger className="w-full flex items-center justify-between text-sm font-medium text-slate-600 bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg h-9 px-3 outline-none cursor-pointer transition-all duration-150">
+                    <Select.Value />
+                    <Select.Indicator>
+                      <Icon icon="lucide:chevron-down" className="w-3.5 h-3.5 text-slate-400" />
+                    </Select.Indicator>
+                  </Select.Trigger>
+                  <Select.Popover className="w-[--trigger-width] bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden z-50">
+                    <ListBox className="p-1 outline-none max-h-60 overflow-y-auto">
+                      {userOptions.map(opt => (
+                        <ListBox.Item
+                          key={opt.value}
+                          id={opt.value}
+                          textValue={opt.label}
+                          className="flex items-center justify-between px-2.5 py-1.5 text-xs rounded text-slate-600 hover:bg-slate-50 cursor-pointer outline-none data-[focused]:bg-slate-100 data-[selected]:bg-slate-100 data-[selected]:text-blue-600 font-medium"
+                        >
+                          {({ isSelected }) => (
+                            <>
+                              <span>{opt.label}</span>
+                              {isSelected && (
+                                <Icon icon="lucide:check" className="w-3.5 h-3.5 text-blue-600" />
+                              )}
+                            </>
+                          )}
+                        </ListBox.Item>
+                      ))}
+                    </ListBox>
+                  </Select.Popover>
+                </Select>
               )}
             />
             {form.formState.errors.userId && (
-              <p className="mt-1 text-[10px] text-red-500 font-semibold">{form.formState.errors.userId.message}</p>
+              <p className="mt-1 text-sm text-red-500 font-medium">{form.formState.errors.userId.message}</p>
             )}
           </div>
         )}
@@ -221,37 +240,58 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Máy chủ đích */}
           <div className="space-y-1">
-            <label className="block text-[11px] font-semibold text-slate-500">Máy chủ đích</label>
+            <label className="block text-sm font-medium text-slate-500">Máy chủ đích</label>
             <Controller
               name="serverId"
               control={form.control}
               render={({ field }) => (
-                <div className="relative">
-                  <select
-                    value={field.value}
-                    onChange={field.onChange}
-                    disabled={!!proxy}
-                    className="w-full text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg h-9 px-3 outline-none disabled:bg-slate-50 disabled:text-slate-400 cursor-pointer appearance-none transition-all duration-150"
-                  >
-                    {serverOptions.map(opt => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </select>
-                  <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-400">
-                    <Icon icon="lucide:chevron-down" className="w-3.5 h-3.5"  />
-                  </div>
-                </div>
+                <Select
+                  selectedKey={field.value || ''}
+                  onSelectionChange={(key) => field.onChange(key as string)}
+                  isDisabled={!!proxy}
+                  className="w-full"
+                >
+                  <Select.Trigger className={`w-full flex items-center justify-between text-sm font-medium text-slate-600 bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg h-9 px-3 outline-none cursor-pointer transition-all duration-150 ${
+                    proxy ? 'bg-slate-50 text-slate-400 cursor-not-allowed border-slate-100 hover:border-slate-100' : ''
+                  }`}>
+                    <Select.Value />
+                    <Select.Indicator>
+                      <Icon icon="lucide:chevron-down" className="w-3.5 h-3.5 text-slate-400" />
+                    </Select.Indicator>
+                  </Select.Trigger>
+                  <Select.Popover className="w-[--trigger-width] bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden z-50">
+                    <ListBox className="p-1 outline-none max-h-60 overflow-y-auto">
+                      {serverOptions.map(opt => (
+                        <ListBox.Item
+                          key={opt.value}
+                          id={opt.value}
+                          textValue={opt.label}
+                          className="flex items-center justify-between px-2.5 py-1.5 text-xs rounded text-slate-600 hover:bg-slate-50 cursor-pointer outline-none data-[focused]:bg-slate-100 data-[selected]:bg-slate-100 data-[selected]:text-blue-600 font-medium"
+                        >
+                          {({ isSelected }) => (
+                            <>
+                              <span>{opt.label}</span>
+                              {isSelected && (
+                                <Icon icon="lucide:check" className="w-3.5 h-3.5 text-blue-600" />
+                              )}
+                            </>
+                          )}
+                        </ListBox.Item>
+                      ))}
+                    </ListBox>
+                  </Select.Popover>
+                </Select>
               )}
             />
             {form.formState.errors.serverId && (
-              <p className="mt-1 text-[10px] text-red-500 font-semibold">{form.formState.errors.serverId.message}</p>
+              <p className="mt-1 text-sm text-red-500 font-medium">{form.formState.errors.serverId.message}</p>
             )}
           </div>
 
           {/* Số lượng Proxy */}
           <div className="space-y-1">
             <div className="flex items-center gap-1">
-              <label className="block text-[11px] font-semibold text-slate-500">Số lượng Proxy</label>
+              <label className="block text-sm font-medium text-slate-500">Số lượng Proxy</label>
               {!proxy && (
                 <div className="group relative cursor-pointer text-slate-400 hover:text-slate-600">
                   <Icon icon="lucide:info" className="w-3 h-3"  />
@@ -265,22 +305,37 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
               name="count"
               control={form.control}
               render={({ field }) => (
-                <Input
-                  type="number"
-                  placeholder="10"
-                  value={field.value?.toString() || ''}
-                  onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
-                  disabled={!!proxy}
-                  className={`w-full h-9 px-2.5 text-xs bg-white border rounded-lg outline-none disabled:bg-slate-50 disabled:text-slate-400 transition-all duration-150 ${
+                <NumberField
+                  value={field.value}
+                  onChange={(val) => field.onChange(val)}
+                  minValue={1}
+                  maxValue={1000}
+                  isDisabled={!!proxy}
+                  className="w-full"
+                >
+                  <NumberField.Group className={`w-full flex items-center border rounded-lg h-9 overflow-hidden transition-all duration-150 ${
+                    !!proxy ? 'bg-slate-50 border-slate-100 cursor-not-allowed' : 'bg-white'
+                  } ${
                     form.formState.errors.count 
-                      ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/50' 
-                      : 'border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50'
-                  }`}
-                />
+                      ? 'border-red-500 focus-within:border-red-500 focus-within:ring-1 focus-within:ring-red-500/50' 
+                      : 'border-slate-200 hover:border-slate-300 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500/50'
+                  }`}>
+                    <NumberField.DecrementButton className="h-full px-2.5 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-50 border-r border-slate-100 cursor-pointer outline-none transition-colors select-none disabled:opacity-50 disabled:pointer-events-none">
+                      <Icon icon="lucide:minus" className="w-3.5 h-3.5" />
+                    </NumberField.DecrementButton>
+                    <NumberField.Input 
+                      placeholder="10"
+                      className="w-full h-full px-2.5 text-sm bg-transparent outline-none border-none text-slate-600 font-medium disabled:bg-slate-50 disabled:text-slate-400"
+                    />
+                    <NumberField.IncrementButton className="h-full px-2.5 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-50 border-l border-slate-100 cursor-pointer outline-none transition-colors select-none disabled:opacity-50 disabled:pointer-events-none">
+                      <Icon icon="lucide:plus" className="w-3.5 h-3.5" />
+                    </NumberField.IncrementButton>
+                  </NumberField.Group>
+                </NumberField>
               )}
             />
             {form.formState.errors.count && (
-              <p className="mt-1 text-[10px] text-red-500 font-semibold">{form.formState.errors.count.message}</p>
+              <p className="mt-1 text-sm text-red-500 font-medium">{form.formState.errors.count.message}</p>
             )}
           </div>
         </div>
@@ -289,7 +344,7 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
           {/* Cổng SSH / Cổng bắt đầu */}
           <div className="space-y-1">
             <div className="flex items-center gap-1">
-              <label className="block text-[11px] font-semibold text-slate-500">{proxy ? "Cổng (Port)" : "Cổng bắt đầu"}</label>
+              <label className="block text-sm font-medium text-slate-500">{proxy ? "Cổng (Port)" : "Cổng bắt đầu"}</label>
               {!proxy && (
                 <div className="group relative cursor-pointer text-slate-400 hover:text-slate-600">
                   <Icon icon="lucide:info" className="w-3 h-3"  />
@@ -303,17 +358,30 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
               name="startPort"
               control={form.control}
               render={({ field }) => (
-                <Input
-                  type="number"
-                  placeholder="10000"
-                  value={field.value?.toString() || ''}
-                  onChange={(e) => field.onChange(parseInt(e.target.value) || 10000)}
-                  className={`w-full h-9 px-2.5 text-xs bg-white border rounded-lg outline-none transition-all duration-150 ${
+                <NumberField
+                  value={field.value}
+                  onChange={(val) => field.onChange(val)}
+                  minValue={1}
+                  maxValue={65535}
+                  className="w-full"
+                >
+                  <NumberField.Group className={`w-full flex items-center border rounded-lg h-9 overflow-hidden transition-all duration-150 bg-white ${
                     form.formState.errors.startPort 
-                      ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/50' 
-                      : 'border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50'
-                  }`}
-                />
+                      ? 'border-red-500 focus-within:border-red-500 focus-within:ring-1 focus-within:ring-red-500/50' 
+                      : 'border-slate-200 hover:border-slate-300 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500/50'
+                  }`}>
+                    <NumberField.DecrementButton className="h-full px-2.5 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-50 border-r border-slate-100 cursor-pointer outline-none transition-colors select-none disabled:opacity-50 disabled:pointer-events-none">
+                      <Icon icon="lucide:minus" className="w-3.5 h-3.5" />
+                    </NumberField.DecrementButton>
+                    <NumberField.Input 
+                      placeholder="10000"
+                      className="w-full h-full px-2.5 text-sm bg-transparent outline-none border-none text-slate-600 font-medium"
+                    />
+                    <NumberField.IncrementButton className="h-full px-2.5 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-50 border-l border-slate-100 cursor-pointer outline-none transition-colors select-none disabled:opacity-50 disabled:pointer-events-none">
+                      <Icon icon="lucide:plus" className="w-3.5 h-3.5" />
+                    </NumberField.IncrementButton>
+                  </NumberField.Group>
+                </NumberField>
               )}
             />
             {form.formState.errors.startPort && (
@@ -323,7 +391,7 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
 
           {/* Tài khoản */}
           <div className="space-y-1">
-            <label className="block text-[11px] font-semibold text-slate-500">Tài khoản</label>
+            <label className="block text-sm font-medium text-slate-500">Tài khoản</label>
             <div className="relative">
               <Controller
                 name="username"
@@ -334,7 +402,7 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
                     placeholder="Ví dụ: user"
                     value={field.value}
                     onChange={field.onChange}
-                    className={`w-full h-9 pl-2.5 pr-8 text-xs bg-white border rounded-lg outline-none transition-all duration-150 ${
+                    className={`w-full h-9 pl-2.5 pr-8 text-sm bg-white border rounded-lg outline-none transition-all duration-150 ${
                       form.formState.errors.username 
                         ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/50' 
                         : 'border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50'
@@ -352,14 +420,14 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
               </button>
             </div>
             {form.formState.errors.username && (
-              <p className="mt-1 text-[10px] text-red-500 font-semibold">{form.formState.errors.username.message}</p>
+              <p className="mt-1 text-sm text-red-500 font-medium">{form.formState.errors.username.message}</p>
             )}
           </div>
         </div>
 
         {/* Mật khẩu */}
         <div className="space-y-1">
-          <label className="block text-[11px] font-semibold text-slate-500">Mật khẩu</label>
+          <label className="block text-sm font-medium text-slate-500">Mật khẩu</label>
           <Controller
             name="password"
             control={form.control}
@@ -369,7 +437,7 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
                 placeholder="Mật khẩu"
                 value={field.value}
                 onChange={field.onChange}
-                className={`w-full h-9 px-2.5 text-xs bg-white border rounded-lg outline-none transition-all duration-150 ${
+                className={`w-full h-9 px-2.5 text-sm bg-white border rounded-lg outline-none transition-all duration-150 ${
                   form.formState.errors.password 
                     ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/50' 
                     : 'border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50'
@@ -378,14 +446,14 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
             )}
           />
           {form.formState.errors.password && (
-            <p className="mt-1 text-[10px] text-red-500 font-semibold">{form.formState.errors.password.message}</p>
+            <p className="mt-1 text-sm text-red-500 font-medium">{form.formState.errors.password.message}</p>
           )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Loại IP Outbound */}
           <div className="space-y-1">
-            <label className="block text-[11px] font-semibold text-slate-500">Loại IP Outbound</label>
+            <label className="block text-sm font-medium text-slate-500">Loại IP Outbound</label>
             <Controller
               name="ipType"
               control={form.control}
@@ -394,7 +462,7 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
                   <button
                     type="button"
                     onClick={() => field.onChange('IPv4')}
-                    className={`text-xs font-bold rounded-md transition-all cursor-pointer ${
+                    className={`text-sm font-bold rounded-md transition-all cursor-pointer ${
                       field.value === 'IPv4'
                         ? 'bg-white text-slate-800 shadow-sm border border-slate-200/50'
                         : 'text-slate-500 hover:text-slate-700'
@@ -405,7 +473,7 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
                   <button
                     type="button"
                     onClick={() => field.onChange('IPv6')}
-                    className={`text-xs font-bold rounded-md transition-all cursor-pointer ${
+                    className={`text-sm font-bold rounded-md transition-all cursor-pointer ${
                       field.value === 'IPv6'
                         ? 'bg-white text-slate-800 shadow-sm border border-slate-200/50'
                         : 'text-slate-500 hover:text-slate-700'
@@ -420,7 +488,7 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
 
           {/* Giao thức Proxy */}
           <div className="space-y-1">
-            <label className="block text-[11px] font-semibold text-slate-500">Giao thức Proxy</label>
+            <label className="block text-sm font-medium text-slate-500">Giao thức Proxy</label>
             <Controller
               name="proxyType"
               control={form.control}
@@ -429,7 +497,7 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
                   <button
                     type="button"
                     onClick={() => field.onChange('HTTP')}
-                    className={`text-xs font-bold rounded-md transition-all cursor-pointer ${
+                    className={`text-sm font-bold rounded-md transition-all cursor-pointer ${
                       field.value === 'HTTP'
                         ? 'bg-white text-slate-800 shadow-sm border border-slate-200/50'
                         : 'text-slate-500 hover:text-slate-700'
@@ -440,7 +508,7 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
                   <button
                     type="button"
                     onClick={() => field.onChange('SOCKS5')}
-                    className={`text-xs font-bold rounded-md transition-all cursor-pointer ${
+                    className={`text-sm font-bold rounded-md transition-all cursor-pointer ${
                       field.value === 'SOCKS5'
                         ? 'bg-white text-slate-800 shadow-sm border border-slate-200/50'
                         : 'text-slate-500 hover:text-slate-700'
@@ -457,27 +525,46 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
         {/* Thời hạn sử dụng */}
         <div className="space-y-3">
           <div className="space-y-1">
-            <label className="block text-[11px] font-semibold text-slate-500">Thời hạn sử dụng</label>
-            <div className="relative">
-              <select
-                value={expirationOption}
-                onChange={(e) => handleExpirationChange(e.target.value)}
-                className="w-full text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg h-9 px-3 outline-none cursor-pointer appearance-none transition-all duration-150"
-              >
-                {EXPIRATION_OPTIONS.map(opt => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
-              <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-400">
-                <Icon icon="lucide:chevron-down" className="w-3.5 h-3.5"  />
-              </div>
-            </div>
+            <label className="block text-sm font-medium text-slate-500">Thời hạn sử dụng</label>
+            <Select
+              selectedKey={expirationOption}
+              onSelectionChange={(key) => handleExpirationChange(key as string)}
+              className="w-full"
+            >
+              <Select.Trigger className="w-full flex items-center justify-between text-sm font-semibold text-slate-600 bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg h-9 px-3 outline-none cursor-pointer transition-all duration-150">
+                <Select.Value />
+                <Select.Indicator>
+                  <Icon icon="lucide:chevron-down" className="w-3.5 h-3.5 text-slate-400" />
+                </Select.Indicator>
+              </Select.Trigger>
+              <Select.Popover className="w-[--trigger-width] bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden z-50">
+                <ListBox className="p-1 outline-none max-h-60 overflow-y-auto">
+                  {EXPIRATION_OPTIONS.map(opt => (
+                    <ListBox.Item
+                      key={opt.value}
+                      id={opt.value}
+                      textValue={opt.label}
+                      className="flex items-center justify-between px-2.5 py-1.5 text-xs rounded text-slate-600 hover:bg-slate-50 cursor-pointer outline-none data-[focused]:bg-slate-100 data-[selected]:bg-slate-100 data-[selected]:text-blue-600 font-medium"
+                    >
+                      {({ isSelected }) => (
+                        <>
+                          <span>{opt.label}</span>
+                          {isSelected && (
+                            <Icon icon="lucide:check" className="w-3.5 h-3.5 text-blue-600" />
+                          )}
+                        </>
+                      )}
+                    </ListBox.Item>
+                  ))}
+                </ListBox>
+              </Select.Popover>
+            </Select>
           </div>
 
           {expirationOption === 'custom' && (
             <div className="space-y-1">
               <div className="flex items-center gap-1">
-                <label className="block text-[11px] font-semibold text-slate-500">Chọn ngày hết hạn</label>
+                <label className="block text-sm font-medium text-slate-500">Chọn ngày hết hạn</label>
                 <Icon icon="lucide:calendar" className="w-3 h-3 text-slate-400"  />
               </div>
               <input
@@ -490,13 +577,13 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
                     form.setValue('expiresAt', new Date(val).toISOString());
                   }
                 }}
-                className="w-full h-9 px-2.5 text-xs bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none transition-all duration-150 font-medium text-slate-600"
+                className="w-full h-9 px-2.5 text-sm bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none transition-all duration-150 font-medium text-slate-600"
               />
             </div>
           )}
 
           {expirationOption !== 'permanent' && expirationOption !== 'custom' && (
-            <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-[11px] text-slate-500 font-semibold flex items-center gap-1.5">
+            <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-500 font-medium flex items-center gap-1.5">
               <span>Sẽ hết hạn vào:</span>
               <span className="text-slate-800 font-bold">
                 {form.watch('expiresAt') ? format(new Date(form.watch('expiresAt') as string), 'dd/MM/yyyy HH:mm') : '---'}
@@ -520,36 +607,55 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
                       onChange={field.onChange}
                       className="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500/50 cursor-pointer"
                     />
-                    <span className="text-[11px] font-semibold text-slate-600">Tự động gia hạn</span>
+                    <span className="text-sm font-medium text-slate-600">Tự động gia hạn</span>
                   </label>
                 )}
               />
-              <span className="text-[9px] text-slate-400 font-medium pl-6">
+              <span className="text-xs text-slate-400 font-medium pl-6">
                 Tự động kéo dài thời gian khi sắp hết hạn (dưới 24h)
               </span>
             </div>
 
             {form.watch('autoRenew') && (
               <div className="space-y-1">
-                <label className="block text-[11px] font-semibold text-slate-500">Thời hạn gia hạn tự động</label>
+                <label className="block text-sm font-medium text-slate-500">Thời hạn gia hạn tự động</label>
                 <Controller
                   name="renewalDuration"
                   control={form.control}
                   render={({ field }) => (
-                    <div className="relative">
-                      <select
-                        value={field.value}
-                        onChange={field.onChange}
-                        className="w-full text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg h-9 px-3 outline-none cursor-pointer appearance-none transition-all duration-150"
-                      >
-                        {RENEWAL_OPTIONS.map(opt => (
-                          <option key={opt.value} value={opt.value}>{opt.label}</option>
-                        ))}
-                      </select>
-                      <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-400">
-                        <Icon icon="lucide:chevron-down" className="w-3.5 h-3.5"  />
-                      </div>
-                    </div>
+                    <Select
+                      selectedKey={field.value || ''}
+                      onSelectionChange={(key) => field.onChange(key as string)}
+                      className="w-full"
+                    >
+                      <Select.Trigger className="w-full flex items-center justify-between text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg h-9 px-3 outline-none cursor-pointer transition-all duration-150">
+                        <Select.Value />
+                        <Select.Indicator>
+                          <Icon icon="lucide:chevron-down" className="w-3.5 h-3.5 text-slate-400" />
+                        </Select.Indicator>
+                      </Select.Trigger>
+                      <Select.Popover className="w-[--trigger-width] bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden z-50">
+                        <ListBox className="p-1 outline-none max-h-60 overflow-y-auto">
+                          {RENEWAL_OPTIONS.map(opt => (
+                            <ListBox.Item
+                              key={opt.value}
+                              id={opt.value}
+                              textValue={opt.label}
+                              className="flex items-center justify-between px-2.5 py-1.5 text-xs rounded text-slate-600 hover:bg-slate-50 cursor-pointer outline-none data-[focused]:bg-slate-100 data-[selected]:bg-slate-100 data-[selected]:text-blue-600 font-medium"
+                            >
+                              {({ isSelected }) => (
+                                <>
+                                  <span>{opt.label}</span>
+                                  {isSelected && (
+                                    <Icon icon="lucide:check" className="w-3.5 h-3.5 text-blue-600" />
+                                  )}
+                                </>
+                              )}
+                            </ListBox.Item>
+                          ))}
+                        </ListBox>
+                      </Select.Popover>
+                    </Select>
                   )}
                 />
               </div>
@@ -559,7 +665,7 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
 
         {/* Ghi chú */}
         <div className="space-y-1">
-          <label className="block text-[11px] font-semibold text-slate-500">Ghi chú (Comment)</label>
+          <label className="block text-sm font-medium text-slate-500">Ghi chú (Comment)</label>
           <Controller
             name="comment"
             control={form.control}
@@ -569,7 +675,7 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
                 value={field.value || ''}
                 onChange={field.onChange}
                 rows={2}
-                className="w-full p-2.5 text-xs bg-white placeholder:text-slate-400 border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none transition-all duration-150 font-medium text-slate-600"
+                className="w-full p-2.5 text-sm bg-white placeholder:text-slate-400 border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none transition-all duration-150 font-medium text-slate-600"
               />
             )}
           />

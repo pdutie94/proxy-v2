@@ -3,7 +3,7 @@
 import { Icon } from '@iconify/react';
 import { Card, Button, Chip } from "@heroui/react";
 import { useState, useEffect } from "react";
-import { toast } from "sonner";
+import { toast } from "@heroui/react";
 
 
 export default function SettingsPage() {
@@ -56,10 +56,10 @@ export default function SettingsPage() {
       if (data.success) {
         toast.success("Đã lưu cài đặt hệ thống thành công");
       } else {
-        toast.error(data.message || "Lỗi lưu cài đặt");
+        toast.danger(data.message || "Lỗi lưu cài đặt");
       }
     } catch {
-      toast.error("Lỗi kết nối");
+      toast.danger("Lỗi kết nối");
     } finally {
       setIsSaving(false);
     }

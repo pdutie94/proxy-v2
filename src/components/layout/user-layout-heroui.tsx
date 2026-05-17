@@ -5,7 +5,7 @@ import React, { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { toast } from "@heroui/react";
 import { getUserHeaderInfoAction } from "@/modules/auth/actions/balance.action";
 import { RealtimeProvider } from "@/components/providers/realtime-provider";
 
@@ -43,7 +43,7 @@ export function UserLayoutHeroUI({ children }: UserLayoutHeroUIProps) {
   // Handle inactive user
   useEffect(() => {
     if (userData && userData.isActive === false) {
-      toast.error("Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.");
+      toast.danger("Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.");
       signOut({ callbackUrl: "/login" });
     }
   }, [userData]);

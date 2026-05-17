@@ -8,7 +8,7 @@ import { signIn, getSession } from 'next-auth/react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { toast } from 'sonner';
+import { toast } from '@heroui/react';
 import { Input, Button } from "@heroui/react";
 
 
@@ -35,7 +35,7 @@ export function LoginForm() {
       const statusData = await res.json();
       
       if (!statusData.success && statusData.error === 'AccountLocked') {
-        toast.error('Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.');
+        toast.danger('Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.');
         setLoading(false);
         return;
       }
@@ -48,7 +48,7 @@ export function LoginForm() {
       });
 
       if (result?.error) {
-        toast.error('Email hoặc mật khẩu không chính xác');
+        toast.danger('Email hoặc mật khẩu không chính xác');
       } else {
         toast.success('Đăng nhập thành công');
         
@@ -63,7 +63,7 @@ export function LoginForm() {
         router.refresh();
       }
     } catch {
-      toast.error('Đã xảy ra lỗi khi đăng nhập');
+      toast.danger('Đã xảy ra lỗi khi đăng nhập');
     } finally {
       setLoading(false);
     }

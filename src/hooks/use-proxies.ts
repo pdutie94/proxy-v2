@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { toast } from '@heroui/react';
 import { ProxyWithServer } from '@/types';
 
 export function useProxies(initialData?: ProxyWithServer[]) {
@@ -37,7 +37,7 @@ export function useProxies(initialData?: ProxyWithServer[]) {
       toast.success('Đã tạo Proxy thành công');
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
+      toast.danger(error instanceof Error ? error.message : 'Có lỗi xảy ra');
     },
   });
 
@@ -57,7 +57,7 @@ export function useProxies(initialData?: ProxyWithServer[]) {
       toast.success('Đã bắt đầu tạo hàng loạt Proxy');
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
+      toast.danger(error instanceof Error ? error.message : 'Có lỗi xảy ra');
     },
   });
 
@@ -77,7 +77,7 @@ export function useProxies(initialData?: ProxyWithServer[]) {
       toast.success('Đã cập nhật Proxy');
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
+      toast.danger(error instanceof Error ? error.message : 'Có lỗi xảy ra');
     },
   });
 
@@ -94,7 +94,7 @@ export function useProxies(initialData?: ProxyWithServer[]) {
       toast.success('Đã xóa Proxy');
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
+      toast.danger(error instanceof Error ? error.message : 'Có lỗi xảy ra');
     },
   });
 
@@ -112,7 +112,7 @@ export function useProxies(initialData?: ProxyWithServer[]) {
       toast.success('Đã bắt đầu xoay IPv6');
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
+      toast.danger(error instanceof Error ? error.message : 'Có lỗi xảy ra');
     },
   });
 
@@ -129,7 +129,7 @@ export function useProxies(initialData?: ProxyWithServer[]) {
       toast.success('Đã bắt đầu kiểm tra Google (Xem kết quả trong Logs)');
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
+      toast.danger(error instanceof Error ? error.message : 'Có lỗi xảy ra');
     },
   });
 
@@ -149,7 +149,7 @@ export function useProxies(initialData?: ProxyWithServer[]) {
       toast.success(data.message || 'Đã xóa các Proxy đã chọn');
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
+      toast.danger(error instanceof Error ? error.message : 'Có lỗi xảy ra');
     },
   });
 
@@ -169,7 +169,7 @@ export function useProxies(initialData?: ProxyWithServer[]) {
       toast.success(data.message);
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
+      toast.danger(error instanceof Error ? error.message : 'Có lỗi xảy ra');
     },
   });
 
@@ -189,7 +189,7 @@ export function useProxies(initialData?: ProxyWithServer[]) {
       toast.success(data.message);
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
+      toast.danger(error instanceof Error ? error.message : 'Có lỗi xảy ra');
     },
   });
 

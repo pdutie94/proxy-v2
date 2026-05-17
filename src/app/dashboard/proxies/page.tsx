@@ -46,15 +46,15 @@ export default function ProxiesPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-lg font-semibold text-slate-800">Quản lý Proxy</h1>
-          <p className="text-xs text-slate-400">Danh sách các Proxy đã được khởi tạo trên hệ thống</p>
+          <p className="text-sm text-slate-400">Danh sách các Proxy đã được khởi tạo trên hệ thống</p>
         </div>
         <Button
           variant="primary"
           size="sm"
           onPress={toggleModal}
-          className="cursor-pointer font-bold text-xs h-9 px-3 flex items-center gap-1.5 self-start sm:self-auto rounded-lg"
+          className="cursor-pointer font-semibold text-sm h-9 px-3 flex items-center gap-1.5 self-start sm:self-auto rounded-lg"
         >
-          <Icon icon="lucide:plus" className="w-3.5 h-3.5 shrink-0"  />
+          <Icon icon="lucide:plus" className="w-4 h-4 shrink-0"  />
           Tạo Proxy mới
         </Button>
       </div>
@@ -65,7 +65,7 @@ export default function ProxiesPage() {
       {/* Modern Compact Overlay Modal for Add/Edit Proxy */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-          <div className="bg-white border border-slate-200 rounded-xl w-full max-w-md overflow-hidden shadow-lg flex flex-col">
+          <div className="bg-white border border-slate-200 rounded-xl w-full max-w-xl overflow-hidden shadow-lg flex flex-col">
             {/* Modal Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50/50">
               <h3 className="text-sm font-semibold text-slate-800">

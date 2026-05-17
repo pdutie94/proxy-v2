@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@heroui/react';
 import { purchaseProxyAction } from '../actions/purchase.action';
 
 interface Package {
@@ -63,10 +63,10 @@ export function PackageList() {
         toast.success(result.message);
         // Maybe redirect to proxies or orders
       } else {
-        toast.error(result.message);
+        toast.danger(result.message);
       }
     } catch {
-      toast.error('Có lỗi xảy ra khi thanh toán.');
+      toast.danger('Có lỗi xảy ra khi thanh toán.');
     } finally {
       setLoadingId(null);
     }

@@ -5,7 +5,7 @@ import { Table, Chip, Button } from '@heroui/react';
 
 import { format } from 'date-fns';
 import { payOrderAction } from '@/modules/store/actions/purchase.action';
-import { toast } from 'sonner';
+import { toast } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { useState, useMemo, useCallback } from 'react';
 import Image from 'next/image';
@@ -101,10 +101,10 @@ export function UserOrdersClient({ orders }: UserOrdersClientProps) {
         toast.success(result.message);
         router.refresh();
       } else {
-        toast.error(result.message);
+        toast.danger(result.message);
       }
     } catch {
-      toast.error('Có lỗi xảy ra khi thanh toán.');
+      toast.danger('Có lỗi xảy ra khi thanh toán.');
     } finally {
       setLoadingId(null);
     }
