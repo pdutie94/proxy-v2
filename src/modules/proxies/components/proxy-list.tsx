@@ -373,19 +373,19 @@ export function ProxyList({ onEdit }: ProxyListProps) {
     switch (status) {
       case 'ACTIVE':
         return (
-          <Chip size="sm" variant="soft" color="success" className="font-medium text-[10px] uppercase">
+          <Chip size="sm" variant="soft" color="success" className="font-medium text-xs uppercase">
             Hoạt động
           </Chip>
         );
       case 'CREATING':
         return (
-          <Chip size="sm" variant="soft" color="warning" className="font-medium text-[10px] uppercase animate-pulse">
+          <Chip size="sm" variant="soft" color="warning" className="font-medium text-xs uppercase animate-pulse">
             Đang tạo
           </Chip>
         );
       default:
         return (
-          <Chip size="sm" variant="soft" color="danger" className="font-medium text-[10px] uppercase">
+          <Chip size="sm" variant="soft" color="danger" className="font-medium text-xs uppercase">
             Lỗi
           </Chip>
         );

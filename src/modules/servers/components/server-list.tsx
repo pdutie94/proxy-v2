@@ -189,11 +189,11 @@ export function ServerList({ onEdit, onAdd }: ServerListProps) {
           {[...Array(5)].map((_, i) => (
             <div key={i} className="grid grid-cols-7 gap-4 py-3 border-b border-slate-50 items-center">
               <Skeleton className="h-4 w-4/5 rounded" />
-              <Skeleton className="h-4 w-2/3 rounded font-mono" />
+              <Skeleton className="h-4 w-2/3 rounded" />
               <Skeleton className="h-4 w-6 rounded" />
               <Skeleton className="h-5 w-16 rounded-full" />
               <Skeleton className="h-4 w-12 rounded" />
-              <Skeleton className="h-4 w-8 rounded font-mono" />
+              <Skeleton className="h-4 w-8 rounded" />
               <div className="flex gap-2 justify-end">
                 <Skeleton className="h-7 w-7 rounded-md" />
                 <Skeleton className="h-7 w-7 rounded-md" />
@@ -217,25 +217,25 @@ export function ServerList({ onEdit, onAdd }: ServerListProps) {
     switch (status) {
       case 'ONLINE':
         return (
-          <Chip size="sm" variant="soft" color="success" className="font-medium text-[10px] uppercase">
+          <Chip size="sm" variant="soft" color="success" className="font-medium text-xs uppercase">
             Trực tuyến
           </Chip>
         );
       case 'SETTING_UP':
         return (
-          <Chip size="sm" variant="soft" color="warning" className="font-medium text-[10px] uppercase">
+          <Chip size="sm" variant="soft" color="warning" className="font-medium text-xs uppercase">
             Đang cài đặt
           </Chip>
         );
       case 'PENDING':
         return (
-          <Chip size="sm" variant="soft" color="default" className="font-medium text-[10px] uppercase">
+          <Chip size="sm" variant="soft" color="default" className="font-medium text-xs uppercase">
             Đang chờ
           </Chip>
         );
       default:
         return (
-          <Chip size="sm" variant="soft" color="danger" className="font-medium text-[10px] uppercase">
+          <Chip size="sm" variant="soft" color="danger" className="font-medium text-xs uppercase">
             Lỗi
           </Chip>
         );
@@ -454,7 +454,7 @@ export function ServerList({ onEdit, onAdd }: ServerListProps) {
                     </Table.Cell>
                   )}
                   {isColumnVisible('host') && (
-                    <Table.Cell className="align-top  font-mono text-slate-500">
+                    <Table.Cell className="align-top text-slate-500">
                       {server.host}
                     </Table.Cell>
                   )}
@@ -484,7 +484,7 @@ export function ServerList({ onEdit, onAdd }: ServerListProps) {
                     </Table.Cell>
                   )}
                   {isColumnVisible('lastPort') && (
-                    <Table.Cell className="align-top  font-mono text-slate-500">
+                    <Table.Cell className="align-top text-slate-500">
                       {server.lastPort || '---'}
                     </Table.Cell>
                   )}

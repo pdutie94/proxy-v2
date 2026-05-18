@@ -141,7 +141,7 @@ export default function LogsPage() {
           {/* Table Body Rows */}
           {[...Array(6)].map((_, i) => (
             <div key={i} className="grid grid-cols-5 gap-4 py-3 border-b border-slate-50 items-center">
-              <Skeleton className="h-4 w-4/5 rounded font-mono" />
+              <Skeleton className="h-4 w-4/5 rounded" />
               <Skeleton className="h-4 w-4/5 rounded" />
               <Skeleton className="h-4 w-1/2 rounded" />
               <Skeleton className="h-5 w-16 rounded-full" />
@@ -328,7 +328,7 @@ export default function LogsPage() {
               </button>
             </div>
             {/* Modal Body */}
-            <div className="p-4 overflow-y-auto bg-slate-950 text-slate-200 font-mono text-[11px] leading-relaxed flex-1">
+            <div className="p-4 overflow-y-auto bg-slate-950 text-slate-200 leading-relaxed flex-1">
               <pre className="whitespace-pre-wrap break-all">
                 {selectedLog.logs || 'Không có dữ liệu nhật ký chi tiết.'}
               </pre>

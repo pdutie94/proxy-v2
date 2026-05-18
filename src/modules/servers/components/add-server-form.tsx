@@ -4,6 +4,7 @@ import { Icon } from '@iconify/react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { serverSchema, ServerSchema } from '../schemas/server.schema';
+import { z } from 'zod';
 import { useServers } from '@/hooks/use-servers';
 import { Select, ListBox, Checkbox, TextField, Label, FieldError, InputGroup, Description } from "@heroui/react";
 
@@ -34,9 +35,21 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
       }));
       return [{ label: 'Chọn vị trí...', value: '' }, ...options];
     }, [locationsData]);
+
+    const dynamicSchema = useMemo(() => {
+      return serverSchema.superRefine((data, ctx) => {
+        if (!server && (!data.password || data.password.trim() === '')) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['password'],
+            message: 'Mật khẩu SSH là bắt buộc khi tạo máy chủ mới',
+          });
+        }
+      });
+    }, [server]);
     
     const { control, handleSubmit, formState: { errors }, reset, watch } = useForm<ServerSchema>({
-      resolver: zodResolver(serverSchema),
+      resolver: zodResolver(dynamicSchema),
       defaultValues: {
         name: '',
         host: '',
@@ -159,7 +172,11 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                     placeholder="22"
                     className="w-full"
                     value={field.value?.toString() || ''}
-                    onChange={(e) => field.onChange(parseInt(e.target.value) || 22)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      const parsed = parseInt(val);
+                      field.onChange(isNaN(parsed) ? '' : parsed);
+                    }}
                   />
                 </InputGroup>
                 <FieldError>{fieldState.error?.message}</FieldError>
@@ -305,7 +322,11 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                     placeholder="100"
                     className="w-full"
                     value={field.value?.toString() || ''}
-                    onChange={(e) => field.onChange(parseInt(e.target.value) || 100)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      const parsed = parseInt(val);
+                      field.onChange(isNaN(parsed) ? '' : parsed);
+                    }}
                   />
                 </InputGroup>
                 <FieldError>{fieldState.error?.message}</FieldError>
@@ -331,7 +352,11 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                     placeholder="10000"
                     className="w-full"
                     value={field.value?.toString() || ''}
-                    onChange={(e) => field.onChange(parseInt(e.target.value) || 10000)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      const parsed = parseInt(val);
+                      field.onChange(isNaN(parsed) ? '' : parsed);
+                    }}
                   />
                 </InputGroup>
                 <FieldError>{fieldState.error?.message}</FieldError>
@@ -381,7 +406,11 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                       type="number"
                       placeholder="60"
                       value={field.value?.toString() || ''}
-                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        const parsed = parseInt(val);
+                        field.onChange(isNaN(parsed) ? '' : parsed);
+                      }}
                     />
                   </InputGroup>
                   <FieldError>{fieldState.error?.message}</FieldError>

@@ -97,19 +97,19 @@ export function UserList({ onEdit }: UserListProps) {
     switch (role) {
       case 'ADMIN':
         return (
-          <Chip size="sm" variant="soft" color="accent" className="font-medium text-[10px] uppercase">
+          <Chip size="sm" variant="soft" color="accent" className="font-medium text-xs uppercase">
             Quản trị viên
           </Chip>
         );
       case 'MODERATOR':
         return (
-          <Chip size="sm" variant="soft" color="warning" className="font-medium text-[10px] uppercase">
+          <Chip size="sm" variant="soft" color="warning" className="font-medium text-xs uppercase">
             Điều hành viên
           </Chip>
         );
       default:
         return (
-          <Chip size="sm" variant="soft" color="default" className="font-medium text-[10px] uppercase">
+          <Chip size="sm" variant="soft" color="default" className="font-medium text-xs uppercase">
             Người dùng
           </Chip>
         );
@@ -119,13 +119,13 @@ export function UserList({ onEdit }: UserListProps) {
   const getStatusChip = (isActive: boolean) => {
     if (isActive) {
       return (
-        <Chip size="sm" variant="soft" color="success" className="font-medium text-[10px] uppercase">
+        <Chip size="sm" variant="soft" color="success" className="font-medium text-xs uppercase">
           Hoạt động
         </Chip>
       );
     }
     return (
-      <Chip size="sm" variant="soft" color="danger" className="font-medium text-[10px] uppercase">
+      <Chip size="sm" variant="soft" color="danger" className="font-medium text-xs uppercase">
         Bị khóa
       </Chip>
     );

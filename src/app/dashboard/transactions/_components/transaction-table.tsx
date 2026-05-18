@@ -71,19 +71,19 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
     switch (status) {
       case 'COMPLETED':
         return (
-          <Chip size="sm" variant="soft" color="success" className="font-medium text-[10px] uppercase">
+          <Chip size="sm" variant="soft" color="success" className="font-medium text-xs uppercase">
             Thành công
           </Chip>
         );
       case 'PENDING':
         return (
-          <Chip size="sm" variant="soft" color="warning" className="font-medium text-[10px] uppercase">
+          <Chip size="sm" variant="soft" color="warning" className="font-medium text-xs uppercase">
             Chờ duyệt
           </Chip>
         );
       default:
         return (
-          <Chip size="sm" variant="soft" color="danger" className="font-medium text-[10px] uppercase">
+          <Chip size="sm" variant="soft" color="danger" className="font-medium text-xs uppercase">
             Đã từ chối
           </Chip>
         );
@@ -92,11 +92,11 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
 
   const getTypeChip = (type: string) => {
     return type === 'DEPOSIT' ? (
-      <Chip size="sm" variant="soft" color="success" className="font-medium text-[10px] uppercase">
+      <Chip size="sm" variant="soft" color="success" className="font-medium text-xs uppercase">
         Nạp tiền
       </Chip>
     ) : (
-      <Chip size="sm" variant="soft" color="accent" className="font-medium text-[10px] uppercase">
+      <Chip size="sm" variant="soft" color="accent" className="font-medium text-xs uppercase">
         Thanh toán
       </Chip>
     );

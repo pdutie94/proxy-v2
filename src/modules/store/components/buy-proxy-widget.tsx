@@ -142,7 +142,7 @@ export function BuyProxyWidget() {
           <button
             key={t}
             onClick={() => setType(t)}
-            className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-300 ${
+            className={`flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-[0.15em] transition-all duration-300 ${
               type === t ? 'bg-blue-600 text-white shadow-[0_0_20px_rgba(37,99,235,0.3)]' : 'text-slate-500 hover:text-slate-200'
             }`}
           >
@@ -158,12 +158,12 @@ export function BuyProxyWidget() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {locationsLoading ? (
               <div className="space-y-2.5">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Quốc gia</label>
+                <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Quốc gia</label>
                 <div className="h-12 bg-white/5 border border-white/10 rounded-xl animate-pulse" />
               </div>
             ) : countriesOptions.length === 0 ? (
               <div className="space-y-2.5">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Quốc gia</label>
+                <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Quốc gia</label>
                 <div className="h-12 px-5 bg-red-900/20 border border-red-500/30 rounded-xl flex items-center">
                   <span className="text-red-400 text-xs font-bold">Hiện không có vị trí nào khả dụng</span>
                 </div>
@@ -179,7 +179,7 @@ export function BuyProxyWidget() {
             
             <div className="grid grid-cols-2 gap-6">
               <div className="space-y-2.5">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Số lượng</label>
+                <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Số lượng</label>
                 <Input 
                   type="number"
                   min={1}
@@ -200,7 +200,7 @@ export function BuyProxyWidget() {
           {/* Pricing & Submit */}
           <div className="pt-10 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-8">
             <div className="text-center md:text-left">
-              <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2">Tổng thanh toán</p>
+              <p className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] mb-2">Tổng thanh toán</p>
               <div className="flex items-baseline gap-2">
                 <span className="text-5xl font-black text-white tracking-tighter drop-shadow-[0_0_20px_rgba(255,255,255,0.1)]">{totalPrice.toLocaleString()}</span>
                 <span className="text-sm font-black text-blue-500 uppercase tracking-widest">VNĐ</span>
@@ -219,7 +219,7 @@ export function BuyProxyWidget() {
       </div>
 
       <div className="text-center pt-2">
-         <p className="text-[10px] text-slate-600 font-bold uppercase tracking-[0.3em]">
+         <p className="text-xs text-slate-600 font-bold uppercase tracking-[0.3em]">
             Hạ tầng Proxy sạch • Cấp phát tức thì • Hỗ trợ 24/7
          </p>
       </div>
@@ -261,7 +261,7 @@ export function BuyProxyWidget() {
           <div className="border border-slate-200 rounded-xl overflow-hidden divide-y divide-slate-100">
             <div className="grid grid-cols-2 p-4 bg-slate-50/50">
               <span className="text-sm font-bold text-slate-900">Mã đơn hàng:</span>
-              <span className="text-sm text-slate-600 font-mono">ORD-{orderId?.slice(0, 8).toUpperCase()}</span>
+              <span className="text-sm text-slate-600 ">ORD-{orderId?.slice(0, 8).toUpperCase()}</span>
             </div>
             <div className="grid grid-cols-2 p-4">
               <span className="text-sm font-bold text-slate-900">Ngày tạo:</span>
@@ -308,17 +308,17 @@ export function BuyProxyWidget() {
             <p className="text-sm text-red-800 font-bold leading-tight">Số dư không đủ. Vui lòng nạp thêm tiền để tiếp tục.</p>
           </div>
           <div className="bg-slate-900 p-10 rounded-[40px] text-white shadow-2xl">
-            <h4 className="font-black uppercase tracking-widest text-[10px] opacity-40 mb-6">Chuyển khoản tới:</h4>
+            <h4 className="font-black uppercase tracking-widest text-xs opacity-40 mb-6">Chuyển khoản tới:</h4>
             <div className="space-y-1 mb-8">
               <p className="text-2xl font-black tracking-tight">MB Bank: 123456789</p>
               <p className="text-sm font-bold opacity-70">Chủ TK: NGUYEN VAN A</p>
             </div>
             <div className="bg-white/5 p-5 rounded-2xl border border-white/5 shadow-inner">
-              <p className="text-[10px] uppercase tracking-widest opacity-40 mb-3 font-black">Nội dung nạp:</p>
-              <p className="text-xl font-mono font-black text-blue-400 uppercase tracking-widest">NAP {session?.user?.email?.split('@')[0]}</p>
+              <p className="text-xs uppercase tracking-widest opacity-40 mb-3 font-black">Nội dung nạp:</p>
+              <p className="text-xl  font-black text-blue-400 uppercase tracking-widest">NAP {session?.user?.email?.split('@')[0]}</p>
             </div>
           </div>
-          <p className="text-[10px] text-slate-400 text-center font-bold uppercase tracking-[0.3em]">Hệ thống cộng tiền tự động</p>
+          <p className="text-xs text-slate-400 text-center font-bold uppercase tracking-[0.3em]">Hệ thống cộng tiền tự động</p>
         </div>
       </Modal>
     </div>

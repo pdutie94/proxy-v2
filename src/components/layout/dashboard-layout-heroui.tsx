@@ -192,7 +192,7 @@ export function DashboardLayoutHeroUI({ children }: DashboardLayoutHeroUIProps) 
                   </Avatar>
                   <div className="flex flex-col min-w-0">
                     <span className="text-xs font-semibold text-slate-955 truncate">{displayName}</span>
-                    <span className="text-[10px] text-slate-500 font-medium">{userRole === "ADMIN" ? "Quản trị viên" : "Điều phối viên"}</span>
+                    <span className="text-xs text-slate-500 font-medium">{userRole === "ADMIN" ? "Quản trị viên" : "Điều phối viên"}</span>
                   </div>
                 </div>
                 <button 
@@ -316,7 +316,7 @@ export function DashboardLayoutHeroUI({ children }: DashboardLayoutHeroUIProps) 
               <Dropdown>
                 <DropdownTrigger>
                   <div className="flex items-center gap-1 p-0.5 rounded-full hover:bg-slate-50 transition-colors cursor-pointer focus:outline-none">
-                    <Avatar className="text-white font-bold bg-gradient-to-tr from-blue-500 to-sky-400 cursor-pointer w-7 h-7 flex items-center justify-center text-[10px] rounded-full">
+                    <Avatar className="text-white font-bold bg-gradient-to-tr from-blue-500 to-sky-400 cursor-pointer w-7 h-7 flex items-center justify-center text-xs rounded-full">
                       <Avatar.Fallback>{initials}</Avatar.Fallback>
                     </Avatar>
                     <Icon icon="lucide:chevron-down" className="w-3.5 h-3.5 text-slate-400 hidden sm:block"  />
@@ -328,7 +328,7 @@ export function DashboardLayoutHeroUI({ children }: DashboardLayoutHeroUIProps) 
                     className="outline-none min-w-44"
                   >
                     <div className="px-3 py-2 border-b border-slate-100 mb-1 pointer-events-none">
-                      <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Đăng nhập với email</p>
+                      <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Đăng nhập với email</p>
                       <p className="font-semibold text-slate-800 text-xs truncate mt-0.5">{session?.user?.email}</p>
                     </div>
                     <Dropdown.Item 

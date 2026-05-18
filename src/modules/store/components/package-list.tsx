@@ -82,7 +82,7 @@ export function PackageList() {
           }`}
         >
           {pkg.recommended && (
-            <span className="bg-blue-600 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest w-fit mb-4">
+            <span className="bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-widest w-fit mb-4">
               Khuyên dùng
             </span>
           )}

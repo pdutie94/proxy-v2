@@ -114,31 +114,31 @@ export function UserOrdersClient({ orders }: UserOrdersClientProps) {
     switch (status) {
       case 'COMPLETED':
         return (
-          <Chip size="sm" variant="soft" color="success" className="font-medium text-[10px] uppercase">
+          <Chip size="sm" variant="soft" color="success" className="font-medium text-xs uppercase">
             Hoàn tất
           </Chip>
         );
       case 'PENDING':
         return (
-          <Chip size="sm" variant="soft" color="warning" className="font-medium text-[10px] uppercase">
+          <Chip size="sm" variant="soft" color="warning" className="font-medium text-xs uppercase">
             Chờ thanh toán
           </Chip>
         );
       case 'PROCESSING':
         return (
-          <Chip size="sm" variant="soft" color="accent" className="font-medium text-[10px] uppercase">
+          <Chip size="sm" variant="soft" color="accent" className="font-medium text-xs uppercase">
             Đang xử lý
           </Chip>
         );
       case 'FAILED':
         return (
-          <Chip size="sm" variant="soft" color="danger" className="font-medium text-[10px] uppercase">
+          <Chip size="sm" variant="soft" color="danger" className="font-medium text-xs uppercase">
             Thất bại
           </Chip>
         );
       default:
         return (
-          <Chip size="sm" variant="soft" color="default" className="font-medium text-[10px] uppercase">
+          <Chip size="sm" variant="soft" color="default" className="font-medium text-xs uppercase">
             Đã hủy
           </Chip>
         );
@@ -299,7 +299,7 @@ export function UserOrdersClient({ orders }: UserOrdersClientProps) {
 
                 return (
                   <Table.Row key={id}>
-                    <Table.Cell className="align-top font-mono font-medium text-slate-400">
+                    <Table.Cell className="align-top font-medium text-slate-400">
                       ORD-{id.slice(0, 8).toUpperCase()}
                     </Table.Cell>
                     <Table.Cell className="align-top whitespace-nowrap">
@@ -307,7 +307,7 @@ export function UserOrdersClient({ orders }: UserOrdersClientProps) {
                         <span className="font-medium text-slate-800">
                           Mua {details.type.toUpperCase()}
                         </span>
-                        <span className="text-[10px] text-slate-400 font-medium mt-0.5">
+                        <span className="text-xs text-slate-400 font-medium mt-0.5">
                           {format(new Date(createdAt), 'dd/MM/yyyy HH:mm')}
                         </span>
                       </div>
@@ -317,12 +317,12 @@ export function UserOrdersClient({ orders }: UserOrdersClientProps) {
                         <div className="flex items-center gap-2 whitespace-nowrap">
                           <span className="text-xs text-slate-500 select-none">Số lượng IP</span>
                           <div className="flex-grow border-b border-dotted border-slate-300"></div>
-                          <span className="font-mono font-medium text-slate-700">{details.count}</span>
+                          <span className=" font-medium text-slate-700">{details.count}</span>
                         </div>
                         <div className="flex items-center gap-2 whitespace-nowrap">
                           <span className="text-xs text-slate-500 select-none">Số ngày</span>
                           <div className="flex-grow border-b border-dotted border-slate-300"></div>
-                          <span className="font-mono font-medium text-slate-600">{details.days} ngày</span>
+                          <span className=" font-medium text-slate-600">{details.days} ngày</span>
                         </div>
                         <div className="flex items-center gap-2 whitespace-nowrap">
                           <span className="text-xs text-slate-500 select-none">Quốc gia</span>

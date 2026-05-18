@@ -143,7 +143,7 @@ export function BuyProxyModal({ open, onClose }: BuyProxyModalProps) {
                   <button
                     type="button"
                     onClick={() => setActiveType('ipv6')}
-                    className={`text-[10px] font-bold rounded-md transition-all cursor-pointer ${
+                    className={`text-xs font-bold rounded-md transition-all cursor-pointer ${
                       activeType === 'ipv6'
                         ? 'bg-white text-slate-800 shadow-sm border border-slate-200/50'
                         : 'text-slate-500 hover:text-slate-700'
@@ -154,7 +154,7 @@ export function BuyProxyModal({ open, onClose }: BuyProxyModalProps) {
                   <button
                     type="button"
                     onClick={() => setActiveType('ipv4')}
-                    className={`text-[10px] font-bold rounded-md transition-all cursor-pointer ${
+                    className={`text-xs font-bold rounded-md transition-all cursor-pointer ${
                       activeType === 'ipv4'
                         ? 'bg-white text-slate-800 shadow-sm border border-slate-200/50'
                         : 'text-slate-500 hover:text-slate-700'
@@ -165,7 +165,7 @@ export function BuyProxyModal({ open, onClose }: BuyProxyModalProps) {
                   <button
                     type="button"
                     onClick={() => setActiveType('ipv4_shared')}
-                    className={`text-[10px] font-bold rounded-md transition-all cursor-pointer ${
+                    className={`text-xs font-bold rounded-md transition-all cursor-pointer ${
                       activeType === 'ipv4_shared'
                         ? 'bg-white text-slate-800 shadow-sm border border-slate-200/50'
                         : 'text-slate-500 hover:text-slate-700'
@@ -287,7 +287,7 @@ export function BuyProxyModal({ open, onClose }: BuyProxyModalProps) {
                 <div className="flex items-center gap-2 whitespace-nowrap">
                   <span className="text-slate-400 font-medium">Mã đơn hàng:</span>
                   <div className="flex-grow border-b border-dotted border-slate-200"></div>
-                  <span className="font-mono font-bold text-slate-800">ORD-{orderId?.slice(0, 8).toUpperCase()}</span>
+                  <span className=" font-bold text-slate-800">ORD-{orderId?.slice(0, 8).toUpperCase()}</span>
                 </div>
                 <div className="flex items-center gap-2 whitespace-nowrap">
                   <span className="text-slate-400 font-medium">Ngày tạo:</span>
@@ -302,12 +302,12 @@ export function BuyProxyModal({ open, onClose }: BuyProxyModalProps) {
                 <div className="flex items-center gap-2 whitespace-nowrap">
                   <span className="text-slate-400 font-medium">Số lượng IP:</span>
                   <div className="flex-grow border-b border-dotted border-slate-200"></div>
-                  <span className="font-mono font-bold text-slate-800">{count}</span>
+                  <span className=" font-bold text-slate-800">{count}</span>
                 </div>
                 <div className="flex items-center gap-2 whitespace-nowrap">
                   <span className="text-slate-400 font-medium">Số ngày:</span>
                   <div className="flex-grow border-b border-dotted border-slate-200"></div>
-                  <span className="font-mono font-bold text-slate-800">{period}</span>
+                  <span className=" font-bold text-slate-800">{period}</span>
                 </div>
                 <div className="flex items-center gap-2 whitespace-nowrap pt-1 border-t border-slate-100">
                   <span className="font-bold text-slate-500">Tổng thanh toán:</span>
@@ -317,7 +317,7 @@ export function BuyProxyModal({ open, onClose }: BuyProxyModalProps) {
               </div>
 
               {/* Warning Banner */}
-              <div className="p-2.5 bg-blue-50 border border-blue-100 rounded-lg text-[10px] text-blue-700 font-semibold flex items-start gap-1.5 leading-relaxed">
+              <div className="p-2.5 bg-blue-50 border border-blue-100 rounded-lg text-xs text-blue-700 font-semibold flex items-start gap-1.5 leading-relaxed">
                 <Icon icon="lucide:info" className="w-3.5 h-3.5 shrink-0 text-blue-500 mt-0.5"  />
                 <span>Vui lòng kiểm tra kỹ thông tin đơn hàng trước khi xác nhận thanh toán.</span>
               </div>

@@ -5,17 +5,9 @@ import React, { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
-import { toast } from "@heroui/react";
+import { toast, Alert, Avatar, Button, Dropdown, DropdownTrigger, Tooltip } from "@heroui/react";
 import { getUserHeaderInfoAction } from "@/modules/auth/actions/balance.action";
 import { RealtimeProvider } from "@/components/providers/realtime-provider";
-
-import { 
-  Avatar, 
-  Button, 
-  Dropdown, 
-  DropdownTrigger, 
-  Tooltip
-} from "@heroui/react";
 
 interface UserLayoutHeroUIProps {
   children: React.ReactNode;
@@ -190,7 +182,7 @@ export function UserLayoutHeroUI({ children }: UserLayoutHeroUIProps) {
 
             {/* Services Section */}
             <div className="space-y-1">
-              <span className="px-3 text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">
+              <span className="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">
                 Dịch vụ của tôi
               </span>
               {serviceNavItems.map((item, idx) => {
@@ -216,7 +208,7 @@ export function UserLayoutHeroUI({ children }: UserLayoutHeroUIProps) {
 
             {/* History Section */}
             <div className="space-y-1">
-              <span className="px-3 text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">
+              <span className="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">
                 Lịch sử
               </span>
               {historyNavItems.map((item, idx) => {
@@ -242,7 +234,7 @@ export function UserLayoutHeroUI({ children }: UserLayoutHeroUIProps) {
 
             {/* Account Section */}
             <div className="space-y-1">
-              <span className="px-3 text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">
+              <span className="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">
                 Tài khoản
               </span>
               {accountNavItems.map((item, idx) => {
@@ -296,7 +288,7 @@ export function UserLayoutHeroUI({ children }: UserLayoutHeroUIProps) {
                   </Avatar>
                   <div className="flex flex-col min-w-0">
                     <span className="text-xs font-semibold text-slate-955 truncate">{displayName}</span>
-                    <span className="text-[10px] text-slate-500 font-medium">Thành viên</span>
+                    <span className="text-xs text-slate-500 font-medium">Thành viên</span>
                   </div>
                 </div>
                 <button 
@@ -352,7 +344,7 @@ export function UserLayoutHeroUI({ children }: UserLayoutHeroUIProps) {
                 </div>
 
                 <div className="space-y-1">
-                  <span className="px-3 text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Dịch vụ</span>
+                  <span className="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider block">Dịch vụ</span>
                   {serviceNavItems.map((item, idx) => {
                     
                     return (
@@ -375,7 +367,7 @@ export function UserLayoutHeroUI({ children }: UserLayoutHeroUIProps) {
                 </div>
 
                 <div className="space-y-1">
-                  <span className="px-3 text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Lịch sử</span>
+                  <span className="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider block">Lịch sử</span>
                   {historyNavItems.map((item, idx) => {
                     
                     return (
@@ -398,7 +390,7 @@ export function UserLayoutHeroUI({ children }: UserLayoutHeroUIProps) {
                 </div>
 
                 <div className="space-y-1">
-                  <span className="px-3 text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Tài khoản</span>
+                  <span className="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider block">Tài khoản</span>
                   {accountNavItems.map((item, idx) => {
                     
                     return (
@@ -505,7 +497,7 @@ export function UserLayoutHeroUI({ children }: UserLayoutHeroUIProps) {
               <Dropdown>
                 <DropdownTrigger>
                   <button className="flex items-center gap-1 p-0.5 rounded-full hover:bg-slate-50 transition-colors focus:outline-none">
-                    <Avatar className="text-white font-bold bg-gradient-to-tr from-blue-500 to-indigo-500 cursor-pointer w-7 h-7 flex items-center justify-center text-[10px] rounded-full">
+                    <Avatar className="text-white font-bold bg-gradient-to-tr from-blue-500 to-indigo-500 cursor-pointer w-7 h-7 flex items-center justify-center text-xs rounded-full">
                       <Avatar.Fallback>{initials}</Avatar.Fallback>
                     </Avatar>
                     <Icon icon="lucide:chevron-down" className="w-3.5 h-3.5 text-slate-400 hidden sm:block"  />
@@ -517,7 +509,7 @@ export function UserLayoutHeroUI({ children }: UserLayoutHeroUIProps) {
                     className="outline-none min-w-44"
                   >
                     <div className="px-3 py-2 border-b border-slate-100 mb-1 pointer-events-none">
-                      <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Đăng nhập với email</p>
+                      <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Đăng nhập với email</p>
                       <p className="font-semibold text-slate-800 text-xs truncate mt-0.5">{session?.user?.email}</p>
                     </div>
                     <Dropdown.Item 
@@ -553,27 +545,16 @@ export function UserLayoutHeroUI({ children }: UserLayoutHeroUIProps) {
           {/* EMAIL VERIFICATION WARNING BANNER */}
           {userData !== undefined && userData !== null && !userData.emailVerified && (
             <div className="px-4 lg:px-6 pt-4 lg:pt-6 max-w-7xl w-full mx-auto">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 bg-amber-50 border border-amber-250/70 rounded-xl">
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-amber-100 rounded-lg text-amber-700 shrink-0">
-                    <Icon icon="lucide:alert-triangle" className="w-5 h-5"  />
-                  </div>
-                  <div className="space-y-0.5">
-                    <h3 className="text-sm font-semibold text-amber-900">Vui lòng xác thực tài khoản Email</h3>
-                    <p className="text-xs text-amber-700 leading-relaxed">
-                      Bạn chưa xác thực địa chỉ email. Vui lòng xác thực email để có thể mở khóa các tính năng thanh toán, nạp tiền và mua/gia hạn Proxy.
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  className="text-xs font-semibold shrink-0 bg-amber-100 text-amber-900 border-none hover:bg-amber-200 rounded-md"
-                  onClick={() => router.push("/verify-email")}
-                >
-                  Xác thực ngay
-                </Button>
-              </div>
+            <Alert status="warning">
+              <Alert.Indicator />
+              <Alert.Content>
+                <Alert.Title>Vui lòng xác thực tài khoản Email</Alert.Title>
+                <Alert.Description>
+                  Bạn chưa xác thực địa chỉ email. Vui lòng xác thực email để có thể mở khóa các tính năng thanh toán, nạp tiền và mua/gia hạn Proxy.
+                </Alert.Description>
+                <Button className='mt-2' size="sm" onPress={() => router.push("/verify-email")}>Xác thực ngay</Button>
+              </Alert.Content>
+            </Alert>
             </div>
           )}
 

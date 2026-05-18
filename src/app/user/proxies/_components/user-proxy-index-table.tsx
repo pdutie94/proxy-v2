@@ -222,19 +222,19 @@ export function UserProxyIndexTable({ proxies: initialProxies }: UserProxyIndexT
     switch (status) {
       case 'ACTIVE':
         return (
-          <Chip size="sm" variant="soft" color="success" className="font-medium text-[10px] uppercase">
+          <Chip size="sm" variant="soft" color="success" className="font-medium text-xs uppercase">
             Hoạt động
           </Chip>
         );
       case 'CREATING':
         return (
-          <Chip size="sm" variant="soft" color="warning" className="font-semibold text-[10px] uppercase animate-pulse">
+          <Chip size="sm" variant="soft" color="warning" className="font-semibold text-xs uppercase animate-pulse">
             Đang tạo
           </Chip>
         );
       default:
         return (
-          <Chip size="sm" variant="soft" color="danger" className="font-medium text-[10px] uppercase">
+          <Chip size="sm" variant="soft" color="danger" className="font-medium text-xs uppercase">
             Lỗi
           </Chip>
         );
@@ -516,17 +516,17 @@ export function UserProxyIndexTable({ proxies: initialProxies }: UserProxyIndexT
                           <div className="flex items-center gap-2 whitespace-nowrap">
                             <span className="text-xs text-slate-500 select-none">IP:PORT</span>
                             <div className="flex-1 border-b border-dotted border-slate-300"></div>
-                            <span className="font-mono font-medium text-slate-700">{proxy.server?.host}:{proxy.port}</span>
+                            <span className=" font-medium text-slate-700">{proxy.server?.host}:{proxy.port}</span>
                           </div>
                           <div className="flex items-center gap-2 whitespace-nowrap">
                             <span className="text-xs text-slate-500 select-none">Tài khoản</span>
                             <div className="flex-1 border-b border-dotted border-slate-300"></div>
-                            <span className="font-mono font-semibold text-slate-600">{proxy.username}</span>
+                            <span className=" font-semibold text-slate-600">{proxy.username}</span>
                           </div>
                           <div className="flex items-center gap-2 whitespace-nowrap">
                             <span className="text-xs text-slate-500 select-none">Mật khẩu</span>
                             <div className="flex-1 border-b border-dotted border-slate-300"></div>
-                            <span className="font-mono font-semibold text-slate-600">{proxy.password}</span>
+                            <span className=" font-semibold text-slate-600">{proxy.password}</span>
                           </div>
                           <div className="flex items-center gap-2 whitespace-nowrap">
                             <span className="text-xs text-slate-500 select-none">Loại</span>
@@ -537,7 +537,7 @@ export function UserProxyIndexTable({ proxies: initialProxies }: UserProxyIndexT
                             <div className="flex items-center gap-2 whitespace-nowrap">
                               <span className="text-xs text-slate-500 select-none">IPv6</span>
                               <div className="flex-1 border-b border-dotted border-slate-300"></div>
-                              <span className="font-mono text-slate-500 overflow-hidden text-ellipsis max-w-[120px]" title={proxy.ipv6}>
+                              <span className=" text-slate-500 overflow-hidden text-ellipsis max-w-[120px]" title={proxy.ipv6}>
                                 {proxy.ipv6}
                               </span>
                             </div>

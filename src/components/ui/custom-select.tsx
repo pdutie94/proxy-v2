@@ -52,7 +52,7 @@ export function CustomSelect({ options, value, onChange, label }: CustomSelectPr
 
   return (
     <div className="relative" ref={containerRef}>
-      {label && <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2.5">{label}</label>}
+      {label && <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2.5">{label}</label>}
       
       <button
         type="button"

@@ -36,7 +36,7 @@ export default async function LandingPage() {
             {session ? (
               <>
                 <div className="flex flex-col items-end mr-2">
-                   <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest leading-none mb-1">Số dư hiện tại</span>
+                   <span className="text-xs font-black text-blue-400 uppercase tracking-widest leading-none mb-1">Số dư hiện tại</span>
                    <span className="text-xs font-black text-white leading-none">{userBalance.toLocaleString('vi-VN')}đ</span>
                 </div>
                 <Link href={session.user?.role === 'ADMIN' ? '/dashboard' : '/user/proxies'} className="text-xs font-bold text-slate-400 hover:text-white transition-colors uppercase tracking-widest">
@@ -48,7 +48,7 @@ export default async function LandingPage() {
                 Đăng nhập
               </Link>
             )}
-            <Link href={session ? "/api/auth/signout" : "/register"} className="bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-black uppercase tracking-widest px-6 py-2 rounded-lg transition-all">
+            <Link href={session ? "/api/auth/signout" : "/register"} className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-black uppercase tracking-widest px-6 py-2 rounded-lg transition-all">
               {session ? 'Đăng xuất' : 'Đăng ký ngay'}
             </Link>
           </nav>
@@ -59,7 +59,7 @@ export default async function LandingPage() {
       <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 py-4">
         {/* Title Block - Compact */}
         <div className="text-center mb-10 max-w-2xl flex-shrink-0">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[9px] font-black uppercase tracking-[0.2em] mb-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-black uppercase tracking-[0.2em] mb-4">
             <span className="w-1 h-1 bg-blue-500 rounded-full animate-pulse"></span>
             Hạ tầng Thế hệ mới
           </div>
@@ -81,17 +81,17 @@ export default async function LandingPage() {
         <div className="mt-12 flex items-center justify-center gap-10 opacity-30 flex-shrink-0">
            <div className="flex items-center gap-3">
               <span className="text-lg font-black tracking-tight">2s</span>
-              <span className="text-[8px] font-bold uppercase tracking-widest text-slate-500 leading-none">Khởi tạo<br/>Tức thì</span>
+              <span className="text-xs font-bold uppercase tracking-widest text-slate-500 leading-none">Khởi tạo<br/>Tức thì</span>
            </div>
            <div className="w-px h-6 bg-white/10"></div>
            <div className="flex items-center gap-3">
               <span className="text-lg font-black tracking-tight">99.9%</span>
-              <span className="text-[8px] font-bold uppercase tracking-widest text-slate-500 leading-none">Độ ổn định<br/>Cao</span>
+              <span className="text-xs font-bold uppercase tracking-widest text-slate-500 leading-none">Độ ổn định<br/>Cao</span>
            </div>
            <div className="w-px h-6 bg-white/10"></div>
            <div className="flex items-center gap-3">
               <span className="text-lg font-black tracking-tight">HTTP/S5</span>
-              <span className="text-[8px] font-bold uppercase tracking-widest text-slate-500 leading-none">Hỗ trợ<br/>Toàn cầu</span>
+              <span className="text-xs font-bold uppercase tracking-widest text-slate-500 leading-none">Hỗ trợ<br/>Toàn cầu</span>
            </div>
         </div>
       </main>
@@ -99,11 +99,11 @@ export default async function LandingPage() {
       {/* Minimal Footer */}
       <footer className="relative z-10 py-6 text-center border-t border-white/5 bg-black/10 flex-shrink-0">
         <div className="flex flex-col items-center gap-2">
-          <p className="text-[8px] font-bold text-slate-600 uppercase tracking-[0.3em]">
+          <p className="text-xs font-bold text-slate-600 uppercase tracking-[0.3em]">
             © {new Date().getFullYear()} ProxyV2 Toàn cầu • Giải pháp Doanh nghiệp
           </p>
           {session?.user?.role === 'ADMIN' && (
-            <Link href="/dashboard" className="text-[9px] font-black text-blue-500/60 hover:text-blue-500 transition-colors uppercase tracking-[0.2em]">
+            <Link href="/dashboard" className="text-xs font-black text-blue-500/60 hover:text-blue-500 transition-colors uppercase tracking-[0.2em]">
               Quản trị viên
             </Link>
           )}

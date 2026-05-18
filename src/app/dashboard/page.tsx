@@ -77,25 +77,25 @@ export default function DashboardPage() {
     switch (status) {
       case 'COMPLETED':
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-50 text-green-700 border border-green-200/50">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-green-50 text-green-700 border border-green-200/50">
             Thành công
           </span>
         );
       case 'FAILED':
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-red-700 border border-red-200/50">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-200/50">
             Thất bại
           </span>
         );
       case 'ACTIVE':
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200/50">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200/50">
             Đang chạy
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200/50">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200/50">
             Đang chờ
           </span>
         );
@@ -117,7 +117,7 @@ export default function DashboardPage() {
               <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">{stat.title}</p>
               <div className="flex items-baseline justify-between mt-1">
                 <p className="text-2xl font-bold text-slate-900 tracking-tight leading-none">{stat.value}</p>
-                <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold ${stat.badgeBg} ${stat.badgeColor}`}>
+                <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${stat.badgeBg} ${stat.badgeColor}`}>
                   {stat.badgeText}
                 </span>
               </div>
@@ -248,11 +248,11 @@ export default function DashboardPage() {
                   <span>Cơ sở dữ liệu</span>
                 </div>
                 {isHealthLoading ? (
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-600">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-600">
                     Đang kiểm tra...
                   </span>
                 ) : (
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${
                     healthData?.database === 'ONLINE' 
                       ? 'bg-green-50 text-green-700 border border-green-200/50' 
                       : 'bg-red-50 text-red-700 border border-red-200/50'
@@ -268,7 +268,7 @@ export default function DashboardPage() {
                   <Icon icon="lucide:layers" className={`w-4 h-4 shrink-0 ${healthData?.redis === 'ONLINE' ? 'text-green-600' : 'text-red-500'}`} />
                   <span>Hàng chờ (Redis)</span>
                 </div>
-                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${
                   healthData?.redis === 'ONLINE' 
                     ? 'bg-green-50 text-green-700 border border-green-200/50' 
                     : 'bg-red-50 text-red-700 border border-red-200/50'
@@ -283,7 +283,7 @@ export default function DashboardPage() {
                   <Icon icon="lucide:cpu" className={`w-4 h-4 shrink-0 ${healthData?.worker === 'ONLINE' ? 'text-green-600' : 'text-red-500'}`} />
                   <span>SSH Workers</span>
                 </div>
-                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${
                   healthData?.worker === 'ONLINE' 
                     ? 'bg-green-50 text-green-700 border border-green-200/50' 
                     : 'bg-red-50 text-red-700 border border-red-200/50'
@@ -313,7 +313,7 @@ export default function DashboardPage() {
               </button>
             </div>
             {/* Modal Body */}
-            <div className="p-4 overflow-y-auto bg-slate-950 text-slate-200 font-mono text-[11px] leading-relaxed flex-1">
+            <div className="p-4 overflow-y-auto bg-slate-950 text-slate-200 leading-relaxed flex-1">
               <pre className="whitespace-pre-wrap break-all">
                 {selectedLog.logs || 'Không có dữ liệu nhật ký chi tiết.'}
               </pre>

@@ -148,7 +148,7 @@ export function LocationManagement({ initialLocations }: LocationManagementProps
                     </div>
                   </Table.Cell>
                   <Table.Cell className="align-top">
-                    <Chip size="sm" variant="soft" color="accent" className="font-medium text-[10px] uppercase">
+                    <Chip size="sm" variant="soft" color="accent" className="font-medium text-xs uppercase">
                       {loc.countryCode}
                     </Chip>
                   </Table.Cell>

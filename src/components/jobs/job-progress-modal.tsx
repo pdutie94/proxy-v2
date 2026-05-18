@@ -218,7 +218,7 @@ export const JobProgressModal = ({ jobId, open, onClose, onCompleted }: JobProgr
           {/* Terminal Logs View */}
           <div className="space-y-1.5">
             <h4 className="text-sm font-medium text-slate-700">Nhật ký thực hiện</h4>
-            <div className="bg-slate-950 border border-slate-800 rounded-md p-3 min-h-[200px] max-h-[240px] overflow-y-auto font-mono text-xs leading-relaxed">
+            <div className="bg-slate-950 border border-slate-800 rounded-md p-3 min-h-[200px] max-h-[240px] overflow-y-auto  text-xs leading-relaxed">
               {logSteps.length === 0 ? (
                 <div className="flex items-center justify-center py-16 gap-2 text-slate-400">
                   <span className="w-3.5 h-3.5 border-2 border-slate-500/30 border-t-slate-400 rounded-full animate-spin text-xs"></span>
@@ -246,7 +246,7 @@ export const JobProgressModal = ({ jobId, open, onClose, onCompleted }: JobProgr
                     return (
                       <div key={index} className="flex gap-2.5 pl-3.5 border-l border-slate-800 relative py-0.5">
                         <div className={`absolute -left-1 top-1.5 w-1.5 h-1.5 rounded-full border ${dotColor}`} />
-                        <span className="text-[10px] text-slate-500 select-none shrink-0 font-medium tracking-tight">
+                        <span className="text-xs text-slate-500 select-none shrink-0 font-medium tracking-tight">
                           {step.time}
                         </span>
                         <p className={`flex-1 break-all ${colorClass}`}>

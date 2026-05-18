@@ -98,7 +98,7 @@ export function LoginForm() {
         <TextField isRequired isInvalid={!!errors.password}>
           <div className="flex justify-between items-center w-full">
             <Label>Mật khẩu</Label>
-            <a href="#" className="text-[10px] text-blue-600 hover:underline font-bold">Quên mật khẩu?</a>
+            <a href="#" className="text-xs text-blue-600 hover:underline font-bold">Quên mật khẩu?</a>
           </div>
           <InputGroup>
             <InputGroup.Input

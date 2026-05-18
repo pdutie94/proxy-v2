@@ -45,19 +45,19 @@ export function UserPaymentsClient({ transactions }: UserPaymentsClientProps) {
     switch (status) {
       case 'COMPLETED':
         return (
-          <Chip size="sm" variant="soft" color="success" className="font-medium text-[10px] uppercase">
+          <Chip size="sm" variant="soft" color="success" className="font-medium text-xs uppercase">
             Thành công
           </Chip>
         );
       case 'PENDING':
         return (
-          <Chip size="sm" variant="soft" color="warning" className="font-medium text-[10px] uppercase">
+          <Chip size="sm" variant="soft" color="warning" className="font-medium text-xs uppercase">
             Chờ duyệt
           </Chip>
         );
       default:
         return (
-          <Chip size="sm" variant="soft" color="danger" className="font-medium text-[10px] uppercase">
+          <Chip size="sm" variant="soft" color="danger" className="font-medium text-xs uppercase">
             Đã từ chối
           </Chip>
         );
@@ -66,11 +66,11 @@ export function UserPaymentsClient({ transactions }: UserPaymentsClientProps) {
 
   const getTypeChip = (type: string) => {
     return type === 'DEPOSIT' ? (
-      <Chip size="sm" variant="soft" color="success" className="font-medium text-[10px] uppercase">
+      <Chip size="sm" variant="soft" color="success" className="font-medium text-xs uppercase">
         Nạp tiền
       </Chip>
     ) : (
-      <Chip size="sm" variant="soft" color="accent" className="font-medium text-[10px] uppercase">
+      <Chip size="sm" variant="soft" color="accent" className="font-medium text-xs uppercase">
         Thanh toán
       </Chip>
     );
@@ -213,7 +213,7 @@ export function UserPaymentsClient({ transactions }: UserPaymentsClientProps) {
             <Table.Body>
               {paginatedTransactions.map((tx: Transaction) => (
                 <Table.Row key={tx.id}>
-                  <Table.Cell className="align-top font-mono font-medium text-slate-400">
+                  <Table.Cell className="align-top  font-medium text-slate-400">
                     #{tx.id.slice(0, 10).toUpperCase()}
                   </Table.Cell>
                   <Table.Cell className="align-top">

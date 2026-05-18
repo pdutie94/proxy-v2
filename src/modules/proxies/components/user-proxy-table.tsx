@@ -28,13 +28,13 @@ export function UserProxyTable({ proxies }: UserProxyTableProps) {
     switch (status) {
       case 'ACTIVE':
         return (
-          <Chip size="sm" variant="soft" color="success" className="font-medium text-[10px] uppercase">
+          <Chip size="sm" variant="soft" color="success" className="font-medium text-xs uppercase">
             Hoạt động
           </Chip>
         );
       default:
         return (
-          <Chip size="sm" variant="soft" color="warning" className="font-medium text-[10px] uppercase">
+          <Chip size="sm" variant="soft" color="warning" className="font-medium text-xs uppercase">
             Đang xử lý
           </Chip>
         );
@@ -46,7 +46,7 @@ export function UserProxyTable({ proxies }: UserProxyTableProps) {
       <Table className="w-full text-left border-collapse">
         <Table.ScrollContainer>
           <Table.Content aria-label="Danh sách Proxy của tôi">
-            <Table.Header className="border-b border-slate-100 text-slate-400 text-[10px] font-bold uppercase tracking-wider bg-slate-50">
+            <Table.Header className="border-b border-slate-100 text-slate-400 text-xs font-bold uppercase tracking-wider bg-slate-50">
               <Table.Column isRowHeader className="py-2.5 px-3">Quốc gia</Table.Column>
               <Table.Column className="py-2.5 px-3">IP:Port</Table.Column>
               <Table.Column className="py-2.5 px-3">Thông tin đăng nhập</Table.Column>
@@ -81,16 +81,16 @@ export function UserProxyTable({ proxies }: UserProxyTableProps) {
                     </div>
                   </Table.Cell>
                   
-                  <Table.Cell className="py-2.5 px-3 font-mono font-medium text-slate-700 whitespace-nowrap">
+                  <Table.Cell className="py-2.5 px-3  font-medium text-slate-700 whitespace-nowrap">
                     {proxy.server.host}:{proxy.port}
                   </Table.Cell>
 
                   <Table.Cell className="py-2.5 px-3">
                     <div className="space-y-0.5">
-                      <div className="font-mono text-slate-500 text-[11px]">
+                      <div className=" text-slate-500 text-[11px]">
                         <span className="text-slate-400">User:</span> {proxy.username}
                       </div>
-                      <div className="font-mono text-slate-500 text-[11px]">
+                      <div className=" text-slate-500 text-[11px]">
                         <span className="text-slate-400">Pass:</span> {proxy.password}
                       </div>
                     </div>
@@ -105,7 +105,7 @@ export function UserProxyTable({ proxies }: UserProxyTableProps) {
                             {proxy.expiresAt ? format(new Date(proxy.expiresAt), 'dd/MM/yy HH:mm') : 'Vĩnh viễn'}
                           </span>
                           {proxy.expiresAt && (
-                            <span className={`text-[10px] font-medium ${isExpired ? 'text-slate-400' : 'text-amber-600'}`}>
+                            <span className={`text-xs font-medium ${isExpired ? 'text-slate-400' : 'text-amber-600'}`}>
                               {isExpired ? 'Hết hạn' : `Còn ${getCountdown(proxy.expiresAt)}`}
                             </span>
                           )}
@@ -130,7 +130,7 @@ export function UserProxyTable({ proxies }: UserProxyTableProps) {
                       {proxy.comment && (
                         <div className="group relative cursor-pointer text-slate-400 hover:text-slate-600 p-1.5">
                           <FileText className="w-3.5 h-3.5" />
-                          <div className="absolute right-0 bottom-full mb-1.5 hidden group-hover:block w-36 bg-slate-800 text-[10px] text-white p-2 rounded shadow-lg z-20 pointer-events-none leading-relaxed text-left">
+                          <div className="absolute right-0 bottom-full mb-1.5 hidden group-hover:block w-36 bg-slate-800 text-xs text-white p-2 rounded shadow-lg z-20 pointer-events-none leading-relaxed text-left">
                             {proxy.comment}
                           </div>
                         </div>
