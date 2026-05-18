@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { bulkProxySchema, BulkProxySchema } from '../schemas/bulk-proxy.schema';
 import { useProxies } from '@/hooks/use-proxies';
 import { useServers } from '@/hooks/use-servers';
-import { Input, Select, ListBox, NumberField, Checkbox } from "@heroui/react";
+import { Input, Select, ListBox, NumberField, Checkbox, TextArea } from "@heroui/react";
 
 import { useCallback, useState, useMemo, forwardRef, useImperativeHandle, useEffect } from 'react';
 import { format, addMinutes, addDays, addWeeks, addMonths, addYears } from 'date-fns';
@@ -668,12 +668,11 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
             name="comment"
             control={form.control}
             render={({ field }) => (
-              <textarea
+              <TextArea
                 placeholder="Ví dụ: Nuôi nick Facebook, chạy tool..."
                 value={field.value || ''}
                 onChange={field.onChange}
                 rows={2}
-                className="w-full p-2.5 text-sm bg-white placeholder:text-slate-400 border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none transition-all duration-150 font-medium text-slate-600"
               />
             )}
           />

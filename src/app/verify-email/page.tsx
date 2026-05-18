@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { toast } from '@heroui/react';
+import { toast, InputOTP, Button } from '@heroui/react';
 
 export default function VerifyEmailPage() {
   const [code, setCode] = useState('');
@@ -49,31 +49,31 @@ export default function VerifyEmailPage() {
           </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleVerify}>
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <label htmlFor="code" className="sr-only">Mã xác thực</label>
-              <input
-                id="code"
-                name="code"
-                type="text"
-                maxLength={6}
-                required
-                className="appearance-none rounded-md relative block w-full px-3 py-2 border border-slate-300 placeholder-slate-500 text-slate-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-lg tracking-[0.5em] text-center"
-                placeholder="------"
-                value={code}
-                onChange={(e) => setCode(e.target.value.replace(/[^0-9]/g, ''))}
-              />
-            </div>
+          <div className="flex justify-center">
+            <InputOTP
+              maxLength={6}
+              value={code}
+              onChange={setCode}
+            >
+              <InputOTP.Group>
+                <InputOTP.Slot index={0} />
+                <InputOTP.Slot index={1} />
+                <InputOTP.Slot index={2} />
+                <InputOTP.Slot index={3} />
+                <InputOTP.Slot index={4} />
+                <InputOTP.Slot index={5} />
+              </InputOTP.Group>
+            </InputOTP>
           </div>
 
           <div>
-            <button
+            <Button
               type="submit"
-              disabled={isLoading || code.length !== 6}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+              isDisabled={isLoading || code.length !== 6}
+              className="w-full font-semibold h-10 px-4 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-all flex items-center justify-center cursor-pointer shadow-none border-none outline-none"
             >
               {isLoading ? 'Đang xác thực...' : 'Xác thực ngay'}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

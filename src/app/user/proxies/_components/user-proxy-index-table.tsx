@@ -329,7 +329,6 @@ export function UserProxyIndexTable({ proxies: initialProxies }: UserProxyIndexT
             </PopoverTrigger>
             <PopoverContent placement="bottom start" className="p-3 w-48 border border-slate-200 rounded-lg shadow-md bg-white">
               <div className="flex flex-col gap-2 w-full">
-                <span className="text-sm font-medium text-slate-500 mb-1">Lọc theo Vị trí</span>
                 {locations.map(loc => (
                   <div key={loc.id} className="flex items-center">
                     <Checkbox

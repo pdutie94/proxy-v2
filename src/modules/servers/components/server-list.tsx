@@ -225,7 +225,6 @@ export function ServerList({ onEdit, onAdd }: ServerListProps) {
               </button>
             </PopoverTrigger>
             <PopoverContent placement="bottom start" offset={8} className="p-3 w-48 flex flex-col gap-2 bg-white border border-slate-200 rounded-lg shadow-md z-50">
-              <span className="text-xs font-semibold text-slate-500 mb-1">Lọc theo Trạng thái</span>
               <div className="flex flex-col gap-2">
                 {statusOptions.map(opt => (
                   <Checkbox
@@ -264,7 +263,6 @@ export function ServerList({ onEdit, onAdd }: ServerListProps) {
               </button>
             </PopoverTrigger>
             <PopoverContent placement="bottom start" offset={8} className="p-3 w-48 flex flex-col gap-2 bg-white border border-slate-200 rounded-lg shadow-md z-50">
-              <span className="text-xs font-semibold text-slate-500 mb-1">Lọc theo Vị trí</span>
               <div className="flex flex-col gap-2 max-h-40 overflow-y-auto">
                 {uniqueLocations.map(loc => (
                   <Checkbox

@@ -242,11 +242,6 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                   placeholder="Ví dụ: 2001:19f0:4401:903"
                   value={field.value}
                   onChange={field.onChange}
-                  className={`w-full h-9 px-2.5 text-sm bg-white border rounded-lg outline-none transition-all duration-150 ${
-                    errors.ipv6 
-                      ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/50' 
-                      : 'border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50'
-                  }`}
                 />
               )}
             />
