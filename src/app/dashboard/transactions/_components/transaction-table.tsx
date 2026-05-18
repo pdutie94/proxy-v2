@@ -1,7 +1,7 @@
 'use client';
 
 import { Icon } from '@iconify/react';
-import { Table, Chip, Button, Popover, PopoverTrigger, PopoverContent, Pagination } from '@heroui/react';
+import { Table, Chip, Button, Popover, PopoverTrigger, PopoverContent, Pagination, Input } from '@heroui/react';
 import { format } from 'date-fns';
 import { approveTransactionAction, rejectTransactionAction } from '@/modules/wallet/actions/admin-transaction.action';
 import { toast } from '@heroui/react';
@@ -196,11 +196,11 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
         {/* Right Side: Search Input */}
         <div className="flex items-center gap-2">
           <div className="relative w-full sm:w-56">
-            <input
+            <Input
               type="text"
               placeholder="Tìm email người dùng..."
               value={queryValue}
-              onChange={(e) => {
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                 setQueryValue(e.target.value);
                 setPage(1);
               }}

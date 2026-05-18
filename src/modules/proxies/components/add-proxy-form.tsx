@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { bulkProxySchema, BulkProxySchema } from '../schemas/bulk-proxy.schema';
 import { useProxies } from '@/hooks/use-proxies';
 import { useServers } from '@/hooks/use-servers';
-import { Input, Select, ListBox, NumberField } from "@heroui/react";
+import { Input, Select, ListBox, NumberField, Checkbox } from "@heroui/react";
 
 import { useCallback, useState, useMemo, forwardRef, useImperativeHandle, useEffect } from 'react';
 import { format, addMinutes, addDays, addWeeks, addMonths, addYears } from 'date-fns';
@@ -567,17 +567,17 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
                 <label className="block text-sm font-medium text-slate-500">Chọn ngày hết hạn</label>
                 <Icon icon="lucide:calendar" className="w-3 h-3 text-slate-400"  />
               </div>
-              <input
+              <Input
                 type="datetime-local"
                 min={format(new Date(), 'yyyy-MM-dd\'T\'HH:mm')}
                 value={form.watch('expiresAt') ? format(new Date(form.watch('expiresAt') as string), 'yyyy-MM-dd\'T\'HH:mm') : ''}
-                onChange={(e) => {
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                   const val = e.target.value;
                   if (val) {
                     form.setValue('expiresAt', new Date(val).toISOString());
                   }
                 }}
-                className="w-full h-9 px-2.5 text-sm bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none transition-all duration-150 font-medium text-slate-600"
+                className="w-full h-9 px-3 text-sm bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none transition-all duration-150 font-medium text-slate-600"
               />
             </div>
           )}
@@ -600,15 +600,13 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
                 name="autoRenew"
                 control={form.control}
                 render={({ field }) => (
-                  <label className="flex items-center gap-2 cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      checked={field.value}
-                      onChange={field.onChange}
-                      className="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500/50 cursor-pointer"
-                    />
-                    <span className="text-sm font-medium text-slate-600">Tự động gia hạn</span>
-                  </label>
+                  <Checkbox
+                    isSelected={field.value}
+                    onChange={field.onChange}
+                    className="text-sm font-medium text-slate-600 select-none cursor-pointer"
+                  >
+                    Tự động gia hạn
+                  </Checkbox>
                 )}
               />
               <span className="text-xs text-slate-400 font-medium pl-6">

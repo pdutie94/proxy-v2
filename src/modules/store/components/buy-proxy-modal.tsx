@@ -2,9 +2,9 @@
 
 import { Icon } from '@iconify/react';
 import { useState, useMemo } from 'react';
-import { Button } from '@heroui/react';
+import { Button, toast, Input, Select, ListBox } from '@heroui/react';
 
-import { toast } from '@heroui/react';
+
 import { createPendingOrderAction, payOrderAction } from '../actions/purchase.action';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
@@ -179,58 +179,98 @@ export function BuyProxyModal({ open, onClose }: BuyProxyModalProps) {
               {/* Country & Period columns */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="block text-[11px] font-semibold text-slate-500">Quốc gia</label>
-                  <div className="relative">
-                    <select
-                      value={country}
-                      onChange={(e) => setCountry(e.target.value)}
-                      disabled={locationsLoading || countriesOptions.length === 0}
-                      className="w-full text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg h-9 px-3 outline-none disabled:bg-slate-50 disabled:text-slate-400 cursor-pointer appearance-none transition-all duration-150"
-                    >
-                      {locationsLoading ? (
-                        <option value="">Đang tải...</option>
-                      ) : countriesOptions.length === 0 ? (
-                        <option value="">Không khả dụng</option>
-                      ) : (
-                        countriesOptions.map(opt => (
-                          <option key={opt.value} value={opt.value}>{opt.label}</option>
-                        ))
-                      )}
-                    </select>
-                    <div className="absolute inset-y-0 right-2.5 flex items-center pointer-events-none text-slate-400">
-                      <Icon icon="lucide:chevron-down" className="w-3.5 h-3.5"  />
-                    </div>
-                  </div>
+                  <label className="block text-[11px] font-semibold text-slate-500 mb-1">Quốc gia</label>
+                  <Select
+                    selectedKey={country}
+                    onSelectionChange={(key) => setCountry(key as string)}
+                    isDisabled={locationsLoading || countriesOptions.length === 0}
+                    className="w-full"
+                  >
+                    <Select.Trigger className="w-full text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg h-9 px-3 outline-none disabled:bg-slate-50 disabled:text-slate-400 cursor-pointer flex items-center justify-between transition-all duration-150">
+                      <span>
+                        {locationsLoading
+                          ? 'Đang tải...'
+                          : countriesOptions.length === 0
+                          ? 'Không khả dụng'
+                          : countriesOptions.find(o => o.value === country)?.label || ''}
+                      </span>
+                      <Select.Indicator>
+                        <Icon icon="lucide:chevron-down" className="w-3.5 h-3.5 text-slate-400" />
+                      </Select.Indicator>
+                    </Select.Trigger>
+                    <Select.Popover className="w-[--trigger-width] bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden z-50">
+                      <ListBox className="p-1 outline-none">
+                        {countriesOptions.map(opt => (
+                          <ListBox.Item
+                            key={opt.value}
+                            id={opt.value}
+                            textValue={opt.label}
+                            className="flex items-center justify-between px-2 py-1 text-xs rounded text-slate-600 hover:bg-slate-50 cursor-pointer outline-none data-[focused]:bg-slate-100 data-[selected]:bg-slate-100 data-[selected]:text-blue-600 font-medium"
+                          >
+                            {({ isSelected }) => (
+                              <>
+                                <span>{opt.label}</span>
+                                {isSelected && (
+                                  <Icon icon="lucide:check" className="w-3.5 h-3.5 text-blue-600" />
+                                )}
+                              </>
+                            )}
+                          </ListBox.Item>
+                        ))}
+                      </ListBox>
+                    </Select.Popover>
+                  </Select>
                 </div>
 
                 <div className="space-y-1">
-                  <label className="block text-[11px] font-semibold text-slate-500">Thời hạn</label>
-                  <div className="relative">
-                    <select
-                      value={period}
-                      onChange={(e) => setPeriod(e.target.value)}
-                      className="w-full text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg h-9 px-3 outline-none cursor-pointer appearance-none transition-all duration-150"
-                    >
-                      {PERIODS.map(p => (
-                        <option key={p.value} value={p.value}>{p.label}</option>
-                      ))}
-                    </select>
-                    <div className="absolute inset-y-0 right-2.5 flex items-center pointer-events-none text-slate-400">
-                      <Icon icon="lucide:chevron-down" className="w-3.5 h-3.5"  />
-                    </div>
-                  </div>
+                  <label className="block text-[11px] font-semibold text-slate-500 mb-1">Thời hạn</label>
+                  <Select
+                    selectedKey={period}
+                    onSelectionChange={(key) => setPeriod(key as string)}
+                    className="w-full"
+                  >
+                    <Select.Trigger className="w-full text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg h-9 px-3 outline-none cursor-pointer flex items-center justify-between transition-all duration-150">
+                      <span>
+                        {PERIODS.find(p => p.value === period)?.label || ''}
+                      </span>
+                      <Select.Indicator>
+                        <Icon icon="lucide:chevron-down" className="w-3.5 h-3.5 text-slate-400" />
+                      </Select.Indicator>
+                    </Select.Trigger>
+                    <Select.Popover className="w-[--trigger-width] bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden z-50">
+                      <ListBox className="p-1 outline-none">
+                        {PERIODS.map(p => (
+                          <ListBox.Item
+                            key={p.value}
+                            id={p.value}
+                            textValue={p.label}
+                            className="flex items-center justify-between px-2 py-1 text-xs rounded text-slate-600 hover:bg-slate-50 cursor-pointer outline-none data-[focused]:bg-slate-100 data-[selected]:bg-slate-100 data-[selected]:text-blue-600 font-medium"
+                          >
+                            {({ isSelected }) => (
+                              <>
+                                <span>{p.label}</span>
+                                {isSelected && (
+                                  <Icon icon="lucide:check" className="w-3.5 h-3.5 text-blue-600" />
+                                )}
+                              </>
+                            )}
+                          </ListBox.Item>
+                        ))}
+                      </ListBox>
+                    </Select.Popover>
+                  </Select>
                 </div>
               </div>
 
               {/* Quantity */}
               <div className="space-y-1">
-                <label className="block text-[11px] font-semibold text-slate-500">Số lượng</label>
-                <input
+                <label className="block text-[11px] font-semibold text-slate-500 mb-1">Số lượng</label>
+                <Input
                   type="number"
                   min={1}
                   value={count}
-                  onChange={(e) => setCount(e.target.value)}
-                  className="w-full h-9 px-2.5 text-xs bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none transition-all duration-150 font-semibold text-slate-600"
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCount(e.target.value)}
+                  className="w-full h-9 px-3 text-xs bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none transition-all duration-150 font-semibold text-slate-600"
                 />
               </div>
 

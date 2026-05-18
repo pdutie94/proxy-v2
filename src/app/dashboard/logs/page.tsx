@@ -5,7 +5,7 @@ import { useLogs } from "@/hooks/use-logs";
 import { useState, useCallback, useMemo } from "react";
 import { ServerJob, Server, Proxy } from "@prisma/client";
 import { Icon } from '@iconify/react';
-import { Button, Table, Pagination, Chip } from "@heroui/react";
+import { Button, Table, Pagination, Chip, Input } from "@heroui/react";
 
 type LogEntry = ServerJob & {
   server?: Server | null;
@@ -176,11 +176,11 @@ export default function LogsPage() {
         {/* Right Side: Search Input */}
         <div className="flex items-center gap-2">
           <div className="relative w-full sm:w-56">
-            <input
+            <Input
               type="text"
               placeholder="Tìm sự kiện, nội dung..."
               value={queryValue}
-              onChange={(e) => {
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                 setQueryValue(e.target.value);
                 setPage(1);
               }}

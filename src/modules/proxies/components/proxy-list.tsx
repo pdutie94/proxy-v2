@@ -2,7 +2,7 @@
 
 import { useProxies } from '@/hooks/use-proxies';
 import { useServers } from '@/hooks/use-servers';
-import { Button, Table, Chip, Checkbox, Popover, PopoverTrigger, PopoverContent, Selection, Pagination } from "@heroui/react";
+import { Button, Table, Chip, Checkbox, Popover, PopoverTrigger, PopoverContent, Selection, Pagination, Input } from "@heroui/react";
 import { Icon } from "@iconify/react";
 import { format } from "date-fns";
 import React, { useState, useCallback, useMemo } from 'react';
@@ -601,11 +601,11 @@ export function ProxyList({ onEdit }: ProxyListProps) {
         <div className="flex items-center gap-2">
           {/* Search Bar */}
           <div className="relative w-full sm:w-56">
-            <input
+            <Input
               type="text"
               placeholder="Tìm kiếm..."
               value={queryValue}
-              onChange={(e) => onHandleQueryValueChange(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => onHandleQueryValueChange(e.target.value)}
               className="w-full h-8 pl-8 pr-8 text-sm bg-slate-100/60 hover:bg-slate-100 focus:bg-white placeholder:text-slate-400 border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none transition-all duration-150"
             />
             <div className="absolute inset-y-0 left-2.5 flex items-center pointer-events-none text-slate-400">

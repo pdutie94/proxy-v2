@@ -5,7 +5,7 @@ import { useSession } from 'next-auth/react';
 import { Modal } from '@/components/ui/modal';
 import { LoginForm } from '@/modules/auth/components/login-form-tw';
 import { RegisterForm } from '@/modules/auth/components/register-form';
-import { toast } from '@heroui/react';
+import { toast, Input } from '@heroui/react';
 import { createPendingOrderAction, payOrderAction } from '../actions/purchase.action';
 import { useRouter } from 'next/navigation';
 import { CustomSelect } from '@/components/ui/custom-select';
@@ -180,11 +180,11 @@ export function BuyProxyWidget() {
             <div className="grid grid-cols-2 gap-6">
               <div className="space-y-2.5">
                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Số lượng</label>
-                <input 
+                <Input 
                   type="number"
-                  min="1"
-                  value={count}
-                  onChange={(e) => setCount(Math.max(1, parseInt(e.target.value) || 1))}
+                  min={1}
+                  value={count.toString()}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCount(Math.max(1, parseInt(e.target.value) || 1))}
                   className="w-full h-12 px-5 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-blue-600 transition-all text-white font-bold text-sm hover:bg-white/10"
                 />
               </div>

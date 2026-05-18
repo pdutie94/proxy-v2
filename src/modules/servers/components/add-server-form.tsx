@@ -5,7 +5,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { serverSchema, ServerSchema } from '../schemas/server.schema';
 import { useServers } from '@/hooks/use-servers';
-import { Input, Select, ListBox } from "@heroui/react";
+import { Input, Select, ListBox, Checkbox } from "@heroui/react";
 
 import { useCallback, forwardRef, useImperativeHandle, useEffect, useMemo } from 'react';
 import { Server } from '@prisma/client';
@@ -370,15 +370,13 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
               name="autoRotate"
               control={control}
               render={({ field }) => (
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={field.value}
+                <Checkbox
+                    isSelected={field.value}
                     onChange={field.onChange}
-                    className="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500/50 cursor-pointer"
-                  />
-                  <span className="text-sm font-medium text-slate-600">Tự động xoay IPv6</span>
-                </label>
+                    className="text-sm font-medium text-slate-600 select-none cursor-pointer"
+                  >
+                    Tự động xoay IPv6
+                  </Checkbox>
               )}
             />
           </div>
