@@ -189,84 +189,126 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
 
     return (
       <form onSubmit={form.handleSubmit(onSubmit)} className="p-4 space-y-4 text-xs bg-white">
-        {isAdmin && (
-          <Controller
-            name="userId"
-            control={form.control}
-            render={({ field }) => (
-              <Select
-                selectedKey={field.value || ''}
-                onSelectionChange={(key) => field.onChange(key as string)}
-                className="w-full"
-              >
-                <Label>Chủ sở hữu (User)</Label>
-                <Select.Trigger>
-                  <Select.Value />
-                  <Select.Indicator />
-                </Select.Trigger>
-                <Select.Popover>
-                  <ListBox>
-                    {userOptions.map(opt => (
-                      <ListBox.Item
-                        key={opt.value}
-                        id={opt.value}
-                        textValue={opt.label}
-                      >
-                        {opt.label}
-                        <ListBox.ItemIndicator />
-                      </ListBox.Item>
-                    ))}
-                  </ListBox>
-                </Select.Popover>
-              </Select>
+        {isAdmin ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Controller
+              name="userId"
+              control={form.control}
+              render={({ field }) => (
+                <Select
+                  selectedKey={field.value || ''}
+                  onSelectionChange={(key) => field.onChange(key as string)}
+                  className="w-full"
+                >
+                  <Label>Khách hàng</Label>
+                  <Select.Trigger>
+                    <Select.Value />
+                    <Select.Indicator />
+                  </Select.Trigger>
+                  <Select.Popover>
+                    <ListBox>
+                      {userOptions.map(opt => (
+                        <ListBox.Item
+                          key={opt.value}
+                          id={opt.value}
+                          textValue={opt.label}
+                        >
+                          {opt.label}
+                          <ListBox.ItemIndicator />
+                        </ListBox.Item>
+                      ))}
+                    </ListBox>
+                  </Select.Popover>
+                </Select>
+              )}
+            />
+
+            <div>
+              <Controller
+                name="serverId"
+                control={form.control}
+                render={({ field }) => (
+                  <Select
+                    selectedKey={field.value || ''}
+                    onSelectionChange={(key) => field.onChange(key as string)}
+                    isDisabled={!!proxy}
+                    className="w-full"
+                  >
+                    <Label>Máy chủ</Label>
+                    <Select.Trigger>
+                      <Select.Value />
+                      <Select.Indicator />
+                    </Select.Trigger>
+                    <Select.Popover>
+                      <ListBox>
+                        {serverOptions.map(opt => (
+                          <ListBox.Item
+                            key={opt.value}
+                            id={opt.value}
+                            textValue={opt.label}
+                          >
+                            {opt.label}
+                            <ListBox.ItemIndicator />
+                          </ListBox.Item>
+                        ))}
+                      </ListBox>
+                    </Select.Popover>
+                  </Select>
+                )}
+              />
+              {form.formState.errors.serverId && (
+                <p className="mt-1 text-sm text-red-500 font-medium">{form.formState.errors.serverId.message}</p>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div>
+            <Controller
+              name="serverId"
+              control={form.control}
+              render={({ field }) => (
+                <Select
+                  selectedKey={field.value || ''}
+                  onSelectionChange={(key) => field.onChange(key as string)}
+                  isDisabled={!!proxy}
+                  className="w-full"
+                >
+                  <Label>Máy chủ</Label>
+                  <Select.Trigger>
+                    <Select.Value />
+                    <Select.Indicator />
+                  </Select.Trigger>
+                  <Select.Popover>
+                    <ListBox>
+                      {serverOptions.map(opt => (
+                        <ListBox.Item
+                          key={opt.value}
+                          id={opt.value}
+                          textValue={opt.label}
+                        >
+                          {opt.label}
+                          <ListBox.ItemIndicator />
+                        </ListBox.Item>
+                      ))}
+                    </ListBox>
+                  </Select.Popover>
+                </Select>
+              )}
+            />
+            {form.formState.errors.serverId && (
+              <p className="mt-1 text-sm text-red-500 font-medium">{form.formState.errors.serverId.message}</p>
             )}
-          />
+          </div>
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Controller
-            name="serverId"
-            control={form.control}
-            render={({ field }) => (
-              <Select
-                selectedKey={field.value || ''}
-                onSelectionChange={(key) => field.onChange(key as string)}
-                isDisabled={!!proxy}
-                className="w-full"
-              >
-                <Label>Máy chủ đích</Label>
-                <Select.Trigger>
-                  <Select.Value />
-                  <Select.Indicator />
-                </Select.Trigger>
-                <Select.Popover>
-                  <ListBox>
-                    {serverOptions.map(opt => (
-                      <ListBox.Item
-                        key={opt.value}
-                        id={opt.value}
-                        textValue={opt.label}
-                      >
-                        {opt.label}
-                        <ListBox.ItemIndicator />
-                      </ListBox.Item>
-                    ))}
-                  </ListBox>
-                </Select.Popover>
-              </Select>
-            )}
-          />
-          {form.formState.errors.serverId && (
-            <p className="mt-1 text-sm text-red-500 font-medium">{form.formState.errors.serverId.message}</p>
-          )}
-
-          {/* Số lượng Proxy */}
+          {/* Số lượng proxy */}
           <Controller
             name="count"
             control={form.control}
             render={({ field, fieldState }) => (
               <TextField isInvalid={!!fieldState.error}>
-                <Label>Số lượng Proxy</Label>
+                <Label>Số lượng proxy</Label>
                 <Input
                   type="number"
                   placeholder="10"
@@ -278,10 +320,8 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
               </TextField>
             )}
           />
-        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Cổng SSH / Cổng bắt đầu */}
+          {/* Cổng bắt đầu */}
           <Controller
             name="startPort"
             control={form.control}
@@ -298,7 +338,9 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
               </TextField>
             )}
           />
+        </div>
 
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Tài khoản */}
           <Controller
             name="username"
@@ -328,25 +370,25 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
               </TextField>
             )}
           />
-        </div>
 
-        {/* Mật khẩu */}
-        <Controller
-          name="password"
-          control={form.control}
-          render={({ field, fieldState }) => (
-            <TextField isInvalid={!!fieldState.error}>
-              <Label>Mật khẩu</Label>
-              <Input
-                type="text"
-                placeholder="Mật khẩu"
-                value={field.value || ''}
-                onChange={field.onChange}
-              />
-              <FieldError className="mt-1 text-sm text-red-500 font-medium">{fieldState.error?.message}</FieldError>
-            </TextField>
-          )}
-        />
+          {/* Mật khẩu */}
+          <Controller
+            name="password"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <TextField isInvalid={!!fieldState.error}>
+                <Label>Mật khẩu</Label>
+                <Input
+                  type="text"
+                  placeholder="Mật khẩu"
+                  value={field.value || ''}
+                  onChange={field.onChange}
+                />
+                <FieldError className="mt-1 text-sm text-red-500 font-medium">{fieldState.error?.message}</FieldError>
+              </TextField>
+            )}
+          />
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Loại IP Outbound */}
