@@ -107,6 +107,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                   <InputGroup.Input
                     type="text"
                     placeholder="Ví dụ: US-West-01"
+                    className="w-full"
                     value={field.value || ''}
                     onChange={field.onChange}
                   />
@@ -130,6 +131,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                   <InputGroup.Input
                     type="text"
                     placeholder="Ví dụ: 1.2.3.4"
+                    className="w-full"
                     value={field.value || ''}
                     onChange={field.onChange}
                   />
@@ -155,6 +157,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                   <InputGroup.Input
                     type="number"
                     placeholder="22"
+                    className="w-full"
                     value={field.value?.toString() || ''}
                     onChange={(e) => field.onChange(parseInt(e.target.value) || 22)}
                   />
@@ -178,6 +181,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                   <InputGroup.Input
                     type="text"
                     placeholder="root"
+                    className="w-full"
                     value={field.value || ''}
                     onChange={field.onChange}
                   />
@@ -199,9 +203,13 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                   {server ? "Mật khẩu SSH (Để trống nếu không đổi)" : "Mật khẩu SSH"}
                 </Label>
                 <InputGroup>
+                  <InputGroup.Prefix>
+                    <Icon icon="lucide:lock" className="w-3.5 h-3.5 text-slate-400" />
+                  </InputGroup.Prefix>
                   <InputGroup.Input
                     type={isPasswordVisible ? "text" : "password"}
                     placeholder="Mật khẩu"
+                    className="w-full"
                     value={field.value || ''}
                     onChange={field.onChange}
                   />
@@ -242,6 +250,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                   <InputGroup.Input
                     type="text"
                     placeholder="Ví dụ: 2001:19f0:4401:903"
+                    className="w-full"
                     value={field.value || ''}
                     onChange={field.onChange}
                   />
@@ -302,6 +311,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                   <InputGroup.Input
                     type="number"
                     placeholder="100"
+                    className="w-full"
                     value={field.value?.toString() || ''}
                     onChange={(e) => field.onChange(parseInt(e.target.value) || 100)}
                   />
@@ -335,6 +345,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                   <InputGroup.Input
                     type="number"
                     placeholder="10000"
+                    className="w-full"
                     value={field.value?.toString() || ''}
                     onChange={(e) => field.onChange(parseInt(e.target.value) || 10000)}
                   />
