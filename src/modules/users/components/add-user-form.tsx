@@ -77,11 +77,12 @@ export const AddUserForm = forwardRef<AddUserFormRef, AddUserFormProps>(
                 <InputGroup.Input
                   type="email"
                   placeholder="vidu@example.com"
+                  className="w-full"
                   value={field.value}
                   onChange={field.onChange}
                 />
               </InputGroup>
-              <FieldError />
+              <FieldError>{fieldState.error?.message}</FieldError>
             </TextField>
           )}
         />
@@ -99,6 +100,7 @@ export const AddUserForm = forwardRef<AddUserFormRef, AddUserFormProps>(
                 <InputGroup.Input
                   type={isVisible ? "text" : "password"}
                   placeholder="Tối thiểu 6 ký tự"
+                  className="w-full"
                   value={field.value}
                   onChange={field.onChange}
                 />
@@ -112,7 +114,7 @@ export const AddUserForm = forwardRef<AddUserFormRef, AddUserFormProps>(
                   </button>
                 </InputGroup.Suffix>
               </InputGroup>
-              <FieldError />
+              <FieldError>{fieldState.error?.message}</FieldError>
             </TextField>
           )}
         />
@@ -151,7 +153,7 @@ export const AddUserForm = forwardRef<AddUserFormRef, AddUserFormProps>(
                   ))}
                 </ListBox>
               </Select.Popover>
-              <FieldError />
+              <FieldError>{fieldState.error?.message}</FieldError>
             </Select>
           )}
         />

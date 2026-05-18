@@ -68,7 +68,7 @@ export function RegisterForm() {
             type="email"
             placeholder="your@email.com"
           />
-          <FieldError />
+          <FieldError>{errors.email?.message}</FieldError>
         </TextField>
 
         <TextField isRequired isInvalid={!!errors.password}>
@@ -78,7 +78,7 @@ export function RegisterForm() {
             type="password"
             placeholder="••••••••"
           />
-          <FieldError />
+          <FieldError>{errors.password?.message}</FieldError>
         </TextField>
 
         <TextField isRequired isInvalid={!!errors.confirmPassword}>
@@ -88,7 +88,7 @@ export function RegisterForm() {
             type="password"
             placeholder="••••••••"
           />
-          <FieldError />
+          <FieldError>{errors.confirmPassword?.message}</FieldError>
         </TextField>
 
         <Button

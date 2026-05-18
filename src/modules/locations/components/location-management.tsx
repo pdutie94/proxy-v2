@@ -201,7 +201,7 @@ export function LocationManagement({ initialLocations }: LocationManagementProps
                       value={field.value}
                       onChange={field.onChange}
                     />
-                    <FieldError />
+                    <FieldError>{fieldState.error?.message}</FieldError>
                   </TextField>
                 )}
               />
@@ -221,7 +221,7 @@ export function LocationManagement({ initialLocations }: LocationManagementProps
                     <span className="block text-xs text-slate-400 mt-1.5 leading-relaxed font-medium">
                       Sử dụng 2 ký tự mã quốc gia để hiển thị icon cờ tự động.
                     </span>
-                    <FieldError />
+                    <FieldError>{fieldState.error?.message}</FieldError>
                   </TextField>
                 )}
               />

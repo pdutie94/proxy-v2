@@ -112,7 +112,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                     onChange={field.onChange}
                   />
                 </InputGroup>
-                <FieldError />
+                <FieldError>{fieldState.error?.message}</FieldError>
               </TextField>
             )}
           />
@@ -136,7 +136,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                     onChange={field.onChange}
                   />
                 </InputGroup>
-                <FieldError />
+                <FieldError>{fieldState.error?.message}</FieldError>
               </TextField>
             )}
           />
@@ -162,7 +162,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                     onChange={(e) => field.onChange(parseInt(e.target.value) || 22)}
                   />
                 </InputGroup>
-                <FieldError />
+                <FieldError>{fieldState.error?.message}</FieldError>
               </TextField>
             )}
           />
@@ -186,7 +186,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                     onChange={field.onChange}
                   />
                 </InputGroup>
-                <FieldError />
+                <FieldError>{fieldState.error?.message}</FieldError>
               </TextField>
             )}
           />
@@ -223,7 +223,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                     </button>
                   </InputGroup.Suffix>
                 </InputGroup>
-                <FieldError />
+                <FieldError>{fieldState.error?.message}</FieldError>
               </TextField>
             )}
           />
@@ -247,7 +247,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                     onChange={field.onChange}
                   />
                 </InputGroup>
-                <FieldError />
+                <FieldError>{fieldState.error?.message}</FieldError>
               </TextField>
             )}
           />
@@ -284,7 +284,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                     ))}
                   </ListBox>
                 </Select.Popover>
-                <FieldError />
+                <FieldError>{fieldState.error?.message}</FieldError>
               </Select>
             )}
           />
@@ -308,7 +308,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                     onChange={(e) => field.onChange(parseInt(e.target.value) || 100)}
                   />
                 </InputGroup>
-                <FieldError />
+                <FieldError>{fieldState.error?.message}</FieldError>
               </TextField>
             )}
           />
@@ -334,7 +334,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                     onChange={(e) => field.onChange(parseInt(e.target.value) || 10000)}
                   />
                 </InputGroup>
-                <FieldError />
+                <FieldError>{fieldState.error?.message}</FieldError>
               </TextField>
             )}
           />
@@ -384,7 +384,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                       onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                     />
                   </InputGroup>
-                  <FieldError />
+                  <FieldError>{fieldState.error?.message}</FieldError>
                 </TextField>
               )}
             />

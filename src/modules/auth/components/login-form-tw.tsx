@@ -88,10 +88,11 @@ export function LoginForm() {
             <InputGroup.Input
               {...register('email')}
               type="email"
+              className="w-full"
               placeholder="admin@example.com"
             />
           </InputGroup>
-          <FieldError />
+          <FieldError>{errors.email?.message}</FieldError>
         </TextField>
 
         <TextField isRequired isInvalid={!!errors.password}>
@@ -103,6 +104,7 @@ export function LoginForm() {
             <InputGroup.Input
               {...register('password')}
               type={isVisible ? "text" : "password"}
+              className="w-full"
               placeholder="••••••••"
             />
             <InputGroup.Suffix>
@@ -115,7 +117,7 @@ export function LoginForm() {
               </button>
             </InputGroup.Suffix>
           </InputGroup>
-          <FieldError />
+          <FieldError>{errors.password?.message}</FieldError>
         </TextField>
 
         <Button
