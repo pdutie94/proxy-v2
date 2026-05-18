@@ -9,7 +9,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from '@heroui/react';
-import { Input, Button, TextField, Label, FieldError } from "@heroui/react";
+import { Input, Button, TextField, Label, FieldError, InputGroup } from "@heroui/react";
 
 
 export function LoginForm() {
@@ -81,11 +81,16 @@ export function LoginForm() {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <TextField isRequired isInvalid={!!errors.email}>
           <Label>Địa chỉ Email</Label>
-          <Input
-            {...register('email')}
-            type="email"
-            placeholder="admin@example.com"
-          />
+          <InputGroup>
+            <InputGroup.Prefix>
+              <Icon icon="lucide:mail" className="w-3.5 h-3.5 text-slate-400" />
+            </InputGroup.Prefix>
+            <InputGroup.Input
+              {...register('email')}
+              type="email"
+              placeholder="admin@example.com"
+            />
+          </InputGroup>
           <FieldError />
         </TextField>
 
@@ -94,20 +99,22 @@ export function LoginForm() {
             <Label>Mật khẩu</Label>
             <a href="#" className="text-[10px] text-blue-600 hover:underline font-bold">Quên mật khẩu?</a>
           </div>
-          <div className="relative">
-            <Input
+          <InputGroup>
+            <InputGroup.Input
               {...register('password')}
               type={isVisible ? "text" : "password"}
               placeholder="••••••••"
             />
-            <button 
-              type="button" 
-              onClick={toggleVisibility} 
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 focus:outline-none cursor-pointer text-slate-400 hover:text-slate-600 flex items-center justify-center p-0.5 rounded-full"
-            >
-              {isVisible ? <Icon icon="lucide:eye-off" className="w-3.5 h-3.5 shrink-0"  /> : <Icon icon="lucide:eye" className="w-3.5 h-3.5 shrink-0"  />}
-            </button>
-          </div>
+            <InputGroup.Suffix>
+              <button 
+                type="button" 
+                onClick={toggleVisibility} 
+                className="focus:outline-none cursor-pointer text-slate-400 hover:text-slate-600 flex items-center justify-center p-0.5 rounded-full"
+              >
+                {isVisible ? <Icon icon="lucide:eye-off" className="w-3.5 h-3.5" /> : <Icon icon="lucide:eye" className="w-3.5 h-3.5" />}
+              </button>
+            </InputGroup.Suffix>
+          </InputGroup>
           <FieldError />
         </TextField>
 

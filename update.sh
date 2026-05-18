@@ -22,7 +22,8 @@ npx prisma generate
 npx prisma db push
 
 # 3. Build ứng dụng
-echo -e "${YELLOW}3/5: Đang build lại ứng dụng...${NC}"
+echo -e "${YELLOW}3/5: Dọn dẹp cache và build lại ứng dụng...${NC}"
+rm -rf .next
 npm run build
 
 # 4. Restart PM2

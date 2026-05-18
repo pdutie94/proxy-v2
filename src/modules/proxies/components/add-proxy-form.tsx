@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { bulkProxySchema, BulkProxySchema } from '../schemas/bulk-proxy.schema';
 import { useProxies } from '@/hooks/use-proxies';
 import { useServers } from '@/hooks/use-servers';
-import { Input, Select, ListBox, Checkbox, TextArea, TextField, Label, FieldError } from "@heroui/react";
+import { Input, Select, ListBox, Checkbox, TextArea, TextField, Label, FieldError, InputGroup, Description } from "@heroui/react";
 
 import { useCallback, useState, useMemo, forwardRef, useImperativeHandle, useEffect } from 'react';
 import { format, addMinutes, addDays, addWeeks, addMonths, addYears } from 'date-fns';
@@ -265,18 +265,8 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
             name="count"
             control={form.control}
             render={({ field, fieldState }) => (
-              <TextField isInvalid={!!fieldState.error} className="space-y-1">
-                <div className="flex items-center gap-1">
-                  <Label className="block text-sm font-medium text-slate-500">Số lượng Proxy</Label>
-                  {!proxy && (
-                    <div className="group relative cursor-pointer text-slate-400 hover:text-slate-600">
-                      <Icon icon="lucide:info" className="w-3 h-3"  />
-                      <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 hidden group-hover:block w-48 bg-slate-800 text-[9px] text-white p-2 rounded shadow-lg z-20 pointer-events-none leading-relaxed">
-                        Tối đa 1000 proxy một lần tạo
-                      </div>
-                    </div>
-                  )}
-                </div>
+              <TextField isInvalid={!!fieldState.error}>
+                <Label>Số lượng Proxy</Label>
                 <Input
                   type="number"
                   placeholder="10"
@@ -296,18 +286,8 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
             name="startPort"
             control={form.control}
             render={({ field, fieldState }) => (
-              <TextField isInvalid={!!fieldState.error} className="space-y-1">
-                <div className="flex items-center gap-1">
-                  <Label className="block text-sm font-medium text-slate-500">{proxy ? "Cổng (Port)" : "Cổng bắt đầu"}</Label>
-                  {!proxy && (
-                    <div className="group relative cursor-pointer text-slate-400 hover:text-slate-600">
-                      <Icon icon="lucide:info" className="w-3 h-3"  />
-                      <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 hidden group-hover:block w-48 bg-slate-800 text-[9px] text-white p-2 rounded shadow-lg z-20 pointer-events-none leading-relaxed">
-                        Các port sẽ được tăng dần từ cổng này
-                      </div>
-                    </div>
-                  )}
-                </div>
+              <TextField isInvalid={!!fieldState.error}>
+                <Label>{proxy ? "Cổng (Port)" : "Cổng bắt đầu"}</Label>
                 <Input
                   type="number"
                   placeholder="10000"
@@ -324,24 +304,26 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
             name="username"
             control={form.control}
             render={({ field, fieldState }) => (
-              <TextField isInvalid={!!fieldState.error} className="space-y-1">
-                <Label className="block text-sm font-medium text-slate-500">Tài khoản</Label>
-                <div className="relative">
-                  <Input
+              <TextField isInvalid={!!fieldState.error}>
+                <Label>Tài khoản</Label>
+                <InputGroup>
+                  <InputGroup.Input
                     type="text"
                     placeholder="Ví dụ: user"
                     value={field.value || ''}
                     onChange={field.onChange}
                   />
-                  <button
-                    type="button"
-                    onClick={refreshRandom}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 hover:bg-slate-100 rounded-lg cursor-pointer transition-colors z-10"
-                    title="Tạo ngẫu nhiên"
-                  >
-                    <Icon icon="lucide:refresh-cw" className="w-3.5 h-3.5"  />
-                  </button>
-                </div>
+                  <InputGroup.Suffix>
+                    <button
+                      type="button"
+                      onClick={refreshRandom}
+                      className="text-slate-400 hover:text-slate-600 p-1 hover:bg-slate-100 rounded-lg cursor-pointer transition-colors"
+                      title="Tạo ngẫu nhiên"
+                    >
+                      <Icon icon="lucide:refresh-cw" className="w-3.5 h-3.5"  />
+                    </button>
+                  </InputGroup.Suffix>
+                </InputGroup>
                 <FieldError className="mt-1 text-sm text-red-500 font-medium">{fieldState.error?.message}</FieldError>
               </TextField>
             )}
@@ -353,8 +335,8 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
           name="password"
           control={form.control}
           render={({ field, fieldState }) => (
-            <TextField isInvalid={!!fieldState.error} className="space-y-1">
-              <Label className="block text-sm font-medium text-slate-500">Mật khẩu</Label>
+            <TextField isInvalid={!!fieldState.error}>
+              <Label>Mật khẩu</Label>
               <Input
                 type="text"
                 placeholder="Mật khẩu"
@@ -368,8 +350,8 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Loại IP Outbound */}
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-slate-500">Loại IP Outbound</label>
+          <div className="flex flex-col gap-1">
+            <Label>Loại IP Outbound</Label>
             <Controller
               name="ipType"
               control={form.control}
@@ -403,8 +385,8 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
           </div>
 
           {/* Giao thức Proxy */}
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-slate-500">Giao thức Proxy</label>
+          <div className="flex flex-col gap-1">
+            <Label>Giao thức Proxy</Label>
             <Controller
               name="proxyType"
               control={form.control}
@@ -439,7 +421,7 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
         </div>
 
         {/* Thời hạn sử dụng */}
-        <div className="space-y-3">
+        <>
           <Select
             selectedKey={expirationOption}
             onSelectionChange={(key) => handleExpirationChange(key as string)}
@@ -464,14 +446,16 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
                 ))}
               </ListBox>
             </Select.Popover>
+            {expirationOption !== 'permanent' && expirationOption !== 'custom' && (
+              <Description className='text-xs mt-1 text-green-600 font-medium'>
+                Sẽ hết hạn vào: {" "} {form.watch('expiresAt') ? format(new Date(form.watch('expiresAt') as string), 'dd/MM/yyyy HH:mm') : '---'}
+              </Description>
+          )}
           </Select>
 
           {expirationOption === 'custom' && (
-            <TextField className="space-y-1">
-              <div className="flex items-center gap-1">
-                <Label className="block text-sm font-medium text-slate-500">Chọn ngày hết hạn</Label>
-                <Icon icon="lucide:calendar" className="w-3 h-3 text-slate-400"  />
-              </div>
+            <TextField>
+              <Label>Chọn ngày hết hạn</Label>
               <Input
                 type="datetime-local"
                 min={format(new Date(), 'yyyy-MM-dd\'T\'HH:mm')}
@@ -485,21 +469,11 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
               />
             </TextField>
           )}
-
-          {expirationOption !== 'permanent' && expirationOption !== 'custom' && (
-            <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-500 font-medium flex items-center gap-1.5">
-              <span>Sẽ hết hạn vào:</span>
-              <span className="text-slate-800 font-bold">
-                {form.watch('expiresAt') ? format(new Date(form.watch('expiresAt') as string), 'dd/MM/yyyy HH:mm') : '---'}
-              </span>
-            </div>
-          )}
-        </div>
+        </>
 
         {/* Tự động gia hạn */}
         {expirationOption !== 'permanent' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start pt-2 border-t border-slate-100">
-            <div className="flex flex-col gap-1 pt-1.5">
+          <>
               <Controller
                 name="autoRenew"
                 control={form.control}
@@ -511,14 +485,15 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
                     <Checkbox.Control>
                       <Checkbox.Indicator />
                     </Checkbox.Control>
-                    Tự động gia hạn
+                    <Checkbox.Content>
+                      <Label htmlFor="auto-renew">Tự động gia hạn</Label>
+                      <Description>
+                        Tự động kéo dài thời gian khi sắp hết hạn (dưới 24h)
+                      </Description>
+                    </Checkbox.Content>
                   </Checkbox>
                 )}
               />
-              <span className="text-xs text-slate-400 font-medium pl-6">
-                Tự động kéo dài thời gian khi sắp hết hạn (dưới 24h)
-              </span>
-            </div>
 
             {form.watch('autoRenew') && (
               <Controller
@@ -553,25 +528,26 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
                 )}
               />
             )}
-          </div>
+            </>
         )}
 
         {/* Ghi chú */}
-        <div className="space-y-1">
-          <label className="block text-sm font-medium text-slate-500">Ghi chú (Comment)</label>
-          <Controller
-            name="comment"
-            control={form.control}
-            render={({ field }) => (
+        <Controller
+          name="comment"
+          control={form.control}
+          render={({ field }) => (
+            <div className="flex flex-col gap-1">
+              <Label htmlFor="comment">Ghi chú</Label>
               <TextArea
+                className='w-full'
                 placeholder="Ví dụ: Nuôi nick Facebook, chạy tool..."
                 value={field.value || ''}
                 onChange={field.onChange}
                 rows={2}
               />
-            )}
-          />
-        </div>
+            </div>
+          )}
+        />
       </form>
     );
   }

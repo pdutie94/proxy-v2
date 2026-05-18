@@ -187,6 +187,7 @@ model Proxy {
   @@index([serverId])
   @@index([status])
   @@index([expiresAt])
+  @@index([userId])
   @@unique([serverId, port])
 }
 
