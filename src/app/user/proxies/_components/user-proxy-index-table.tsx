@@ -1,6 +1,6 @@
 'use client';
 
-import { Table, Chip, Button, Checkbox, Popover, PopoverTrigger, PopoverContent, Selection } from "@heroui/react";
+import { Table, Chip, Button, Checkbox, Popover, PopoverTrigger, PopoverContent, Selection, Input } from "@heroui/react";
 import { Icon } from "@iconify/react";
 import { format } from "date-fns";
 import React, { useState, useCallback, useMemo } from 'react';
@@ -331,21 +331,21 @@ export function UserProxyIndexTable({ proxies: initialProxies }: UserProxyIndexT
               <div className="flex flex-col gap-2 w-full">
                 <span className="text-sm font-medium text-slate-500 mb-1">Lọc theo Vị trí</span>
                 {locations.map(loc => (
-                  <label key={loc.id} className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer hover:text-slate-900">
-                    <input
-                      type="checkbox"
-                      checked={filterLocationId.includes(loc.id)}
-                      onChange={() => {
-                        const newLocs = filterLocationId.includes(loc.id)
-                          ? filterLocationId.filter(id => id !== loc.id)
-                          : [...filterLocationId, loc.id];
+                  <div key={loc.id} className="flex items-center">
+                    <Checkbox
+                      isSelected={filterLocationId.includes(loc.id)}
+                      onChange={(isSelected) => {
+                        const newLocs = isSelected
+                          ? [...filterLocationId, loc.id]
+                          : filterLocationId.filter(id => id !== loc.id);
                         setFilterLocationId(newLocs);
                         resetPage();
                       }}
-                      className="w-3.5 h-3.5 text-blue-600 border-slate-300 rounded focus:ring-blue-500/50"
-                    />
-                    <span>{loc.name}</span>
-                  </label>
+                      className="text-sm font-medium text-slate-700 select-none cursor-pointer"
+                    >
+                      {loc.name}
+                    </Checkbox>
+                  </div>
                 ))}
                 {filterLocationId.length > 0 && (
                   <button
@@ -406,15 +406,15 @@ export function UserProxyIndexTable({ proxies: initialProxies }: UserProxyIndexT
                   { key: 'status', label: 'Trạng thái' },
                   { key: 'comment', label: 'Ghi chú' },
                 ].map(col => (
-                  <label key={col.key} className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer hover:text-slate-900">
-                    <input
-                      type="checkbox"
-                      checked={isColumnVisible(col.key)}
+                  <div key={col.key} className="flex items-center">
+                    <Checkbox
+                      isSelected={isColumnVisible(col.key)}
                       onChange={() => toggleColumn(col.key)}
-                      className="w-3.5 h-3.5 text-blue-600 border-slate-300 rounded focus:ring-blue-500/50"
-                    />
-                    <span>{col.label}</span>
-                  </label>
+                      className="text-sm font-medium text-slate-700 select-none cursor-pointer"
+                    >
+                      {col.label}
+                    </Checkbox>
+                  </div>
                 ))}
               </div>
             </PopoverContent>
@@ -423,19 +423,25 @@ export function UserProxyIndexTable({ proxies: initialProxies }: UserProxyIndexT
 
         {/* Right: Search Pill */}
         <div className="relative w-full sm:w-48">
-          <input
+          <Input
             type="text"
             placeholder="Tìm kiếm..."
             value={queryValue}
-            onChange={(e) => { setQueryValue(e.target.value); resetPage(); }}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+              setQueryValue(e.target.value);
+              resetPage();
+            }}
             className="w-full h-8 pl-8 pr-8 text-sm bg-slate-100/60 hover:bg-slate-100 focus:bg-white placeholder:text-slate-400 border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none transition-all duration-150"
           />
-          <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-400">
+          <div className="absolute inset-y-0 left-2.5 flex items-center pointer-events-none text-slate-400">
             <Icon icon="lucide:search" className="w-3.5 h-3.5" />
           </div>
           {queryValue && (
             <button
-              onClick={() => { setQueryValue(''); resetPage(); }}
+              onClick={() => {
+                setQueryValue('');
+                resetPage();
+              }}
               className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full hover:bg-slate-100 cursor-pointer border-none bg-transparent flex items-center justify-center"
             >
               <Icon icon="lucide:x" className="w-3 h-3" />

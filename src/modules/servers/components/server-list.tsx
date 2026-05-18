@@ -2,7 +2,7 @@
 
 import { Icon } from '@iconify/react';
 import { useServers, ServerWithLocation } from '@/hooks/use-servers';
-import { Button, Table, Chip, Popover, PopoverTrigger, PopoverContent, Pagination, Checkbox } from "@heroui/react";
+import { Button, Table, Chip, Popover, PopoverTrigger, PopoverContent, Pagination, Checkbox, Input } from "@heroui/react";
 
 import { Server } from '@prisma/client';
 import { useState, useCallback, useMemo } from 'react';
@@ -311,9 +311,8 @@ export function ServerList({ onEdit, onAdd }: ServerListProps) {
 
         {/* Right Side: Search, Sort, Columns */}
         <div className="flex items-center gap-2">
-          {/* Search Input */}
           <div className="relative w-full sm:w-56">
-            <input
+            <Input
               type="text"
               placeholder="Tìm kiếm máy chủ..."
               value={queryValue}

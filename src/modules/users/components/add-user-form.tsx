@@ -5,7 +5,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { userSchema, UserSchema } from '../schemas/user.schema';
 import { useUsers } from '@/hooks/use-users';
-import { Input } from "@heroui/react";
+import { Input, Select, ListBox } from "@heroui/react";
 
 import { useCallback, forwardRef, useImperativeHandle, useEffect } from 'react';
 import { User } from '@prisma/client';
@@ -122,20 +122,43 @@ export const AddUserForm = forwardRef<AddUserFormRef, AddUserFormProps>(
             name="role"
             control={control}
             render={({ field }) => (
-              <div className="relative">
-                <select
-                  value={field.value}
-                  onChange={field.onChange}
-                  className="w-full text-sm font-medium text-slate-600 bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg h-9 px-3 outline-none cursor-pointer appearance-none transition-all duration-150"
-                >
-                  <option value="USER">Người dùng</option>
-                  <option value="MODERATOR">Điều hành viên (Moderator)</option>
-                  <option value="ADMIN">Quản trị viên</option>
-                </select>
-                <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-400">
-                  <Icon icon="lucide:chevron-down" className="w-3.5 h-3.5"  />
-                </div>
-              </div>
+              <Select
+                selectedKey={field.value}
+                onSelectionChange={(key) => field.onChange(key as string)}
+                className="w-full"
+              >
+                <Select.Trigger className="w-full flex items-center justify-between text-sm font-medium text-slate-600 bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg h-9 px-3 outline-none cursor-pointer transition-all duration-150">
+                  <Select.Value />
+                  <Select.Indicator>
+                    <Icon icon="lucide:chevron-down" className="w-3.5 h-3.5 text-slate-400" />
+                  </Select.Indicator>
+                </Select.Trigger>
+                <Select.Popover className="w-[--trigger-width] bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden z-50">
+                  <ListBox className="p-1 outline-none">
+                    {[
+                      { value: 'USER', label: 'Người dùng' },
+                      { value: 'MODERATOR', label: 'Điều hành viên (Moderator)' },
+                      { value: 'ADMIN', label: 'Quản trị viên' }
+                    ].map(opt => (
+                      <ListBox.Item
+                        key={opt.value}
+                        id={opt.value}
+                        textValue={opt.label}
+                        className="flex items-center justify-between px-2.5 py-1.5 text-xs rounded text-slate-600 hover:bg-slate-50 cursor-pointer outline-none data-[focused]:bg-slate-100 data-[selected]:bg-slate-100 data-[selected]:text-blue-600 font-medium"
+                      >
+                        {({ isSelected }) => (
+                          <>
+                            <span>{opt.label}</span>
+                            {isSelected && (
+                              <Icon icon="lucide:check" className="w-3.5 h-3.5 text-blue-600" />
+                            )}
+                          </>
+                        )}
+                      </ListBox.Item>
+                    ))}
+                  </ListBox>
+                </Select.Popover>
+              </Select>
             )}
           />
           {errors.role && (

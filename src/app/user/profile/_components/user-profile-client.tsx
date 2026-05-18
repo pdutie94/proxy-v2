@@ -1,7 +1,7 @@
 'use client';
 
 import { Icon } from '@iconify/react';
-import { Button, Card } from '@heroui/react';
+import { Button, Card, Input, Checkbox } from '@heroui/react';
 
 import { useState, useCallback } from 'react';
 import { toast } from '@heroui/react';
@@ -81,35 +81,34 @@ export function UserProfileClient({ user }: UserProfileClientProps) {
             <div className="space-y-3 max-w-md">
               <div className="space-y-1">
                 <label className="block text-sm font-medium text-slate-500 mb-1.5">Địa chỉ Email</label>
-                <input
+                <Input
                   type="email"
                   value={user.email}
+                  readOnly
                   disabled
-                  className="w-full h-9 px-2.5 text-sm bg-slate-50 text-slate-400 border border-slate-200 rounded-lg outline-none cursor-not-allowed font-medium"
+                  className="w-full h-9 px-3 text-sm bg-slate-50 text-slate-400 font-medium border border-slate-200 rounded-lg outline-none cursor-not-allowed select-none"
                 />
               </div>
 
               <div className="space-y-1">
                 <label className="block text-sm font-medium text-slate-500 mb-1.5">Họ và tên</label>
-                <input
+                <Input
                   type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  value={name || ''}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
                   placeholder="Nhập tên của bạn"
-                  className="w-full h-9 px-2.5 text-sm bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none transition-all duration-150 font-medium text-slate-700"
+                  className="w-full h-9 px-3 text-sm bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none transition-all duration-150 font-medium text-slate-700"
                 />
               </div>
 
               <div className="pt-1">
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={notifications}
-                    onChange={(e) => setNotifications(e.target.checked)}
-                    className="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500/50 cursor-pointer"
-                  />
-                  <span className="text-sm font-medium text-slate-600">Nhận thông báo qua Email</span>
-                </label>
+                <Checkbox
+                  isSelected={notifications}
+                  onChange={setNotifications}
+                  className="text-sm font-medium text-slate-600 select-none cursor-pointer"
+                >
+                  Nhận thông báo qua Email
+                </Checkbox>
               </div>
             </div>
           </Card>
@@ -129,12 +128,12 @@ export function UserProfileClient({ user }: UserProfileClientProps) {
             <div className="space-y-3.5 max-w-md">
               <div className="space-y-1">
                 <label className="block text-sm font-medium text-slate-500 mb-1.5">Mật khẩu hiện tại</label>
-                <input
+                <Input
                   type="password"
                   value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCurrentPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full h-9 px-2.5 text-sm bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none transition-all duration-150 font-medium text-slate-700"
+                  className="w-full h-9 px-3 text-sm bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none transition-all duration-150 font-medium text-slate-700"
                 />
               </div>
 
@@ -142,23 +141,23 @@ export function UserProfileClient({ user }: UserProfileClientProps) {
 
               <div className="space-y-1">
                 <label className="block text-sm font-medium text-slate-500 mb-1.5">Mật khẩu mới</label>
-                <input
+                <Input
                   type="password"
                   value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewPassword(e.target.value)}
                   placeholder="Nhập mật khẩu mới"
-                  className="w-full h-9 px-2.5 text-sm bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none transition-all duration-150 font-medium text-slate-700"
+                  className="w-full h-9 px-3 text-sm bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none transition-all duration-150 font-medium text-slate-700"
                 />
               </div>
 
               <div className="space-y-1">
                 <label className="block text-sm font-medium text-slate-500 mb-1.5">Xác nhận mật khẩu mới</label>
-                <input
+                <Input
                   type="password"
                   value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConfirmPassword(e.target.value)}
                   placeholder="Xác nhận mật khẩu mới"
-                  className="w-full h-9 px-2.5 text-sm bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none transition-all duration-150 font-medium text-slate-700"
+                  className="w-full h-9 px-3 text-sm bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none transition-all duration-150 font-medium text-slate-700"
                 />
               </div>
             </div>

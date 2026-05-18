@@ -1,7 +1,7 @@
 'use client';
 
 import { Icon } from '@iconify/react';
-import { Table, Chip, Button } from '@heroui/react';
+import { Table, Chip, Button, Input, Select, ListBox } from '@heroui/react';
 
 import { format } from 'date-fns';
 import { payOrderAction } from '@/modules/store/actions/purchase.action';
@@ -180,60 +180,112 @@ export function UserOrdersClient({ orders }: UserOrdersClientProps) {
           <div className="flex flex-wrap items-center gap-2">
             {/* Search Input */}
             <div className="relative w-full sm:w-48">
-              <input
+              <Input
                 type="text"
-                placeholder="Tìm theo mã đơn hàng..."
+                placeholder="Tìm theo mã đơn..."
                 value={queryValue}
-                onChange={(e) => { setQueryValue(e.target.value); resetPage(); }}
-                className="w-full h-8 pl-8 pr-8 text-sm bg-white placeholder:text-slate-400 border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none transition-all duration-150"
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  setQueryValue(e.target.value);
+                  resetPage();
+                }}
+                className="w-full h-8 pl-8 pr-8 text-sm bg-slate-100/60 hover:bg-slate-100 focus:bg-white placeholder:text-slate-400 border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none transition-all duration-150"
               />
               <div className="absolute inset-y-0 left-2.5 flex items-center pointer-events-none text-slate-400">
-                <Icon icon="lucide:search" className="w-3.5 h-3.5 shrink-0"  />
+                <Icon icon="lucide:search" className="w-3.5 h-3.5 shrink-0" />
               </div>
               {queryValue && (
                 <button
-                  onClick={() => { setQueryValue(''); resetPage(); }}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full hover:bg-slate-100 cursor-pointer"
+                  onClick={() => {
+                    setQueryValue('');
+                    resetPage();
+                  }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full hover:bg-slate-100 cursor-pointer bg-transparent border-none flex items-center justify-center"
                 >
-                  <Icon icon="lucide:x" className="w-3 h-3"  />
+                  <Icon icon="lucide:x" width={12} height={12} />
                 </button>
               )}
             </div>
 
             {/* Status Select Filter */}
-            <div className="relative">
-              <select
-                value={filterStatus}
-                onChange={(e) => { setFilterStatus(e.target.value); resetPage(); }}
-                className="h-8 pl-3 pr-8 text-sm font-medium text-slate-600 bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none cursor-pointer appearance-none transition-all duration-150"
-              >
-                <option value="">Tất cả trạng thái</option>
-                <option value="PENDING">Chờ thanh toán</option>
-                <option value="PROCESSING">Đang xử lý</option>
-                <option value="COMPLETED">Hoàn tất</option>
-                <option value="FAILED">Thất bại</option>
-                <option value="CANCELLED">Đã hủy</option>
-              </select>
-              <div className="absolute inset-y-0 right-2.5 flex items-center pointer-events-none text-slate-400">
-                <Icon icon="lucide:chevron-down" className="w-3 h-3"  />
-              </div>
-            </div>
+            <Select
+              selectedKey={filterStatus}
+              onSelectionChange={(key) => { setFilterStatus(key as string); resetPage(); }}
+              className="min-w-[150px]"
+            >
+              <Select.Trigger className="h-8 flex items-center justify-between text-sm font-medium text-slate-600 bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg px-2.5 outline-none cursor-pointer transition-all duration-150">
+                <span>
+                  {filterStatus ? STATUS_LABELS[filterStatus] || 'Tất cả trạng thái' : 'Tất cả trạng thái'}
+                </span>
+                <Select.Indicator>
+                  <Icon icon="lucide:chevron-down" className="w-3 h-3 text-slate-400" />
+                </Select.Indicator>
+              </Select.Trigger>
+              <Select.Popover className="w-[--trigger-width] bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden z-50">
+                <ListBox className="p-1 outline-none">
+                  {[
+                    { value: '', label: 'Tất cả trạng thái' },
+                    { value: 'PENDING', label: 'Chờ thanh toán' },
+                    { value: 'PROCESSING', label: 'Đang xử lý' },
+                    { value: 'COMPLETED', label: 'Hoàn tất' },
+                    { value: 'FAILED', label: 'Thất bại' },
+                    { value: 'CANCELLED', label: 'Đã hủy' }
+                  ].map(opt => (
+                    <ListBox.Item
+                      key={opt.value}
+                      id={opt.value}
+                      textValue={opt.label}
+                      className="flex items-center justify-between px-2 py-1 text-xs rounded text-slate-600 hover:bg-slate-50 cursor-pointer outline-none data-[focused]:bg-slate-100 data-[selected]:bg-slate-100 data-[selected]:text-blue-600 font-medium"
+                    >
+                      {({ isSelected }) => (
+                        <>
+                          <span>{opt.label}</span>
+                          {isSelected && (
+                            <Icon icon="lucide:check" className="w-3.5 h-3.5 text-blue-600" />
+                          )}
+                        </>
+                      )}
+                    </ListBox.Item>
+                  ))}
+                </ListBox>
+              </Select.Popover>
+            </Select>
 
             {/* Sort Select */}
-            <div className="relative">
-              <select
-                value={sortSelected[0]}
-                onChange={(e) => setSortSelected([e.target.value])}
-                className="h-8 pl-3 pr-8 text-sm font-medium text-slate-600 bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none cursor-pointer appearance-none transition-all duration-150"
-              >
-                {sortOptions.map(opt => (
-                  <option key={opt.value} value={opt.value}>Sắp xếp: {opt.label} ({opt.directionLabel})</option>
-                ))}
-              </select>
-              <div className="absolute inset-y-0 right-2.5 flex items-center pointer-events-none text-slate-400">
-                <Icon icon="lucide:chevron-down" className="w-3 h-3"  />
-              </div>
-            </div>
+            <Select
+              selectedKey={sortSelected[0]}
+              onSelectionChange={(key) => setSortSelected([key as string])}
+              className="min-w-[200px]"
+            >
+              <Select.Trigger className="h-8 flex items-center justify-between text-sm font-medium text-slate-600 bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg px-2.5 outline-none cursor-pointer transition-all duration-150">
+                <span>
+                  {`Sắp xếp: ${sortOptions.find(o => o.value === sortSelected[0])?.label || ''}`}
+                </span>
+                <Select.Indicator>
+                  <Icon icon="lucide:chevron-down" className="w-3 h-3 text-slate-400" />
+                </Select.Indicator>
+              </Select.Trigger>
+              <Select.Popover className="w-[--trigger-width] bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden z-50">
+                <ListBox className="p-1 outline-none">
+                  {sortOptions.map(opt => (
+                    <ListBox.Item
+                      key={opt.value}
+                      id={opt.value}
+                      textValue={`Sắp xếp: ${opt.label} (${opt.directionLabel})`}
+                      className="flex items-center justify-between px-2 py-1 text-xs rounded text-slate-600 hover:bg-slate-50 cursor-pointer outline-none data-[focused]:bg-slate-100 data-[selected]:bg-slate-100 data-[selected]:text-blue-600 font-medium"
+                    >
+                      {({ isSelected }) => (
+                        <>
+                          <span>Sắp xếp: {opt.label} ({opt.directionLabel})</span>
+                          {isSelected && (
+                            <Icon icon="lucide:check" className="w-3.5 h-3.5 text-blue-600" />
+                          )}
+                        </>
+                      )}
+                    </ListBox.Item>
+                  ))}
+                </ListBox>
+              </Select.Popover>
+            </Select>
           </div>
         </div>
       </div>
