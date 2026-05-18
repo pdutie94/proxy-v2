@@ -234,15 +234,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
             control={control}
             render={({ field, fieldState }) => (
               <TextField isInvalid={!!fieldState.error}>
-                <div className="flex items-center gap-1">
-                  <Label>IPv6 Prefix</Label>
-                  <div className="group relative cursor-pointer text-slate-400 hover:text-slate-600">
-                    <Icon icon="lucide:info" className="w-3 h-3"  />
-                    <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 hidden group-hover:block w-48 bg-slate-800 text-[9px] text-white p-2 rounded shadow-lg z-20 pointer-events-none leading-relaxed">
-                      Nhập 4 cụm đầu của dải IPv6 được cấp (Ví dụ: 2001:19f0:4401:903)
-                    </div>
-                  </div>
-                </div>
+                <Label>IPv6 Prefix</Label>
                 <InputGroup>
                   <InputGroup.Prefix>
                     <Icon icon="lucide:network" className="w-3.5 h-3.5 text-slate-400" />
@@ -329,15 +321,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
             control={control}
             render={({ field, fieldState }) => (
               <TextField isRequired isInvalid={!!fieldState.error}>
-                <div className="flex items-center gap-1">
-                  <Label>Cổng bắt đầu</Label>
-                  <div className="group relative cursor-pointer text-slate-400 hover:text-slate-600">
-                    <Icon icon="lucide:info" className="w-3 h-3"  />
-                    <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 hidden group-hover:block w-48 bg-slate-800 text-[9px] text-white p-2 rounded shadow-lg z-20 pointer-events-none leading-relaxed">
-                      Cổng mặc định khi tạo Proxy hàng loạt (Ví dụ: 10000)
-                    </div>
-                  </div>
-                </div>
+                <Label>Cổng bắt đầu</Label>
                 <InputGroup>
                   <InputGroup.Prefix>
                     <Icon icon="lucide:key-round" className="w-3.5 h-3.5 text-slate-400" />
@@ -388,15 +372,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
               control={control}
               render={({ field, fieldState }) => (
                 <TextField isInvalid={!!fieldState.error}>
-                  <div className="flex items-center gap-1">
-                    <Label>Chu kỳ xoay (Phút)</Label>
-                    <div className="group relative cursor-pointer text-slate-400 hover:text-slate-600">
-                      <Icon icon="lucide:info" className="w-3 h-3"  />
-                      <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 hidden group-hover:block w-48 bg-slate-800 text-[9px] text-white p-2 rounded shadow-lg z-20 pointer-events-none leading-relaxed">
-                        Hệ thống sẽ tự động đổi toàn bộ IP Proxy sau mỗi X phút
-                      </div>
-                    </div>
-                  </div>
+                  <Label>Chu kỳ xoay (Phút)</Label>
                   <InputGroup>
                     <InputGroup.Prefix>
                       <Icon icon="lucide:clock" className="w-3.5 h-3.5 text-slate-400" />
