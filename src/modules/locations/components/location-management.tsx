@@ -3,7 +3,7 @@
 import { Icon } from '@iconify/react';
 import { useState, useCallback } from 'react';
 import Image from 'next/image';
-import { Button, Table, Chip, Input } from '@heroui/react';
+import { Button, Table, Chip, Input, TextField, Label, FieldError } from '@heroui/react';
 
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -195,51 +195,43 @@ export function LocationManagement({ initialLocations }: LocationManagementProps
               </button>
             </div>
             {/* Modal Body */}
-            <form onSubmit={handleSubmit(onSubmit)} className="p-4 space-y-3.5 text-xs bg-white">
-              {/* Tên vị trí */}
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-slate-500">Tên vị trí</label>
-                <Controller
-                  name="name"
-                  control={control}
-                  render={({ field }) => (
+            <form onSubmit={handleSubmit(onSubmit)} className="p-4 space-y-4 text-xs bg-white">
+              <Controller
+                name="name"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <TextField isRequired isInvalid={!!fieldState.error}>
+                    <Label>Tên vị trí</Label>
                     <Input
                       type="text"
                       placeholder="Ví dụ: Việt Nam, Hoa Kỳ..."
                       value={field.value}
                       onChange={field.onChange}
-                      className={`w-full h-9 text-sm bg-white outline-none`}
                     />
-                  )}
-                />
-                {errors.name && (
-                  <p className="mt-1 text-sm text-red-500 font-medium">{errors.name.message}</p>
+                    <FieldError />
+                  </TextField>
                 )}
-              </div>
+              />
 
-              {/* Mã quốc gia */}
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-slate-500">Mã quốc gia (ISO 3166-1 alpha-2)</label>
-                <Controller
-                  name="countryCode"
-                  control={control}
-                  render={({ field }) => (
+              <Controller
+                name="countryCode"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <TextField isRequired isInvalid={!!fieldState.error}>
+                    <Label>Mã quốc gia (ISO 3166-1 alpha-2)</Label>
                     <Input
                       type="text"
                       placeholder="VN, US, UK, SG..."
                       value={field.value}
                       onChange={field.onChange}
-                      className={`w-full h-9 text-sm bg-white outline-none`}
                     />
-                  )}
-                />
-                <p className="text-xs text-slate-400 mt-0.5 leading-relaxed font-medium">
-                  Sử dụng 2 ký tự mã quốc gia để hiển thị icon cờ tự động.
-                </p>
-                {errors.countryCode && (
-                  <p className="mt-1 text-sm text-red-500 font-medium">{errors.countryCode.message}</p>
+                    <span className="block text-xs text-slate-400 mt-1.5 leading-relaxed font-medium">
+                      Sử dụng 2 ký tự mã quốc gia để hiển thị icon cờ tự động.
+                    </span>
+                    <FieldError />
+                  </TextField>
                 )}
-              </div>
+              />
             </form>
             {/* Modal Footer */}
             <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-slate-100 bg-slate-50/50">

@@ -1,7 +1,7 @@
 'use client';
 
 import { Icon } from '@iconify/react';
-import { Button, Card, Input, Checkbox } from '@heroui/react';
+import { Button, Card, Input, Checkbox, TextField, Label } from '@heroui/react';
 
 import { useState, useCallback } from 'react';
 import { toast } from '@heroui/react';
@@ -78,28 +78,26 @@ export function UserProfileClient({ user }: UserProfileClientProps) {
               Thông tin cơ bản
             </h2>
             
-            <div className="space-y-3 max-w-md">
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-slate-500 mb-1.5">Địa chỉ Email</label>
+            <div className="space-y-4 max-w-md">
+              <TextField>
+                <Label>Địa chỉ Email</Label>
                 <Input
                   type="email"
                   value={user.email}
                   readOnly
                   disabled
-                  className="w-full h-9 px-3 text-sm bg-slate-50 text-slate-400 font-medium border border-slate-200 rounded-lg outline-none cursor-not-allowed select-none"
                 />
-              </div>
+              </TextField>
 
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-slate-500 mb-1.5">Họ và tên</label>
+              <TextField>
+                <Label>Họ và tên</Label>
                 <Input
                   type="text"
                   value={name || ''}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
                   placeholder="Nhập tên của bạn"
-                  className="w-full h-9 px-3 text-sm bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none transition-all duration-150 font-medium text-slate-700"
                 />
-              </div>
+              </TextField>
 
               <div className="pt-1">
                 <Checkbox
@@ -125,41 +123,38 @@ export function UserProfileClient({ user }: UserProfileClientProps) {
               </p>
             </div>
             
-            <div className="space-y-3.5 max-w-md">
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-slate-500 mb-1.5">Mật khẩu hiện tại</label>
+            <div className="space-y-4 max-w-md">
+              <TextField>
+                <Label>Mật khẩu hiện tại</Label>
                 <Input
                   type="password"
                   value={currentPassword}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCurrentPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full h-9 px-3 text-sm bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none transition-all duration-150 font-medium text-slate-700"
                 />
-              </div>
+              </TextField>
 
               <hr className="border-slate-100 my-1" />
 
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-slate-500 mb-1.5">Mật khẩu mới</label>
+              <TextField>
+                <Label>Mật khẩu mới</Label>
                 <Input
                   type="password"
                   value={newPassword}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewPassword(e.target.value)}
                   placeholder="Nhập mật khẩu mới"
-                  className="w-full h-9 px-3 text-sm bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none transition-all duration-150 font-medium text-slate-700"
                 />
-              </div>
+              </TextField>
 
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-slate-500 mb-1.5">Xác nhận mật khẩu mới</label>
+              <TextField>
+                <Label>Xác nhận mật khẩu mới</Label>
                 <Input
                   type="password"
                   value={confirmPassword}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConfirmPassword(e.target.value)}
                   placeholder="Xác nhận mật khẩu mới"
-                  className="w-full h-9 px-3 text-sm bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none transition-all duration-150 font-medium text-slate-700"
                 />
-              </div>
+              </TextField>
             </div>
           </Card>
 
@@ -169,7 +164,7 @@ export function UserProfileClient({ user }: UserProfileClientProps) {
               size="sm" 
               isDisabled={loading}
               onPress={handleSave}
-              className="cursor-pointer font-semibold text-sm h-9 px-4 rounded-lg flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white"
+              className="cursor-pointer font-semibold"
              >
                {loading && (
                  <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>

@@ -1,7 +1,7 @@
 'use client';
 
 import { Icon } from '@iconify/react';
-import { Button, Card, Input } from '@heroui/react';
+import { Button, Card, Input, TextField, Label } from '@heroui/react';
 
 import { addTestBalanceAction } from '@/modules/auth/actions/test-balance.action';
 import { toast } from '@heroui/react';
@@ -65,23 +65,22 @@ export function UserBalanceClient({ user }: UserBalanceClientProps) {
 
             {/* Amount and Action */}
             <div className="mt-8 space-y-4 max-w-sm">
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-slate-500 mb-1.5">Số tiền cần nạp (VNĐ)</label>
+              <TextField>
+                <Label>Số tiền cần nạp (VNĐ)</Label>
                 <div className="relative">
                   <Input
                     type="number"
                     value={depositAmount}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDepositAmount(e.target.value)}
                     placeholder="50000"
-                    className="w-full h-9 pl-3 pr-12 text-sm bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none transition-all duration-150 font-medium text-slate-700"
                   />
                   <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400 select-none">VNĐ</span>
                 </div>
-              </div>
+              </TextField>
               <Button 
                 variant="primary" 
                 size="sm"
-                className="w-full font-semibold h-9 text-sm rounded-lg cursor-pointer bg-blue-600 hover:bg-blue-700 text-white"
+                className="w-full font-semibold cursor-pointer"
               >
                 Tiếp tục nạp tiền
               </Button>

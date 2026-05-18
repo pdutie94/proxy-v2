@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { bulkProxySchema, BulkProxySchema } from '../schemas/bulk-proxy.schema';
 import { useProxies } from '@/hooks/use-proxies';
 import { useServers } from '@/hooks/use-servers';
-import { Input, Select, ListBox, NumberField, Checkbox, TextArea } from "@heroui/react";
+import { Input, Select, ListBox, Checkbox, TextArea, TextField, Label, FieldError } from "@heroui/react";
 
 import { useCallback, useState, useMemo, forwardRef, useImperativeHandle, useEffect } from 'react';
 import { format, addMinutes, addDays, addWeeks, addMonths, addYears } from 'date-fns';
@@ -190,265 +190,181 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
     return (
       <form onSubmit={form.handleSubmit(onSubmit)} className="p-4 space-y-4 text-xs bg-white">
         {isAdmin && (
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-slate-500">Chủ sở hữu (User)</label>
-            <Controller
-              name="userId"
-              control={form.control}
-              render={({ field }) => (
-                <Select
-                  selectedKey={field.value || ''}
-                  onSelectionChange={(key) => field.onChange(key as string)}
-                  className="w-full"
-                >
-                  <Select.Trigger className="w-full flex items-center justify-between text-sm font-medium text-slate-600 bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg h-9 px-3 outline-none cursor-pointer transition-all duration-150">
-                    <Select.Value />
-                    <Select.Indicator>
-                      <Icon icon="lucide:chevron-down" className="w-3.5 h-3.5 text-slate-400" />
-                    </Select.Indicator>
-                  </Select.Trigger>
-                  <Select.Popover className="w-[--trigger-width] bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden z-50">
-                    <ListBox className="p-1 outline-none max-h-60 overflow-y-auto">
-                      {userOptions.map(opt => (
-                        <ListBox.Item
-                          key={opt.value}
-                          id={opt.value}
-                          textValue={opt.label}
-                          className="flex items-center justify-between px-2.5 py-1.5 text-xs rounded text-slate-600 hover:bg-slate-50 cursor-pointer outline-none data-[focused]:bg-slate-100 data-[selected]:bg-slate-100 data-[selected]:text-blue-600 font-medium"
-                        >
-                          {({ isSelected }) => (
-                            <>
-                              <span>{opt.label}</span>
-                              {isSelected && (
-                                <Icon icon="lucide:check" className="w-3.5 h-3.5 text-blue-600" />
-                              )}
-                            </>
-                          )}
-                        </ListBox.Item>
-                      ))}
-                    </ListBox>
-                  </Select.Popover>
-                </Select>
-              )}
-            />
-            {form.formState.errors.userId && (
-              <p className="mt-1 text-sm text-red-500 font-medium">{form.formState.errors.userId.message}</p>
+          <Controller
+            name="userId"
+            control={form.control}
+            render={({ field }) => (
+              <Select
+                selectedKey={field.value || ''}
+                onSelectionChange={(key) => field.onChange(key as string)}
+                className="w-full"
+              >
+                <Label>Chủ sở hữu (User)</Label>
+                <Select.Trigger>
+                  <Select.Value />
+                  <Select.Indicator />
+                </Select.Trigger>
+                <Select.Popover>
+                  <ListBox>
+                    {userOptions.map(opt => (
+                      <ListBox.Item
+                        key={opt.value}
+                        id={opt.value}
+                        textValue={opt.label}
+                      >
+                        {opt.label}
+                        <ListBox.ItemIndicator />
+                      </ListBox.Item>
+                    ))}
+                  </ListBox>
+                </Select.Popover>
+              </Select>
             )}
-          </div>
+          />
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Máy chủ đích */}
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-slate-500">Máy chủ đích</label>
-            <Controller
-              name="serverId"
-              control={form.control}
-              render={({ field }) => (
-                <Select
-                  selectedKey={field.value || ''}
-                  onSelectionChange={(key) => field.onChange(key as string)}
-                  isDisabled={!!proxy}
-                  className="w-full"
-                >
-                  <Select.Trigger className={`w-full flex items-center justify-between text-sm font-medium text-slate-600 bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg h-9 px-3 outline-none cursor-pointer transition-all duration-150 ${
-                    proxy ? 'bg-slate-50 text-slate-400 cursor-not-allowed border-slate-100 hover:border-slate-100' : ''
-                  }`}>
-                    <Select.Value />
-                    <Select.Indicator>
-                      <Icon icon="lucide:chevron-down" className="w-3.5 h-3.5 text-slate-400" />
-                    </Select.Indicator>
-                  </Select.Trigger>
-                  <Select.Popover className="w-[--trigger-width] bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden z-50">
-                    <ListBox className="p-1 outline-none max-h-60 overflow-y-auto">
-                      {serverOptions.map(opt => (
-                        <ListBox.Item
-                          key={opt.value}
-                          id={opt.value}
-                          textValue={opt.label}
-                          className="flex items-center justify-between px-2.5 py-1.5 text-xs rounded text-slate-600 hover:bg-slate-50 cursor-pointer outline-none data-[focused]:bg-slate-100 data-[selected]:bg-slate-100 data-[selected]:text-blue-600 font-medium"
-                        >
-                          {({ isSelected }) => (
-                            <>
-                              <span>{opt.label}</span>
-                              {isSelected && (
-                                <Icon icon="lucide:check" className="w-3.5 h-3.5 text-blue-600" />
-                              )}
-                            </>
-                          )}
-                        </ListBox.Item>
-                      ))}
-                    </ListBox>
-                  </Select.Popover>
-                </Select>
-              )}
-            />
-            {form.formState.errors.serverId && (
-              <p className="mt-1 text-sm text-red-500 font-medium">{form.formState.errors.serverId.message}</p>
+          <Controller
+            name="serverId"
+            control={form.control}
+            render={({ field }) => (
+              <Select
+                selectedKey={field.value || ''}
+                onSelectionChange={(key) => field.onChange(key as string)}
+                isDisabled={!!proxy}
+                className="w-full"
+              >
+                <Label>Máy chủ đích</Label>
+                <Select.Trigger>
+                  <Select.Value />
+                  <Select.Indicator />
+                </Select.Trigger>
+                <Select.Popover>
+                  <ListBox>
+                    {serverOptions.map(opt => (
+                      <ListBox.Item
+                        key={opt.value}
+                        id={opt.value}
+                        textValue={opt.label}
+                      >
+                        {opt.label}
+                        <ListBox.ItemIndicator />
+                      </ListBox.Item>
+                    ))}
+                  </ListBox>
+                </Select.Popover>
+              </Select>
             )}
-          </div>
+          />
+          {form.formState.errors.serverId && (
+            <p className="mt-1 text-sm text-red-500 font-medium">{form.formState.errors.serverId.message}</p>
+          )}
 
           {/* Số lượng Proxy */}
-          <div className="space-y-1">
-            <div className="flex items-center gap-1">
-              <label className="block text-sm font-medium text-slate-500">Số lượng Proxy</label>
-              {!proxy && (
-                <div className="group relative cursor-pointer text-slate-400 hover:text-slate-600">
-                  <Icon icon="lucide:info" className="w-3 h-3"  />
-                  <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 hidden group-hover:block w-48 bg-slate-800 text-[9px] text-white p-2 rounded shadow-lg z-20 pointer-events-none leading-relaxed">
-                    Tối đa 1000 proxy một lần tạo
-                  </div>
+          <Controller
+            name="count"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <TextField isInvalid={!!fieldState.error} className="space-y-1">
+                <div className="flex items-center gap-1">
+                  <Label className="block text-sm font-medium text-slate-500">Số lượng Proxy</Label>
+                  {!proxy && (
+                    <div className="group relative cursor-pointer text-slate-400 hover:text-slate-600">
+                      <Icon icon="lucide:info" className="w-3 h-3"  />
+                      <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 hidden group-hover:block w-48 bg-slate-800 text-[9px] text-white p-2 rounded shadow-lg z-20 pointer-events-none leading-relaxed">
+                        Tối đa 1000 proxy một lần tạo
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-            <Controller
-              name="count"
-              control={form.control}
-              render={({ field }) => (
-                <NumberField
-                  value={field.value}
-                  onChange={(val) => field.onChange(val)}
-                  minValue={1}
-                  maxValue={1000}
-                  isDisabled={!!proxy}
-                  className="w-full"
-                >
-                  <NumberField.Group className={`w-full flex items-center border rounded-lg h-9 overflow-hidden transition-all duration-150 ${
-                    !!proxy ? 'bg-slate-50 border-slate-100 cursor-not-allowed' : 'bg-white'
-                  } ${
-                    form.formState.errors.count 
-                      ? 'border-red-500 focus-within:border-red-500 focus-within:ring-1 focus-within:ring-red-500/50' 
-                      : 'border-slate-200 hover:border-slate-300 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500/50'
-                  }`}>
-                    <NumberField.DecrementButton className="h-full px-2.5 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-50 border-r border-slate-100 cursor-pointer outline-none transition-colors select-none disabled:opacity-50 disabled:pointer-events-none">
-                      <Icon icon="lucide:minus" className="w-3.5 h-3.5" />
-                    </NumberField.DecrementButton>
-                    <NumberField.Input 
-                      placeholder="10"
-                      className="w-full h-full px-2.5 text-sm bg-transparent outline-none border-none text-slate-600 font-medium disabled:bg-slate-50 disabled:text-slate-400"
-                    />
-                    <NumberField.IncrementButton className="h-full px-2.5 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-50 border-l border-slate-100 cursor-pointer outline-none transition-colors select-none disabled:opacity-50 disabled:pointer-events-none">
-                      <Icon icon="lucide:plus" className="w-3.5 h-3.5" />
-                    </NumberField.IncrementButton>
-                  </NumberField.Group>
-                </NumberField>
-              )}
-            />
-            {form.formState.errors.count && (
-              <p className="mt-1 text-sm text-red-500 font-medium">{form.formState.errors.count.message}</p>
+                <Input
+                  type="number"
+                  placeholder="10"
+                  value={field.value?.toString() || ''}
+                  onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                  disabled={!!proxy}
+                />
+                <FieldError className="mt-1 text-sm text-red-500 font-medium">{fieldState.error?.message}</FieldError>
+              </TextField>
             )}
-          </div>
+          />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Cổng SSH / Cổng bắt đầu */}
-          <div className="space-y-1">
-            <div className="flex items-center gap-1">
-              <label className="block text-sm font-medium text-slate-500">{proxy ? "Cổng (Port)" : "Cổng bắt đầu"}</label>
-              {!proxy && (
-                <div className="group relative cursor-pointer text-slate-400 hover:text-slate-600">
-                  <Icon icon="lucide:info" className="w-3 h-3"  />
-                  <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 hidden group-hover:block w-48 bg-slate-800 text-[9px] text-white p-2 rounded shadow-lg z-20 pointer-events-none leading-relaxed">
-                    Các port sẽ được tăng dần từ cổng này
-                  </div>
+          <Controller
+            name="startPort"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <TextField isInvalid={!!fieldState.error} className="space-y-1">
+                <div className="flex items-center gap-1">
+                  <Label className="block text-sm font-medium text-slate-500">{proxy ? "Cổng (Port)" : "Cổng bắt đầu"}</Label>
+                  {!proxy && (
+                    <div className="group relative cursor-pointer text-slate-400 hover:text-slate-600">
+                      <Icon icon="lucide:info" className="w-3 h-3"  />
+                      <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 hidden group-hover:block w-48 bg-slate-800 text-[9px] text-white p-2 rounded shadow-lg z-20 pointer-events-none leading-relaxed">
+                        Các port sẽ được tăng dần từ cổng này
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-            <Controller
-              name="startPort"
-              control={form.control}
-              render={({ field }) => (
-                <NumberField
-                  value={field.value}
-                  onChange={(val) => field.onChange(val)}
-                  minValue={1}
-                  maxValue={65535}
-                  className="w-full"
-                >
-                  <NumberField.Group className={`w-full flex items-center border rounded-lg h-9 overflow-hidden transition-all duration-150 bg-white ${
-                    form.formState.errors.startPort 
-                      ? 'border-red-500 focus-within:border-red-500 focus-within:ring-1 focus-within:ring-red-500/50' 
-                      : 'border-slate-200 hover:border-slate-300 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500/50'
-                  }`}>
-                    <NumberField.DecrementButton className="h-full px-2.5 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-50 border-r border-slate-100 cursor-pointer outline-none transition-colors select-none disabled:opacity-50 disabled:pointer-events-none">
-                      <Icon icon="lucide:minus" className="w-3.5 h-3.5" />
-                    </NumberField.DecrementButton>
-                    <NumberField.Input 
-                      placeholder="10000"
-                      className="w-full h-full px-2.5 text-sm bg-transparent outline-none border-none text-slate-600 font-medium"
-                    />
-                    <NumberField.IncrementButton className="h-full px-2.5 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-50 border-l border-slate-100 cursor-pointer outline-none transition-colors select-none disabled:opacity-50 disabled:pointer-events-none">
-                      <Icon icon="lucide:plus" className="w-3.5 h-3.5" />
-                    </NumberField.IncrementButton>
-                  </NumberField.Group>
-                </NumberField>
-              )}
-            />
-            {form.formState.errors.startPort && (
-              <p className="mt-1 text-[10px] text-red-500 font-semibold">{form.formState.errors.startPort.message}</p>
+                <Input
+                  type="number"
+                  placeholder="10000"
+                  value={field.value?.toString() || ''}
+                  onChange={(e) => field.onChange(parseInt(e.target.value) || 10000)}
+                />
+                <FieldError className="mt-1 text-sm text-red-500 font-medium">{fieldState.error?.message}</FieldError>
+              </TextField>
             )}
-          </div>
+          />
 
           {/* Tài khoản */}
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-slate-500">Tài khoản</label>
-            <div className="relative">
-              <Controller
-                name="username"
-                control={form.control}
-                render={({ field }) => (
+          <Controller
+            name="username"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <TextField isInvalid={!!fieldState.error} className="space-y-1">
+                <Label className="block text-sm font-medium text-slate-500">Tài khoản</Label>
+                <div className="relative">
                   <Input
                     type="text"
                     placeholder="Ví dụ: user"
-                    value={field.value}
+                    value={field.value || ''}
                     onChange={field.onChange}
-                    className={`w-full h-9 pl-2.5 pr-8 text-sm bg-white border rounded-lg outline-none transition-all duration-150 ${
-                      form.formState.errors.username 
-                        ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/50' 
-                        : 'border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50'
-                    }`}
                   />
-                )}
-              />
-              <button
-                type="button"
-                onClick={refreshRandom}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 hover:bg-slate-100 rounded-lg cursor-pointer transition-colors"
-                title="Tạo ngẫu nhiên"
-              >
-                <Icon icon="lucide:refresh-cw" className="w-3.5 h-3.5"  />
-              </button>
-            </div>
-            {form.formState.errors.username && (
-              <p className="mt-1 text-sm text-red-500 font-medium">{form.formState.errors.username.message}</p>
+                  <button
+                    type="button"
+                    onClick={refreshRandom}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 hover:bg-slate-100 rounded-lg cursor-pointer transition-colors z-10"
+                    title="Tạo ngẫu nhiên"
+                  >
+                    <Icon icon="lucide:refresh-cw" className="w-3.5 h-3.5"  />
+                  </button>
+                </div>
+                <FieldError className="mt-1 text-sm text-red-500 font-medium">{fieldState.error?.message}</FieldError>
+              </TextField>
             )}
-          </div>
+          />
         </div>
 
         {/* Mật khẩu */}
-        <div className="space-y-1">
-          <label className="block text-sm font-medium text-slate-500">Mật khẩu</label>
-          <Controller
-            name="password"
-            control={form.control}
-            render={({ field }) => (
+        <Controller
+          name="password"
+          control={form.control}
+          render={({ field, fieldState }) => (
+            <TextField isInvalid={!!fieldState.error} className="space-y-1">
+              <Label className="block text-sm font-medium text-slate-500">Mật khẩu</Label>
               <Input
                 type="text"
                 placeholder="Mật khẩu"
-                value={field.value}
+                value={field.value || ''}
                 onChange={field.onChange}
-                className={`w-full h-9 px-2.5 text-sm bg-white border rounded-lg outline-none transition-all duration-150 ${
-                  form.formState.errors.password 
-                    ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/50' 
-                    : 'border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50'
-                }`}
               />
-            )}
-          />
-          {form.formState.errors.password && (
-            <p className="mt-1 text-sm text-red-500 font-medium">{form.formState.errors.password.message}</p>
+              <FieldError className="mt-1 text-sm text-red-500 font-medium">{fieldState.error?.message}</FieldError>
+            </TextField>
           )}
-        </div>
+        />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Loại IP Outbound */}
@@ -524,47 +440,36 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
 
         {/* Thời hạn sử dụng */}
         <div className="space-y-3">
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-slate-500">Thời hạn sử dụng</label>
-            <Select
-              selectedKey={expirationOption}
-              onSelectionChange={(key) => handleExpirationChange(key as string)}
-              className="w-full"
-            >
-              <Select.Trigger className="w-full flex items-center justify-between text-sm font-semibold text-slate-600 bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg h-9 px-3 outline-none cursor-pointer transition-all duration-150">
-                <Select.Value />
-                <Select.Indicator>
-                  <Icon icon="lucide:chevron-down" className="w-3.5 h-3.5 text-slate-400" />
-                </Select.Indicator>
-              </Select.Trigger>
-              <Select.Popover className="w-[--trigger-width] bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden z-50">
-                <ListBox className="p-1 outline-none max-h-60 overflow-y-auto">
-                  {EXPIRATION_OPTIONS.map(opt => (
-                    <ListBox.Item
-                      key={opt.value}
-                      id={opt.value}
-                      textValue={opt.label}
-                      className="flex items-center justify-between px-2.5 py-1.5 text-xs rounded text-slate-600 hover:bg-slate-50 cursor-pointer outline-none data-[focused]:bg-slate-100 data-[selected]:bg-slate-100 data-[selected]:text-blue-600 font-medium"
-                    >
-                      {({ isSelected }) => (
-                        <>
-                          <span>{opt.label}</span>
-                          {isSelected && (
-                            <Icon icon="lucide:check" className="w-3.5 h-3.5 text-blue-600" />
-                          )}
-                        </>
-                      )}
-                    </ListBox.Item>
-                  ))}
-                </ListBox>
-              </Select.Popover>
-            </Select>
-          </div>
+          <Select
+            selectedKey={expirationOption}
+            onSelectionChange={(key) => handleExpirationChange(key as string)}
+            className="w-full"
+          >
+            <Label>Thời hạn sử dụng</Label>
+            <Select.Trigger>
+              <Select.Value />
+              <Select.Indicator />
+            </Select.Trigger>
+            <Select.Popover>
+              <ListBox>
+                {EXPIRATION_OPTIONS.map(opt => (
+                  <ListBox.Item
+                    key={opt.value}
+                    id={opt.value}
+                    textValue={opt.label}
+                  >
+                    {opt.label}
+                    <ListBox.ItemIndicator />
+                  </ListBox.Item>
+                ))}
+              </ListBox>
+            </Select.Popover>
+          </Select>
 
           {expirationOption === 'custom' && (
-            <div className="space-y-1">
+            <TextField className="space-y-1">
               <div className="flex items-center gap-1">
-                <label className="block text-sm font-medium text-slate-500">Chọn ngày hết hạn</label>
+                <Label className="block text-sm font-medium text-slate-500">Chọn ngày hết hạn</Label>
                 <Icon icon="lucide:calendar" className="w-3 h-3 text-slate-400"  />
               </div>
               <Input
@@ -577,9 +482,8 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
                     form.setValue('expiresAt', new Date(val).toISOString());
                   }
                 }}
-                className="w-full h-9 px-3 text-sm bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none transition-all duration-150 font-medium text-slate-600"
               />
-            </div>
+            </TextField>
           )}
 
           {expirationOption !== 'permanent' && expirationOption !== 'custom' && (
@@ -603,7 +507,6 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
                   <Checkbox
                     isSelected={field.value}
                     onChange={field.onChange}
-                    className="text-sm font-medium text-slate-600 select-none cursor-pointer"
                   >
                     Tự động gia hạn
                   </Checkbox>
@@ -615,48 +518,37 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
             </div>
 
             {form.watch('autoRenew') && (
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-slate-500">Thời hạn gia hạn tự động</label>
-                <Controller
-                  name="renewalDuration"
-                  control={form.control}
-                  render={({ field }) => (
-                    <Select
-                      selectedKey={field.value || ''}
-                      onSelectionChange={(key) => field.onChange(key as string)}
-                      className="w-full"
-                    >
-                      <Select.Trigger className="w-full flex items-center justify-between text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg h-9 px-3 outline-none cursor-pointer transition-all duration-150">
-                        <Select.Value />
-                        <Select.Indicator>
-                          <Icon icon="lucide:chevron-down" className="w-3.5 h-3.5 text-slate-400" />
-                        </Select.Indicator>
-                      </Select.Trigger>
-                      <Select.Popover className="w-[--trigger-width] bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden z-50">
-                        <ListBox className="p-1 outline-none max-h-60 overflow-y-auto">
-                          {RENEWAL_OPTIONS.map(opt => (
-                            <ListBox.Item
-                              key={opt.value}
-                              id={opt.value}
-                              textValue={opt.label}
-                              className="flex items-center justify-between px-2.5 py-1.5 text-xs rounded text-slate-600 hover:bg-slate-50 cursor-pointer outline-none data-[focused]:bg-slate-100 data-[selected]:bg-slate-100 data-[selected]:text-blue-600 font-medium"
-                            >
-                              {({ isSelected }) => (
-                                <>
-                                  <span>{opt.label}</span>
-                                  {isSelected && (
-                                    <Icon icon="lucide:check" className="w-3.5 h-3.5 text-blue-600" />
-                                  )}
-                                </>
-                              )}
-                            </ListBox.Item>
-                          ))}
-                        </ListBox>
-                      </Select.Popover>
-                    </Select>
-                  )}
-                />
-              </div>
+              <Controller
+                name="renewalDuration"
+                control={form.control}
+                render={({ field }) => (
+                  <Select
+                    selectedKey={field.value || ''}
+                    onSelectionChange={(key) => field.onChange(key as string)}
+                    className="w-full"
+                  >
+                    <Label>Thời hạn gia hạn tự động</Label>
+                    <Select.Trigger>
+                      <Select.Value />
+                      <Select.Indicator />
+                    </Select.Trigger>
+                    <Select.Popover>
+                      <ListBox>
+                        {RENEWAL_OPTIONS.map(opt => (
+                          <ListBox.Item
+                            key={opt.value}
+                            id={opt.value}
+                            textValue={opt.label}
+                          >
+                            {opt.label}
+                            <ListBox.ItemIndicator />
+                          </ListBox.Item>
+                        ))}
+                      </ListBox>
+                    </Select.Popover>
+                  </Select>
+                )}
+              />
             )}
           </div>
         )}

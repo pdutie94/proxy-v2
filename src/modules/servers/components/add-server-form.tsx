@@ -5,7 +5,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { serverSchema, ServerSchema } from '../schemas/server.schema';
 import { useServers } from '@/hooks/use-servers';
-import { Input, Select, ListBox, Checkbox } from "@heroui/react";
+import { Input, Select, ListBox, Checkbox, TextField, Label, FieldError } from "@heroui/react";
 
 import { useCallback, forwardRef, useImperativeHandle, useEffect, useMemo } from 'react';
 import { Server } from '@prisma/client';
@@ -92,272 +92,209 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
       <form onSubmit={handleSubmit(onSubmit)} className="p-4 space-y-4 text-xs bg-white">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Tên Máy chủ */}
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-slate-500">Tên Máy chủ</label>
-            <Controller
-              name="name"
-              control={control}
-              render={({ field }) => (
+          <Controller
+            name="name"
+            control={control}
+            render={({ field, fieldState }) => (
+              <TextField isRequired isInvalid={!!fieldState.error}>
+                <Label>Tên Máy chủ</Label>
                 <Input
                   type="text"
                   placeholder="Ví dụ: US-West-01"
-                  value={field.value}
+                  value={field.value || ''}
                   onChange={field.onChange}
-                  className={`w-full h-9 px-2.5 text-sm bg-white border rounded-lg outline-none transition-all duration-150 ${
-                    errors.name 
-                      ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/50' 
-                      : 'border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50'
-                  }`}
                 />
-              )}
-            />
-            {errors.name && (
-              <p className="mt-1 text-sm text-red-500 font-medium">{errors.name.message}</p>
+                <FieldError />
+              </TextField>
             )}
-          </div>
+          />
 
           {/* Địa chỉ IP */}
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-slate-500">Địa chỉ IP / Hostname</label>
-            <Controller
-              name="host"
-              control={control}
-              render={({ field }) => (
+          <Controller
+            name="host"
+            control={control}
+            render={({ field, fieldState }) => (
+              <TextField isRequired isInvalid={!!fieldState.error}>
+                <Label>Địa chỉ IP / Hostname</Label>
                 <Input
                   type="text"
                   placeholder="Ví dụ: 1.2.3.4"
-                  value={field.value}
+                  value={field.value || ''}
                   onChange={field.onChange}
-                  className={`w-full h-9 px-2.5 text-sm bg-white border rounded-lg outline-none transition-all duration-150 ${
-                    errors.host 
-                      ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/50' 
-                      : 'border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50'
-                  }`}
                 />
-              )}
-            />
-            {errors.host && (
-              <p className="mt-1 text-sm text-red-500 font-medium">{errors.host.message}</p>
+                <FieldError />
+              </TextField>
             )}
-          </div>
+          />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Cổng SSH */}
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-slate-500">Cổng SSH</label>
-            <Controller
-              name="port"
-              control={control}
-              render={({ field }) => (
+          <Controller
+            name="port"
+            control={control}
+            render={({ field, fieldState }) => (
+              <TextField isRequired isInvalid={!!fieldState.error}>
+                <Label>Cổng SSH</Label>
                 <Input
                   type="number"
                   placeholder="22"
                   value={field.value?.toString() || ''}
                   onChange={(e) => field.onChange(parseInt(e.target.value) || 22)}
-                  className={`w-full h-9 px-2.5 text-sm bg-white border rounded-lg outline-none transition-all duration-150 ${
-                    errors.port 
-                      ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/50' 
-                      : 'border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50'
-                  }`}
                 />
-              )}
-            />
-            {errors.port && (
-              <p className="mt-1 text-sm text-red-500 font-medium">{errors.port.message}</p>
+                <FieldError />
+              </TextField>
             )}
-          </div>
+          />
 
           {/* Tài khoản SSH */}
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-slate-500">Tài khoản SSH</label>
-            <Controller
-              name="username"
-              control={control}
-              render={({ field }) => (
+          <Controller
+            name="username"
+            control={control}
+            render={({ field, fieldState }) => (
+              <TextField isRequired isInvalid={!!fieldState.error}>
+                <Label>Tài khoản SSH</Label>
                 <Input
                   type="text"
                   placeholder="root"
-                  value={field.value}
+                  value={field.value || ''}
                   onChange={field.onChange}
-                  className={`w-full h-9 px-2.5 text-sm bg-white border rounded-lg outline-none transition-all duration-150 ${
-                    errors.username 
-                      ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/50' 
-                      : 'border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50'
-                  }`}
                 />
-              )}
-            />
-            {errors.username && (
-              <p className="mt-1 text-sm text-red-500 font-medium">{errors.username.message}</p>
+                <FieldError />
+              </TextField>
             )}
-          </div>
+          />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Mật khẩu SSH */}
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-slate-500 text-slate-500">
-              {server ? "Mật khẩu SSH (Để trống nếu không đổi)" : "Mật khẩu SSH"}
-            </label>
-            <Controller
-              name="password"
-              control={control}
-              render={({ field }) => (
+          <Controller
+            name="password"
+            control={control}
+            render={({ field, fieldState }) => (
+              <TextField isRequired={!server} isInvalid={!!fieldState.error}>
+                <Label>
+                  {server ? "Mật khẩu SSH (Để trống nếu không đổi)" : "Mật khẩu SSH"}
+                </Label>
                 <Input
                   type="password"
                   placeholder="Mật khẩu"
-                  value={field.value}
+                  value={field.value || ''}
                   onChange={field.onChange}
-                  className={`w-full h-9 px-2.5 text-sm bg-white border rounded-lg outline-none transition-all duration-150 ${
-                    errors.password 
-                      ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/50' 
-                      : 'border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50'
-                  }`}
                 />
-              )}
-            />
-            {errors.password && (
-              <p className="mt-1 text-sm text-red-500 font-medium">{errors.password.message}</p>
+                <FieldError />
+              </TextField>
             )}
-          </div>
+          />
 
           {/* IPv6 Prefix */}
-          <div className="space-y-1">
-            <div className="flex items-center gap-1">
-              <label className="block text-sm font-medium text-slate-500">IPv6 Prefix</label>
-              <div className="group relative cursor-pointer text-slate-400 hover:text-slate-600">
-                <Icon icon="lucide:info" className="w-3 h-3"  />
-                <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 hidden group-hover:block w-48 bg-slate-800 text-[9px] text-white p-2 rounded shadow-lg z-20 pointer-events-none leading-relaxed">
-                  Nhập 4 cụm đầu của dải IPv6 được cấp (Ví dụ: 2001:19f0:4401:903)
+          <Controller
+            name="ipv6"
+            control={control}
+            render={({ field, fieldState }) => (
+              <TextField isInvalid={!!fieldState.error}>
+                <div className="flex items-center gap-1">
+                  <Label>IPv6 Prefix</Label>
+                  <div className="group relative cursor-pointer text-slate-400 hover:text-slate-600">
+                    <Icon icon="lucide:info" className="w-3 h-3"  />
+                    <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 hidden group-hover:block w-48 bg-slate-800 text-[9px] text-white p-2 rounded shadow-lg z-20 pointer-events-none leading-relaxed">
+                      Nhập 4 cụm đầu của dải IPv6 được cấp (Ví dụ: 2001:19f0:4401:903)
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-            <Controller
-              name="ipv6"
-              control={control}
-              render={({ field }) => (
                 <Input
                   type="text"
                   placeholder="Ví dụ: 2001:19f0:4401:903"
-                  value={field.value}
+                  value={field.value || ''}
                   onChange={field.onChange}
                 />
-              )}
-            />
-            {errors.ipv6 && (
-              <p className="mt-1 text-sm text-red-500 font-medium">{errors.ipv6.message}</p>
+                <FieldError />
+              </TextField>
             )}
-          </div>
+          />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Vị trí máy chủ */}
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-slate-500">Vị trí máy chủ</label>
-            <Controller
-              name="locationId"
-              control={control}
-              render={({ field }) => (
-                <Select
-                  selectedKey={field.value || ''}
-                  onSelectionChange={(key) => field.onChange(key as string)}
-                  className="w-full"
-                >
-                  <Select.Trigger className="w-full flex items-center justify-between text-sm font-medium text-slate-600 bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg h-9 px-3 outline-none cursor-pointer transition-all duration-150">
-                    <Select.Value />
-                    <Select.Indicator>
-                      <Icon icon="lucide:chevron-down" className="w-3.5 h-3.5 text-slate-400" />
-                    </Select.Indicator>
-                  </Select.Trigger>
-                  <Select.Popover className="w-[--trigger-width] bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden z-50">
-                    <ListBox className="p-1 outline-none">
-                      {locationOptions.map(opt => (
-                        <ListBox.Item
-                          key={opt.value}
-                          id={opt.value}
-                          textValue={opt.label}
-                          className="flex items-center justify-between px-2.5 py-1.5 text-xs rounded text-slate-600 hover:bg-slate-50 cursor-pointer outline-none data-[focused]:bg-slate-100 data-[selected]:bg-slate-100 data-[selected]:text-blue-600 font-medium"
-                        >
-                          {({ isSelected }) => (
-                            <>
-                              <span>{opt.label}</span>
-                              {isSelected && (
-                                <Icon icon="lucide:check" className="w-3.5 h-3.5 text-blue-600" />
-                              )}
-                            </>
-                          )}
-                        </ListBox.Item>
-                      ))}
-                    </ListBox>
-                  </Select.Popover>
-                </Select>
-              )}
-            />
-            {errors.locationId && (
-              <p className="mt-1 text-sm text-red-500 font-medium">{errors.locationId.message}</p>
+          <Controller
+            name="locationId"
+            control={control}
+            render={({ field, fieldState }) => (
+              <Select
+                selectedKey={field.value || ''}
+                onSelectionChange={(key) => field.onChange(key as string)}
+                className="w-full"
+                isInvalid={!!fieldState.error}
+              >
+                <Label>Vị trí máy chủ</Label>
+                <Select.Trigger>
+                  <Select.Value />
+                  <Select.Indicator />
+                </Select.Trigger>
+                <Select.Popover>
+                  <ListBox>
+                    {locationOptions.map(opt => (
+                      <ListBox.Item
+                        key={opt.value}
+                        id={opt.value}
+                        textValue={opt.label}
+                      >
+                        {opt.label}
+                        <ListBox.ItemIndicator />
+                      </ListBox.Item>
+                    ))}
+                  </ListBox>
+                </Select.Popover>
+                <FieldError />
+              </Select>
             )}
-          </div>
+          />
 
           {/* Số lượng Proxy tối đa */}
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-slate-500">Số lượng Proxy tối đa</label>
-            <Controller
-              name="maxProxies"
-              control={control}
-              render={({ field }) => (
+          <Controller
+            name="maxProxies"
+            control={control}
+            render={({ field, fieldState }) => (
+              <TextField isRequired isInvalid={!!fieldState.error}>
+                <Label>Số lượng Proxy tối đa</Label>
                 <Input
                   type="number"
                   placeholder="100"
                   value={field.value?.toString() || ''}
                   onChange={(e) => field.onChange(parseInt(e.target.value) || 100)}
-                  className={`w-full h-9 px-2.5 text-sm bg-white border rounded-lg outline-none transition-all duration-150 ${
-                    errors.maxProxies 
-                      ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/50' 
-                      : 'border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50'
-                  }`}
                 />
-              )}
-            />
-            {errors.maxProxies && (
-              <p className="mt-1 text-sm text-red-500 font-medium">{errors.maxProxies.message}</p>
+                <FieldError />
+              </TextField>
             )}
-          </div>
+          />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Cổng bắt đầu */}
-          <div className="space-y-1">
-            <div className="flex items-center gap-1">
-              <label className="block text-sm font-medium text-slate-500">Cổng bắt đầu</label>
-              <div className="group relative cursor-pointer text-slate-400 hover:text-slate-600">
-                <Icon icon="lucide:info" className="w-3 h-3"  />
-                <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 hidden group-hover:block w-48 bg-slate-800 text-[9px] text-white p-2 rounded shadow-lg z-20 pointer-events-none leading-relaxed">
-                  Cổng mặc định khi tạo Proxy hàng loạt (Ví dụ: 10000)
+          <Controller
+            name="startPort"
+            control={control}
+            render={({ field, fieldState }) => (
+              <TextField isRequired isInvalid={!!fieldState.error}>
+                <div className="flex items-center gap-1">
+                  <Label>Cổng bắt đầu</Label>
+                  <div className="group relative cursor-pointer text-slate-400 hover:text-slate-600">
+                    <Icon icon="lucide:info" className="w-3 h-3"  />
+                    <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 hidden group-hover:block w-48 bg-slate-800 text-[9px] text-white p-2 rounded shadow-lg z-20 pointer-events-none leading-relaxed">
+                      Cổng mặc định khi tạo Proxy hàng loạt (Ví dụ: 10000)
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-            <Controller
-              name="startPort"
-              control={control}
-              render={({ field }) => (
                 <Input
                   type="number"
                   placeholder="10000"
                   value={field.value?.toString() || ''}
                   onChange={(e) => field.onChange(parseInt(e.target.value) || 10000)}
-                  className={`w-full h-9 px-2.5 text-sm bg-white border rounded-lg outline-none transition-all duration-150 ${
-                    errors.startPort 
-                      ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/50' 
-                      : 'border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50'
-                  }`}
                 />
-              )}
-            />
-            {errors.startPort && (
-              <p className="mt-1 text-sm text-red-500 font-medium">{errors.startPort.message}</p>
+                <FieldError />
+              </TextField>
             )}
-          </div>
+          />
 
           {/* Tự động xoay IPv6 */}
           <div className="flex items-center h-full pt-4">
@@ -366,12 +303,12 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
               control={control}
               render={({ field }) => (
                 <Checkbox
-                    isSelected={field.value}
-                    onChange={field.onChange}
-                    className="text-sm font-medium text-slate-600 select-none cursor-pointer"
-                  >
-                    Tự động xoay IPv6
-                  </Checkbox>
+                  isSelected={field.value}
+                  onChange={field.onChange}
+                  className="text-sm font-medium text-slate-600 select-none cursor-pointer"
+                >
+                  Tự động xoay IPv6
+                </Checkbox>
               )}
             />
           </div>
@@ -380,37 +317,30 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
         {isAutoRotate && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Chu kỳ xoay */}
-            <div className="space-y-1">
-              <div className="flex items-center gap-1">
-                <label className="block text-sm font-medium text-slate-500">Chu kỳ xoay (Phút)</label>
-                <div className="group relative cursor-pointer text-slate-400 hover:text-slate-600">
-                  <Icon icon="lucide:info" className="w-3 h-3"  />
-                  <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 hidden group-hover:block w-48 bg-slate-800 text-[9px] text-white p-2 rounded shadow-lg z-20 pointer-events-none leading-relaxed">
-                    Hệ thống sẽ tự động đổi toàn bộ IP Proxy sau mỗi X phút
+            <Controller
+              name="rotationInterval"
+              control={control}
+              render={({ field, fieldState }) => (
+                <TextField isInvalid={!!fieldState.error}>
+                  <div className="flex items-center gap-1">
+                    <Label>Chu kỳ xoay (Phút)</Label>
+                    <div className="group relative cursor-pointer text-slate-400 hover:text-slate-600">
+                      <Icon icon="lucide:info" className="w-3 h-3"  />
+                      <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 hidden group-hover:block w-48 bg-slate-800 text-[9px] text-white p-2 rounded shadow-lg z-20 pointer-events-none leading-relaxed">
+                        Hệ thống sẽ tự động đổi toàn bộ IP Proxy sau mỗi X phút
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-              <Controller
-                name="rotationInterval"
-                control={control}
-                render={({ field }) => (
                   <Input
                     type="number"
                     placeholder="60"
                     value={field.value?.toString() || ''}
                     onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                    className={`w-full h-9 px-2.5 text-sm bg-white border rounded-lg outline-none transition-all duration-150 ${
-                      errors.rotationInterval 
-                        ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/50' 
-                        : 'border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50'
-                    }`}
                   />
-                )}
-              />
-              {errors.rotationInterval && (
-                <p className="mt-1 text-sm text-red-500 font-medium">{errors.rotationInterval.message}</p>
+                  <FieldError />
+                </TextField>
               )}
-            </div>
+            />
           </div>
         )}
       </form>
