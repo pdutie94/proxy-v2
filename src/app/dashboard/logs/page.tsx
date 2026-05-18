@@ -314,7 +314,7 @@ export default function LogsPage() {
       {/* Modern Compact Log Details Overlay Modal */}
       {selectedLog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-          <div className="bg-white border border-slate-200 rounded-xl w-full max-w-2xl overflow-hidden shadow-lg flex flex-col max-h-[90vh]">
+          <div className="bg-white border border-slate-200 rounded-xl w-full max-w-xl overflow-hidden shadow-lg flex flex-col max-h-[90vh]">
             {/* Modal Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50/50">
               <h3 className="text-sm font-semibold text-slate-800">
@@ -340,7 +340,7 @@ export default function LogsPage() {
       {/* Delete Confirmation Overlay Modal */}
       {isDeleteModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-          <div className="bg-white border border-slate-200 rounded-xl w-full max-w-sm overflow-hidden shadow-lg flex flex-col">
+          <div className="bg-white border border-slate-200 rounded-xl w-full max-w-xl overflow-hidden shadow-lg flex flex-col">
             {/* Modal Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50/50">
               <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-1.5 text-danger">
