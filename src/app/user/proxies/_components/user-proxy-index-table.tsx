@@ -213,7 +213,7 @@ export function UserProxyIndexTable({ proxies: initialProxies }: UserProxyIndexT
     switch (status) {
       case 'ACTIVE':
         return (
-          <Chip size="sm" variant="soft" color="success" className="font-semibold text-[10px] uppercase">
+          <Chip size="sm" variant="soft" color="success" className="font-medium text-[10px] uppercase">
             Hoạt động
           </Chip>
         );
@@ -225,7 +225,7 @@ export function UserProxyIndexTable({ proxies: initialProxies }: UserProxyIndexT
         );
       default:
         return (
-          <Chip size="sm" variant="soft" color="danger" className="font-semibold text-[10px] uppercase">
+          <Chip size="sm" variant="soft" color="danger" className="font-medium text-[10px] uppercase">
             Lỗi
           </Chip>
         );
@@ -245,7 +245,7 @@ export function UserProxyIndexTable({ proxies: initialProxies }: UserProxyIndexT
             <Button
               size="sm"
               onPress={handleCopyProxies}
-              className="cursor-pointer h-7 px-2.5 bg-blue-100 hover:bg-blue-200 text-blue-700 font-bold rounded-lg flex items-center gap-1 border-0"
+              className="cursor-pointer h-7 px-2.5 bg-blue-100 hover:bg-blue-200 text-blue-700 font-semibold rounded-lg flex items-center gap-1 border-0"
             >
               <Icon icon="lucide:clipboard" className="w-3.5 h-3.5 shrink-0" />
               Copy
@@ -253,7 +253,7 @@ export function UserProxyIndexTable({ proxies: initialProxies }: UserProxyIndexT
             <Button
               size="sm"
               onPress={handleExportProxies}
-              className="cursor-pointer h-7 px-2.5 bg-blue-100 hover:bg-blue-200 text-blue-700 font-bold rounded-lg flex items-center gap-1 border-0"
+              className="cursor-pointer h-7 px-2.5 bg-blue-100 hover:bg-blue-200 text-blue-700 font-semibold rounded-lg flex items-center gap-1 border-0"
             >
               <Icon icon="lucide:download" className="w-3.5 h-3.5 shrink-0" />
               Xuất file
@@ -261,21 +261,21 @@ export function UserProxyIndexTable({ proxies: initialProxies }: UserProxyIndexT
             <Button
               size="sm"
               onPress={() => handleBulkToggleAutoRenew(true)}
-              className="cursor-pointer h-7 px-2.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 font-bold rounded-lg border-0"
+              className="cursor-pointer h-7 px-2.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 font-semibold rounded-lg border-0"
             >
               Bật gia hạn tự động
             </Button>
             <Button
               size="sm"
               onPress={() => handleBulkToggleAutoRenew(false)}
-              className="cursor-pointer h-7 px-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-lg border-0"
+              className="cursor-pointer h-7 px-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded-lg border-0"
             >
               Tắt gia hạn tự động
             </Button>
             <Button
               size="sm"
               onPress={() => setDeleteConfirmState({ isOpen: true, id: null })}
-              className="cursor-pointer h-7 px-2.5 bg-red-100 hover:bg-red-200 text-red-700 font-bold rounded-lg border-0"
+              className="cursor-pointer h-7 px-2.5 bg-red-100 hover:bg-red-200 text-red-700 font-semibold rounded-lg border-0"
             >
               Xóa
             </Button>
@@ -303,7 +303,7 @@ export function UserProxyIndexTable({ proxies: initialProxies }: UserProxyIndexT
                   setPage(1);
                   setSelectedKeys(new Set());
                 }}
-                className={`px-2.5 py-1 text-xs font-bold rounded-md transition-all cursor-pointer whitespace-nowrap border-none ${
+                className={`px-2.5 py-1 text-sm font-medium rounded-md transition-all cursor-pointer whitespace-nowrap border-none ${
                   selectedTab === idx
                     ? 'bg-white text-slate-800 shadow-sm'
                     : 'text-slate-500 hover:text-slate-700 bg-transparent'
@@ -317,7 +317,7 @@ export function UserProxyIndexTable({ proxies: initialProxies }: UserProxyIndexT
           {/* Location Filter Popover */}
           <Popover>
             <PopoverTrigger>
-              <button className="h-8 px-3 text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:border-slate-300 rounded-lg flex items-center gap-1.5 cursor-pointer outline-none">
+              <button className="h-8 px-3 text-sm font-medium text-slate-600 bg-white border border-slate-200 hover:border-slate-300 rounded-lg flex items-center gap-1.5 cursor-pointer outline-none">
                 <Icon icon="lucide:map-pin" className="w-3.5 h-3.5" />
                 <span>Vị trí</span>
                 {filterLocationId.length > 0 && (
@@ -329,9 +329,9 @@ export function UserProxyIndexTable({ proxies: initialProxies }: UserProxyIndexT
             </PopoverTrigger>
             <PopoverContent placement="bottom start" className="p-3 w-48 border border-slate-200 rounded-lg shadow-md bg-white">
               <div className="flex flex-col gap-2 w-full">
-                <span className="text-xs font-bold text-slate-500 mb-1">Lọc theo Vị trí</span>
+                <span className="text-sm font-medium text-slate-500 mb-1">Lọc theo Vị trí</span>
                 {locations.map(loc => (
-                  <label key={loc.id} className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer hover:text-slate-900">
+                  <label key={loc.id} className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer hover:text-slate-900">
                     <input
                       type="checkbox"
                       checked={filterLocationId.includes(loc.id)}
@@ -350,7 +350,7 @@ export function UserProxyIndexTable({ proxies: initialProxies }: UserProxyIndexT
                 {filterLocationId.length > 0 && (
                   <button
                     onClick={() => { setFilterLocationId([]); resetPage(); }}
-                    className="mt-1.5 pt-1.5 border-t border-slate-100 text-left text-[10px] text-blue-600 font-bold hover:text-blue-800 cursor-pointer border-none bg-transparent"
+                    className="mt-1.5 pt-1.5 border-t border-slate-100 text-left text-sm text-red-600 font-medium hover:text-red-700 cursor-pointer border-none bg-transparent"
                   >
                     Xóa bộ lọc
                   </button>
@@ -362,19 +362,19 @@ export function UserProxyIndexTable({ proxies: initialProxies }: UserProxyIndexT
           {/* Sort Popover */}
           <Popover>
             <PopoverTrigger>
-              <button className="h-8 px-3 text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:border-slate-300 rounded-lg flex items-center gap-1.5 cursor-pointer outline-none">
+              <button className="h-8 px-3 text-sm font-medium text-slate-600 bg-white border border-slate-200 hover:border-slate-300 rounded-lg flex items-center gap-1.5 cursor-pointer outline-none">
                 <Icon icon="lucide:arrow-up-down" className="w-3.5 h-3.5" />
                 <span>Sắp xếp</span>
               </button>
             </PopoverTrigger>
             <PopoverContent placement="bottom start" className="p-3 w-48 border border-slate-200 rounded-lg shadow-md bg-white">
               <div className="flex flex-col gap-2 w-full">
-                <span className="text-xs font-bold text-slate-500 mb-1">Tiêu chí sắp xếp</span>
+                <span className="text-sm font-medium text-slate-500 mb-1">Tiêu chí sắp xếp</span>
                 {sortOptions.map(opt => (
                   <button
                     key={opt.value}
                     onClick={() => setSortSelected([opt.value])}
-                    className={`flex items-center justify-between text-left text-xs px-2 py-1.5 rounded-md transition-colors cursor-pointer border-none ${
+                    className={`flex items-center justify-between text-left text-sm px-2 py-1.5 rounded-md transition-colors cursor-pointer border-none ${
                       sortSelected[0] === opt.value
                         ? 'bg-blue-50 text-blue-700 font-bold'
                         : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800 bg-transparent'
@@ -391,14 +391,14 @@ export function UserProxyIndexTable({ proxies: initialProxies }: UserProxyIndexT
           {/* Columns Toggle Popover */}
           <Popover>
             <PopoverTrigger>
-              <button className="h-8 px-3 text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:border-slate-300 rounded-lg flex items-center gap-1.5 cursor-pointer outline-none">
+              <button className="h-8 px-3 text-sm font-medium text-slate-600 bg-white border border-slate-200 hover:border-slate-300 rounded-lg flex items-center gap-1.5 cursor-pointer outline-none">
                 <Icon icon="lucide:columns" className="w-3.5 h-3.5" />
                 <span>Hiển thị cột</span>
               </button>
             </PopoverTrigger>
             <PopoverContent placement="bottom start" className="p-3 w-48 border border-slate-200 rounded-lg shadow-md bg-white">
               <div className="flex flex-col gap-2 w-full">
-                <span className="text-xs font-bold text-slate-500 mb-1">Bật/tắt các cột</span>
+                <span className="text-sm font-medium text-slate-500 mb-1">Bật/tắt các cột</span>
                 {[
                   { key: 'server', label: 'Máy chủ' },
                   { key: 'info', label: 'Thông tin Proxy' },
@@ -406,7 +406,7 @@ export function UserProxyIndexTable({ proxies: initialProxies }: UserProxyIndexT
                   { key: 'status', label: 'Trạng thái' },
                   { key: 'comment', label: 'Ghi chú' },
                 ].map(col => (
-                  <label key={col.key} className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer hover:text-slate-900">
+                  <label key={col.key} className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer hover:text-slate-900">
                     <input
                       type="checkbox"
                       checked={isColumnVisible(col.key)}
@@ -428,7 +428,7 @@ export function UserProxyIndexTable({ proxies: initialProxies }: UserProxyIndexT
             placeholder="Tìm kiếm..."
             value={queryValue}
             onChange={(e) => { setQueryValue(e.target.value); resetPage(); }}
-            className="w-full h-8 pl-8 pr-8 text-xs bg-slate-100/60 hover:bg-slate-100 focus:bg-white placeholder:text-slate-400 border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-full outline-none transition-all duration-150"
+            className="w-full h-8 pl-8 pr-8 text-sm bg-slate-100/60 hover:bg-slate-100 focus:bg-white placeholder:text-slate-400 border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none transition-all duration-150"
           />
           <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-400">
             <Icon icon="lucide:search" className="w-3.5 h-3.5" />
@@ -489,11 +489,11 @@ export function UserProxyIndexTable({ proxies: initialProxies }: UserProxyIndexT
                     {isColumnVisible('server') && (
                       <Table.Cell className="py-2.5 px-3 whitespace-nowrap">
                         <div className="flex flex-col gap-0.5">
-                          <span className="font-bold text-slate-800">
+                          <span className="font-medium text-slate-800">
                             {proxy.server?.name || proxy.server?.host || 'Không xác định'}
                           </span>
                           <div className="flex items-center mt-0.5">
-                            <Chip size="sm" variant="soft" color="accent" className="font-semibold text-[9px] uppercase px-1 py-0 h-4">
+                            <Chip size="sm" variant="soft" color="accent" className="font-medium text-[9px] uppercase px-1 py-0 h-4">
                               {proxy.ipType}
                             </Chip>
                           </div>
@@ -506,7 +506,7 @@ export function UserProxyIndexTable({ proxies: initialProxies }: UserProxyIndexT
                           <div className="flex items-center gap-2 whitespace-nowrap">
                             <span className="text-[10px] text-slate-400 select-none">IP:PORT</span>
                             <div className="flex-1 border-b border-dotted border-slate-200"></div>
-                            <span className="font-mono font-bold text-slate-700">{proxy.server?.host}:{proxy.port}</span>
+                            <span className="font-mono font-medium text-slate-700">{proxy.server?.host}:{proxy.port}</span>
                           </div>
                           <div className="flex items-center gap-2 whitespace-nowrap">
                             <span className="text-[10px] text-slate-400 select-none">Tài khoản</span>
@@ -547,7 +547,7 @@ export function UserProxyIndexTable({ proxies: initialProxies }: UserProxyIndexT
                               <div className="flex items-center gap-2 whitespace-nowrap">
                                 <span className="text-[10px] text-slate-400 select-none">Hết hạn</span>
                                 <div className="flex-1 border-b border-dotted border-slate-200"></div>
-                                <span className={`font-semibold ${valueColorClass}`}>
+                                <span className={`font-medium ${valueColorClass}`}>
                                   {proxy.expiresAt ? format(new Date(proxy.expiresAt), 'dd/MM/yyyy HH:mm') : 'Vĩnh viễn'}
                                 </span>
                               </div>
@@ -556,7 +556,7 @@ export function UserProxyIndexTable({ proxies: initialProxies }: UserProxyIndexT
                                   <div className="flex items-center gap-2 whitespace-nowrap">
                                     <span className="text-[10px] text-slate-400 select-none">Còn lại</span>
                                     <div className="flex-1 border-b border-dotted border-slate-200"></div>
-                                    <span className={`font-bold ${valueColorClass}`}>
+                                    <span className={`font-medium ${valueColorClass}`}>
                                       {getCountdown(proxy.expiresAt)}
                                     </span>
                                   </div>
@@ -564,7 +564,7 @@ export function UserProxyIndexTable({ proxies: initialProxies }: UserProxyIndexT
                                     <div className="flex items-center gap-2 whitespace-nowrap">
                                       <span className="text-[10px] text-slate-400 select-none">Gia hạn tự động</span>
                                       <div className="flex-1 border-b border-dotted border-slate-200"></div>
-                                      <span className="text-emerald-600 font-bold flex items-center gap-0.5">
+                                      <span className="text-emerald-600 font-medium flex items-center gap-0.5">
                                         <Icon icon="lucide:check" className="w-3.5 h-3.5 shrink-0" />
                                         Bật
                                       </span>
@@ -658,19 +658,19 @@ export function UserProxyIndexTable({ proxies: initialProxies }: UserProxyIndexT
         {/* Compact Flat Pagination Footer */}
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-3 py-2.5 border-t border-slate-100 text-xs bg-slate-50/50">
-            <span className="text-slate-400 font-semibold">Trang {page} / {totalPages}</span>
+            <span className="text-slate-400 font-medium">Trang {page} / {totalPages}</span>
             <div className="flex items-center gap-1.5">
               <Button
                 isDisabled={page <= 1}
                 onPress={() => setPage(page - 1)}
-                className="px-2.5 py-1 text-xs border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 font-bold h-7 min-w-0 rounded-lg cursor-pointer transition-all"
+                className="px-2.5 py-1 text-sm border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 font-medium h-8 min-w-0 rounded-lg cursor-pointer transition-all"
               >
                 Trước
               </Button>
               <Button
                 isDisabled={page >= totalPages}
                 onPress={() => setPage(page + 1)}
-                className="px-2.5 py-1 text-xs border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 font-bold h-7 min-w-0 rounded-lg cursor-pointer transition-all"
+                className="px-2.5 py-1 text-sm border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 font-medium h-8 min-w-0 rounded-lg cursor-pointer transition-all"
               >
                 Sau
               </Button>
@@ -705,7 +705,7 @@ export function UserProxyIndexTable({ proxies: initialProxies }: UserProxyIndexT
               <Button
                 size="sm"
                 onPress={() => setDeleteConfirmState({ isOpen: false, id: null })}
-                className="cursor-pointer font-bold text-xs h-8 px-3 rounded-lg border border-slate-200 bg-white text-slate-600"
+                className="cursor-pointer font-medium text-sm h-9 px-3 rounded-lg border border-slate-200 bg-white text-slate-600"
               >
                 Hủy bỏ
               </Button>
@@ -714,7 +714,7 @@ export function UserProxyIndexTable({ proxies: initialProxies }: UserProxyIndexT
                 variant="danger"
                 onPress={handleDeleteConfirm}
                 isDisabled={deleteConfirmState.id ? deleteMutation.isPending : bulkDeleteMutation.isPending}
-                className="cursor-pointer font-bold text-xs h-8 px-3 rounded-lg flex items-center gap-1"
+                className="cursor-pointer font-medium text-sm h-9 px-3 rounded-lg flex items-center gap-1 bg-red-500 text-white"
               >
                 {(deleteConfirmState.id ? deleteMutation.isPending : bulkDeleteMutation.isPending) && (
                   <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>

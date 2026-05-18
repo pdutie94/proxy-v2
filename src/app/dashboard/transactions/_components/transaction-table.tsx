@@ -71,19 +71,19 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
     switch (status) {
       case 'COMPLETED':
         return (
-          <Chip size="sm" variant="soft" color="success" className="font-semibold text-[10px] uppercase">
+          <Chip size="sm" variant="soft" color="success" className="font-medium text-[10px] uppercase">
             Thành công
           </Chip>
         );
       case 'PENDING':
         return (
-          <Chip size="sm" variant="soft" color="warning" className="font-semibold text-[10px] uppercase">
+          <Chip size="sm" variant="soft" color="warning" className="font-medium text-[10px] uppercase">
             Chờ duyệt
           </Chip>
         );
       default:
         return (
-          <Chip size="sm" variant="soft" color="danger" className="font-semibold text-[10px] uppercase">
+          <Chip size="sm" variant="soft" color="danger" className="font-medium text-[10px] uppercase">
             Đã từ chối
           </Chip>
         );
@@ -92,11 +92,11 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
 
   const getTypeChip = (type: string) => {
     return type === 'DEPOSIT' ? (
-      <Chip size="sm" variant="soft" color="success" className="font-semibold text-[10px] uppercase">
+      <Chip size="sm" variant="soft" color="success" className="font-medium text-[10px] uppercase">
         Nạp tiền
       </Chip>
     ) : (
-      <Chip size="sm" variant="soft" color="accent" className="font-semibold text-[10px] uppercase">
+      <Chip size="sm" variant="soft" color="accent" className="font-medium text-[10px] uppercase">
         Thanh toán
       </Chip>
     );
@@ -111,7 +111,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
           {/* Status Filter */}
           <Popover>
             <PopoverTrigger>
-              <button className={`h-8 px-2.5 text-xs font-semibold rounded-lg flex items-center gap-1.5 cursor-pointer outline-none transition-all duration-150 shadow-none ${
+              <button className={`h-8 px-2.5 text-sm font-medium rounded-lg flex items-center gap-1.5 cursor-pointer outline-none transition-all duration-150 shadow-none ${
                 statusFilter !== 'ALL' ? 'bg-blue-50/50 border border-blue-200 text-blue-600' : 'bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 text-slate-600'
               }`}>
                 <Icon icon="lucide:check-circle" width={14} height={14} className={statusFilter !== 'ALL' ? 'text-blue-500' : 'text-slate-400'} />
@@ -129,10 +129,10 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                 <button
                   key={opt.key}
                   onClick={() => {
-                    setStatusFilter(opt.key as any);
+                    setStatusFilter(opt.key as 'ALL' | 'PENDING' | 'COMPLETED' | 'REJECTED');
                     setPage(1);
                   }}
-                  className={`w-full text-left px-2 py-1.5 text-xs rounded transition-colors cursor-pointer border-none bg-transparent ${
+                  className={`w-full text-left px-2 py-1.5 text-sm rounded transition-colors cursor-pointer border-none bg-transparent ${
                     statusFilter === opt.key
                       ? 'bg-blue-50 text-blue-600 font-semibold'
                       : 'text-slate-600 hover:bg-slate-50'
@@ -147,7 +147,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
           {/* Type Filter */}
           <Popover>
             <PopoverTrigger>
-              <button className={`h-8 px-2.5 text-xs font-semibold rounded-lg flex items-center gap-1.5 cursor-pointer outline-none transition-all duration-150 shadow-none ${
+              <button className={`h-8 px-2.5 text-sm font-medium rounded-lg flex items-center gap-1.5 cursor-pointer outline-none transition-all duration-150 shadow-none ${
                 typeFilter !== 'ALL' ? 'bg-blue-50/50 border border-blue-200 text-blue-600' : 'bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 text-slate-600'
               }`}>
                 <Icon icon="lucide:sliders" width={14} height={14} className={typeFilter !== 'ALL' ? 'text-blue-500' : 'text-slate-400'} />
@@ -164,10 +164,10 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                 <button
                   key={opt.key}
                   onClick={() => {
-                    setTypeFilter(opt.key as any);
+                    setTypeFilter(opt.key as 'ALL' | 'DEPOSIT' | 'PAYMENT');
                     setPage(1);
                   }}
-                  className={`w-full text-left px-2 py-1.5 text-xs rounded transition-colors cursor-pointer border-none bg-transparent ${
+                  className={`w-full text-left px-2 py-1.5 text-sm rounded transition-colors cursor-pointer border-none bg-transparent ${
                     typeFilter === opt.key
                       ? 'bg-blue-50 text-blue-600 font-semibold'
                       : 'text-slate-600 hover:bg-slate-50'
@@ -186,7 +186,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                 setTypeFilter('ALL');
                 setPage(1);
               }}
-              className="text-xs font-semibold text-blue-500 hover:text-blue-600 cursor-pointer transition-colors border-none bg-transparent ml-1"
+              className="text-sm font-medium text-red-600 hover:text-red-700 border-none bg-transparent cursor-pointer ml-1"
             >
               Xóa lọc
             </button>
@@ -204,7 +204,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                 setQueryValue(e.target.value);
                 setPage(1);
               }}
-              className="w-full h-8 pl-8 pr-8 text-xs bg-slate-100/60 hover:bg-slate-100 focus:bg-white placeholder:text-slate-400 border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none transition-all duration-150"
+              className="w-full h-8 pl-8 pr-8 text-sm bg-slate-100/60 hover:bg-slate-100 focus:bg-white placeholder:text-slate-400 border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none transition-all duration-150"
             />
             <div className="absolute inset-y-0 left-2.5 flex items-center pointer-events-none text-slate-400">
               <Icon icon="lucide:search" width={14} height={14} />
@@ -239,11 +239,11 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
             <Table.Body>
               {paginatedTransactions.map((tx) => (
                 <Table.Row key={tx.id}>
-                  <Table.Cell className="align-top  font-semibold text-slate-800">
+                  <Table.Cell className="align-top  font-medium text-slate-800">
                     {tx.user?.email}
                   </Table.Cell>
                   <Table.Cell className="align-top">
-                    <span className={`font-bold text-xs ${tx.type === 'DEPOSIT' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                    <span className={`font-semibold text-sm ${tx.type === 'DEPOSIT' ? 'text-emerald-600' : 'text-rose-600'}`}>
                       {tx.type === 'DEPOSIT' ? '+' : '-'}{Number(tx.amount).toLocaleString()}đ
                     </span>
                   </Table.Cell>
@@ -263,7 +263,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                           size="sm"
                           onPress={() => handleApprove(tx.id)}
                           isDisabled={loadingId !== null}
-                          className="cursor-pointer font-bold h-7 text-[10px] px-2.5 rounded-lg inline-flex items-center gap-1 border-0 bg-blue-600 hover:bg-blue-700 text-white"
+                          className="cursor-pointer font-medium h-7 text-xs px-2.5 rounded-lg inline-flex items-center gap-1 border-0 bg-blue-600 hover:bg-blue-700 text-white"
                         >
                           {loadingId === tx.id ? (
                             <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
@@ -276,7 +276,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                           size="sm"
                           onPress={() => handleReject(tx.id)}
                           isDisabled={loadingId !== null}
-                          className="cursor-pointer font-bold h-7 text-[10px] px-2.5 rounded-lg inline-flex items-center gap-1 border-0 bg-red-600 hover:bg-red-700 text-white"
+                          className="cursor-pointer font-medium h-7 text-xs px-2.5 rounded-lg inline-flex items-center gap-1 border-0 bg-red-600 hover:bg-red-700 text-white"
                         >
                           {loadingId === tx.id ? (
                             <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
@@ -287,7 +287,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                         </Button>
                       </div>
                     ) : (
-                      <span className="text-slate-400 font-semibold italic text-[11px] block">
+                      <span className="text-slate-400 font-medium italic text-xs block">
                         {tx.notes || '-'}
                       </span>
                     )}

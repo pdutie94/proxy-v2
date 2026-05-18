@@ -77,25 +77,25 @@ export default function LogsPage() {
     switch (status) {
       case 'COMPLETED':
         return (
-          <Chip size="sm" variant="soft" color="success" className="font-semibold">
+          <Chip size="sm" variant="soft" color="success" className="font-medium">
             Thành công
           </Chip>
         );
       case 'FAILED':
         return (
-          <Chip size="sm" variant="soft" color="danger" className="font-semibold">
+          <Chip size="sm" variant="soft" color="danger" className="font-medium">
             Thất bại
           </Chip>
         );
       case 'ACTIVE':
         return (
-          <Chip size="sm" variant="soft" color="warning" className="font-semibold">
+          <Chip size="sm" variant="soft" color="warning" className="font-medium">
             Đang chạy
           </Chip>
         );
       default:
         return (
-          <Chip size="sm" variant="soft" color="default" className="font-semibold">
+          <Chip size="sm" variant="soft" color="default" className="font-medium">
             Đang chờ
           </Chip>
         );
@@ -144,7 +144,7 @@ export default function LogsPage() {
           size="sm"
           onPress={() => setIsDeleteModalOpen(true)}
           isDisabled={logs.length === 0 || isClearing}
-          className="cursor-pointer font-bold text-xs h-9 px-3 flex items-center gap-1.5 self-start sm:self-auto rounded-lg bg-red-500 text-white"
+          className="cursor-pointer font-medium text-sm h-9 px-3 flex items-center gap-1.5 self-start sm:self-auto rounded-lg bg-red-500 text-white"
         >
           <Icon icon="lucide:trash-2" className="w-3.5 h-3.5 shrink-0" />
           Dọn dẹp nhật ký
@@ -162,7 +162,7 @@ export default function LogsPage() {
                 setSelectedTab(idx);
                 setPage(1);
               }}
-              className={`h-8 px-3 text-xs font-semibold rounded-lg flex items-center gap-1.5 cursor-pointer outline-none transition-all duration-150 shadow-none ${
+              className={`h-8 px-3 text-sm font-medium rounded-lg flex items-center gap-1.5 cursor-pointer outline-none transition-all duration-150 shadow-none ${
                 selectedTab === idx
                   ? 'bg-blue-50/50 border border-blue-200 text-blue-600'
                   : 'bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 text-slate-600'
@@ -184,7 +184,7 @@ export default function LogsPage() {
                 setQueryValue(e.target.value);
                 setPage(1);
               }}
-              className="w-full h-8 pl-8 pr-8 text-xs bg-slate-100/60 hover:bg-slate-100 focus:bg-white placeholder:text-slate-400 border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none transition-all duration-150"
+              className="w-full h-8 pl-8 pr-8 text-sm bg-slate-100/60 hover:bg-slate-100 focus:bg-white placeholder:text-slate-400 border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none transition-all duration-150"
             />
             <div className="absolute inset-y-0 left-2.5 flex items-center pointer-events-none text-slate-400">
               <Icon icon="lucide:search" width={14} height={14} />
@@ -221,7 +221,7 @@ export default function LogsPage() {
                   <Table.Cell className="align-top  text-slate-500 whitespace-nowrap font-medium">
                     {format(new Date(log.createdAt), 'dd/MM/yyyy HH:mm:ss')}
                   </Table.Cell>
-                  <Table.Cell className="align-top  font-semibold text-slate-700">
+                  <Table.Cell className="align-top  font-medium text-slate-700">
                     <div className="flex items-center gap-2">
                       <Icon icon="lucide:calendar" className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                       <span>{getJobTitle(log)}</span>
@@ -354,7 +354,7 @@ export default function LogsPage() {
               <Button
                 size="sm"
                 onPress={() => setIsDeleteModalOpen(false)}
-                className="cursor-pointer font-bold text-xs h-8 px-3 rounded-lg border border-slate-200 bg-white text-slate-600"
+                className="cursor-pointer font-medium text-sm h-9 px-3 rounded-lg border border-slate-200 bg-white text-slate-600"
               >
                 Hủy bỏ
               </Button>
@@ -363,7 +363,7 @@ export default function LogsPage() {
                 variant="danger"
                 onPress={handleDeleteAll}
                 isDisabled={isClearing}
-                className="cursor-pointer font-bold text-xs h-8 px-3 rounded-lg flex items-center gap-1.5 bg-red-500 text-white"
+                className="cursor-pointer font-medium text-sm h-9 px-3 rounded-lg flex items-center gap-1.5 bg-red-500 text-white"
               >
                 {isClearing && (
                   <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>

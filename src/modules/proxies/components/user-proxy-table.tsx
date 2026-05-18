@@ -28,13 +28,13 @@ export function UserProxyTable({ proxies }: UserProxyTableProps) {
     switch (status) {
       case 'ACTIVE':
         return (
-          <Chip size="sm" variant="soft" color="success" className="font-semibold text-[10px] uppercase">
+          <Chip size="sm" variant="soft" color="success" className="font-medium text-[10px] uppercase">
             Hoạt động
           </Chip>
         );
       default:
         return (
-          <Chip size="sm" variant="soft" color="warning" className="font-semibold text-[10px] uppercase">
+          <Chip size="sm" variant="soft" color="warning" className="font-medium text-[10px] uppercase">
             Đang xử lý
           </Chip>
         );
@@ -69,11 +69,11 @@ export function UserProxyTable({ proxies }: UserProxyTableProps) {
                         />
                       )}
                       <div className="flex flex-col gap-0.5">
-                        <span className="font-bold text-slate-800">
+                        <span className="font-medium text-slate-800">
                           {proxy.server.location?.name || 'Việt Nam'}
                         </span>
                         <div className="flex items-center mt-0.5">
-                          <Chip size="sm" variant="soft" color="accent" className="font-semibold text-[9px] uppercase px-1 py-0 h-4">
+                          <Chip size="sm" variant="soft" color="accent" className="font-medium text-[9px] uppercase px-1 py-0 h-4">
                             {proxy.ipType}
                           </Chip>
                         </div>
@@ -81,7 +81,7 @@ export function UserProxyTable({ proxies }: UserProxyTableProps) {
                     </div>
                   </Table.Cell>
                   
-                  <Table.Cell className="py-2.5 px-3 font-mono font-bold text-slate-700 whitespace-nowrap">
+                  <Table.Cell className="py-2.5 px-3 font-mono font-medium text-slate-700 whitespace-nowrap">
                     {proxy.server.host}:{proxy.port}
                   </Table.Cell>
 
@@ -101,11 +101,11 @@ export function UserProxyTable({ proxies }: UserProxyTableProps) {
                       const isExpired = proxy.expiresAt ? new Date(proxy.expiresAt) <= new Date() : false;
                       return (
                         <div className="flex flex-col gap-0.5">
-                          <span className={`font-semibold ${isExpired ? 'text-slate-400 line-through' : 'text-slate-700'}`}>
+                          <span className={`font-medium ${isExpired ? 'text-slate-400 line-through' : 'text-slate-700'}`}>
                             {proxy.expiresAt ? format(new Date(proxy.expiresAt), 'dd/MM/yy HH:mm') : 'Vĩnh viễn'}
                           </span>
                           {proxy.expiresAt && (
-                            <span className={`text-[10px] font-bold ${isExpired ? 'text-slate-400' : 'text-amber-600'}`}>
+                            <span className={`text-[10px] font-medium ${isExpired ? 'text-slate-400' : 'text-amber-600'}`}>
                               {isExpired ? 'Hết hạn' : `Còn ${getCountdown(proxy.expiresAt)}`}
                             </span>
                           )}
@@ -153,7 +153,7 @@ export function UserProxyTable({ proxies }: UserProxyTableProps) {
                       <span>Bạn chưa có Proxy nào.</span>
                       <Link 
                         href="/"
-                        className="text-xs text-blue-500 hover:underline font-bold"
+                        className="text-xs text-blue-500 hover:underline font-semibold"
                       >
                         Mua Proxy đầu tiên ngay
                       </Link>

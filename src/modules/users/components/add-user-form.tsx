@@ -61,9 +61,9 @@ export const AddUserForm = forwardRef<AddUserFormRef, AddUserFormProps>(
     }));
 
     return (
-      <form onSubmit={handleSubmit(onSubmit)} className="p-4 space-y-3.5">
+      <form onSubmit={handleSubmit(onSubmit)} className="p-4 space-y-3.5 bg-white">
         <div className="space-y-1">
-          <label className="block text-[11px] font-semibold text-slate-500">Địa chỉ Email</label>
+          <label className="block text-sm font-medium text-slate-500">Địa chỉ Email</label>
           <Controller
             name="email"
             control={control}
@@ -73,7 +73,7 @@ export const AddUserForm = forwardRef<AddUserFormRef, AddUserFormProps>(
                 placeholder="vidu@example.com"
                 value={field.value}
                 onChange={field.onChange}
-                className={`w-full h-9 px-2.5 text-xs bg-white placeholder:text-slate-300 border rounded-lg outline-none transition-all duration-150 ${
+                className={`w-full h-9 px-2.5 text-sm bg-white placeholder:text-slate-300 border rounded-lg outline-none transition-all duration-150 ${
                   errors.email 
                     ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/50' 
                     : 'border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50'
@@ -82,14 +82,14 @@ export const AddUserForm = forwardRef<AddUserFormRef, AddUserFormProps>(
             )}
           />
           {errors.email && (
-            <p className="mt-1 text-[10px] text-red-500 font-semibold">
+            <p className="mt-1 text-sm text-red-500 font-medium">
               {errors.email.message}
             </p>
           )}
         </div>
 
         <div className="space-y-1">
-          <label className="block text-[11px] font-semibold text-slate-500">
+          <label className="block text-sm font-medium text-slate-500">
             {user ? "Mật khẩu mới (Để trống nếu không đổi)" : "Mật khẩu"}
           </label>
           <Controller
@@ -101,7 +101,7 @@ export const AddUserForm = forwardRef<AddUserFormRef, AddUserFormProps>(
                 placeholder="Tối thiểu 6 ký tự"
                 value={field.value}
                 onChange={field.onChange}
-                className={`w-full h-9 px-2.5 text-xs bg-white placeholder:text-slate-300 border rounded-lg outline-none transition-all duration-150 ${
+                className={`w-full h-9 px-2.5 text-sm bg-white placeholder:text-slate-300 border rounded-lg outline-none transition-all duration-150 ${
                   errors.password 
                     ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/50' 
                     : 'border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50'
@@ -110,14 +110,14 @@ export const AddUserForm = forwardRef<AddUserFormRef, AddUserFormProps>(
             )}
           />
           {errors.password && (
-            <p className="mt-1 text-[10px] text-red-500 font-semibold">
+            <p className="mt-1 text-sm text-red-500 font-medium">
               {errors.password.message}
             </p>
           )}
         </div>
 
         <div className="space-y-1">
-          <label className="block text-[11px] font-semibold text-slate-500">Vai trò hệ thống</label>
+          <label className="block text-sm font-medium text-slate-500">Vai trò hệ thống</label>
           <Controller
             name="role"
             control={control}
@@ -126,7 +126,7 @@ export const AddUserForm = forwardRef<AddUserFormRef, AddUserFormProps>(
                 <select
                   value={field.value}
                   onChange={field.onChange}
-                  className="w-full text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg h-9 px-3 outline-none cursor-pointer appearance-none transition-all duration-150"
+                  className="w-full text-sm font-medium text-slate-600 bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg h-9 px-3 outline-none cursor-pointer appearance-none transition-all duration-150"
                 >
                   <option value="USER">Người dùng</option>
                   <option value="MODERATOR">Điều hành viên (Moderator)</option>
@@ -139,7 +139,7 @@ export const AddUserForm = forwardRef<AddUserFormRef, AddUserFormProps>(
             )}
           />
           {errors.role && (
-            <p className="text-[10px] font-semibold text-red-500 mt-1">
+            <p className="text-sm font-medium text-red-500 mt-1">
               {errors.role.message}
             </p>
           )}

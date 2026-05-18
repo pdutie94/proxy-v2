@@ -89,11 +89,11 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
     }));
 
     return (
-      <form onSubmit={handleSubmit(onSubmit)} className="p-4 space-y-4 text-xs">
+      <form onSubmit={handleSubmit(onSubmit)} className="p-4 space-y-4 text-xs bg-white">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Tên Máy chủ */}
           <div className="space-y-1">
-            <label className="block text-[11px] font-semibold text-slate-500">Tên Máy chủ</label>
+            <label className="block text-sm font-medium text-slate-500">Tên Máy chủ</label>
             <Controller
               name="name"
               control={control}
@@ -103,7 +103,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                   placeholder="Ví dụ: US-West-01"
                   value={field.value}
                   onChange={field.onChange}
-                  className={`w-full h-9 px-2.5 text-xs bg-white border rounded-lg outline-none transition-all duration-150 ${
+                  className={`w-full h-9 px-2.5 text-sm bg-white border rounded-lg outline-none transition-all duration-150 ${
                     errors.name 
                       ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/50' 
                       : 'border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50'
@@ -112,13 +112,13 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
               )}
             />
             {errors.name && (
-              <p className="mt-1 text-[10px] text-red-500 font-semibold">{errors.name.message}</p>
+              <p className="mt-1 text-sm text-red-500 font-medium">{errors.name.message}</p>
             )}
           </div>
 
           {/* Địa chỉ IP */}
           <div className="space-y-1">
-            <label className="block text-[11px] font-semibold text-slate-500">Địa chỉ IP / Hostname</label>
+            <label className="block text-sm font-medium text-slate-500">Địa chỉ IP / Hostname</label>
             <Controller
               name="host"
               control={control}
@@ -128,7 +128,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                   placeholder="Ví dụ: 1.2.3.4"
                   value={field.value}
                   onChange={field.onChange}
-                  className={`w-full h-9 px-2.5 text-xs bg-white border rounded-lg outline-none transition-all duration-150 ${
+                  className={`w-full h-9 px-2.5 text-sm bg-white border rounded-lg outline-none transition-all duration-150 ${
                     errors.host 
                       ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/50' 
                       : 'border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50'
@@ -137,7 +137,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
               )}
             />
             {errors.host && (
-              <p className="mt-1 text-[10px] text-red-500 font-semibold">{errors.host.message}</p>
+              <p className="mt-1 text-sm text-red-500 font-medium">{errors.host.message}</p>
             )}
           </div>
         </div>
@@ -145,7 +145,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Cổng SSH */}
           <div className="space-y-1">
-            <label className="block text-[11px] font-semibold text-slate-500">Cổng SSH</label>
+            <label className="block text-sm font-medium text-slate-500">Cổng SSH</label>
             <Controller
               name="port"
               control={control}
@@ -155,7 +155,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                   placeholder="22"
                   value={field.value?.toString() || ''}
                   onChange={(e) => field.onChange(parseInt(e.target.value) || 22)}
-                  className={`w-full h-9 px-2.5 text-xs bg-white border rounded-lg outline-none transition-all duration-150 ${
+                  className={`w-full h-9 px-2.5 text-sm bg-white border rounded-lg outline-none transition-all duration-150 ${
                     errors.port 
                       ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/50' 
                       : 'border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50'
@@ -164,13 +164,13 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
               )}
             />
             {errors.port && (
-              <p className="mt-1 text-[10px] text-red-500 font-semibold">{errors.port.message}</p>
+              <p className="mt-1 text-sm text-red-500 font-medium">{errors.port.message}</p>
             )}
           </div>
 
           {/* Tài khoản SSH */}
           <div className="space-y-1">
-            <label className="block text-[11px] font-semibold text-slate-500">Tài khoản SSH</label>
+            <label className="block text-sm font-medium text-slate-500">Tài khoản SSH</label>
             <Controller
               name="username"
               control={control}
@@ -180,7 +180,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                   placeholder="root"
                   value={field.value}
                   onChange={field.onChange}
-                  className={`w-full h-9 px-2.5 text-xs bg-white border rounded-lg outline-none transition-all duration-150 ${
+                  className={`w-full h-9 px-2.5 text-sm bg-white border rounded-lg outline-none transition-all duration-150 ${
                     errors.username 
                       ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/50' 
                       : 'border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50'
@@ -189,7 +189,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
               )}
             />
             {errors.username && (
-              <p className="mt-1 text-[10px] text-red-500 font-semibold">{errors.username.message}</p>
+              <p className="mt-1 text-sm text-red-500 font-medium">{errors.username.message}</p>
             )}
           </div>
         </div>
@@ -197,7 +197,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Mật khẩu SSH */}
           <div className="space-y-1">
-            <label className="block text-[11px] font-semibold text-slate-500 text-slate-500">
+            <label className="block text-sm font-medium text-slate-500 text-slate-500">
               {server ? "Mật khẩu SSH (Để trống nếu không đổi)" : "Mật khẩu SSH"}
             </label>
             <Controller
@@ -209,7 +209,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                   placeholder="Mật khẩu"
                   value={field.value}
                   onChange={field.onChange}
-                  className={`w-full h-9 px-2.5 text-xs bg-white border rounded-lg outline-none transition-all duration-150 ${
+                  className={`w-full h-9 px-2.5 text-sm bg-white border rounded-lg outline-none transition-all duration-150 ${
                     errors.password 
                       ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/50' 
                       : 'border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50'
@@ -218,14 +218,14 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
               )}
             />
             {errors.password && (
-              <p className="mt-1 text-[10px] text-red-500 font-semibold">{errors.password.message}</p>
+              <p className="mt-1 text-sm text-red-500 font-medium">{errors.password.message}</p>
             )}
           </div>
 
           {/* IPv6 Prefix */}
           <div className="space-y-1">
             <div className="flex items-center gap-1">
-              <label className="block text-[11px] font-semibold text-slate-500">IPv6 Prefix</label>
+              <label className="block text-sm font-medium text-slate-500">IPv6 Prefix</label>
               <div className="group relative cursor-pointer text-slate-400 hover:text-slate-600">
                 <Icon icon="lucide:info" className="w-3 h-3"  />
                 <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 hidden group-hover:block w-48 bg-slate-800 text-[9px] text-white p-2 rounded shadow-lg z-20 pointer-events-none leading-relaxed">
@@ -242,7 +242,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                   placeholder="Ví dụ: 2001:19f0:4401:903"
                   value={field.value}
                   onChange={field.onChange}
-                  className={`w-full h-9 px-2.5 text-xs bg-white border rounded-lg outline-none transition-all duration-150 ${
+                  className={`w-full h-9 px-2.5 text-sm bg-white border rounded-lg outline-none transition-all duration-150 ${
                     errors.ipv6 
                       ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/50' 
                       : 'border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50'
@@ -251,7 +251,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
               )}
             />
             {errors.ipv6 && (
-              <p className="mt-1 text-[10px] text-red-500 font-semibold">{errors.ipv6.message}</p>
+              <p className="mt-1 text-sm text-red-500 font-medium">{errors.ipv6.message}</p>
             )}
           </div>
         </div>
@@ -259,7 +259,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Vị trí máy chủ */}
           <div className="space-y-1">
-            <label className="block text-[11px] font-semibold text-slate-500">Vị trí máy chủ</label>
+            <label className="block text-sm font-medium text-slate-500">Vị trí máy chủ</label>
             <Controller
               name="locationId"
               control={control}
@@ -268,7 +268,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                   <select
                     value={field.value || ''}
                     onChange={field.onChange}
-                    className="w-full text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg h-9 px-3 outline-none cursor-pointer appearance-none transition-all duration-150"
+                    className="w-full text-sm font-medium text-slate-600 bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg h-9 px-3 outline-none cursor-pointer appearance-none transition-all duration-150"
                   >
                     {locationOptions.map(opt => (
                       <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -281,13 +281,13 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
               )}
             />
             {errors.locationId && (
-              <p className="mt-1 text-[10px] text-red-500 font-semibold">{errors.locationId.message}</p>
+              <p className="mt-1 text-sm text-red-500 font-medium">{errors.locationId.message}</p>
             )}
           </div>
 
           {/* Số lượng Proxy tối đa */}
           <div className="space-y-1">
-            <label className="block text-[11px] font-semibold text-slate-500">Số lượng Proxy tối đa</label>
+            <label className="block text-sm font-medium text-slate-500">Số lượng Proxy tối đa</label>
             <Controller
               name="maxProxies"
               control={control}
@@ -297,7 +297,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                   placeholder="100"
                   value={field.value?.toString() || ''}
                   onChange={(e) => field.onChange(parseInt(e.target.value) || 100)}
-                  className={`w-full h-9 px-2.5 text-xs bg-white border rounded-lg outline-none transition-all duration-150 ${
+                  className={`w-full h-9 px-2.5 text-sm bg-white border rounded-lg outline-none transition-all duration-150 ${
                     errors.maxProxies 
                       ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/50' 
                       : 'border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50'
@@ -306,7 +306,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
               )}
             />
             {errors.maxProxies && (
-              <p className="mt-1 text-[10px] text-red-500 font-semibold">{errors.maxProxies.message}</p>
+              <p className="mt-1 text-sm text-red-500 font-medium">{errors.maxProxies.message}</p>
             )}
           </div>
         </div>
@@ -315,7 +315,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
           {/* Cổng bắt đầu */}
           <div className="space-y-1">
             <div className="flex items-center gap-1">
-              <label className="block text-[11px] font-semibold text-slate-500">Cổng bắt đầu</label>
+              <label className="block text-sm font-medium text-slate-500">Cổng bắt đầu</label>
               <div className="group relative cursor-pointer text-slate-400 hover:text-slate-600">
                 <Icon icon="lucide:info" className="w-3 h-3"  />
                 <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 hidden group-hover:block w-48 bg-slate-800 text-[9px] text-white p-2 rounded shadow-lg z-20 pointer-events-none leading-relaxed">
@@ -332,7 +332,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                   placeholder="10000"
                   value={field.value?.toString() || ''}
                   onChange={(e) => field.onChange(parseInt(e.target.value) || 10000)}
-                  className={`w-full h-9 px-2.5 text-xs bg-white border rounded-lg outline-none transition-all duration-150 ${
+                  className={`w-full h-9 px-2.5 text-sm bg-white border rounded-lg outline-none transition-all duration-150 ${
                     errors.startPort 
                       ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/50' 
                       : 'border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50'
@@ -341,7 +341,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
               )}
             />
             {errors.startPort && (
-              <p className="mt-1 text-[10px] text-red-500 font-semibold">{errors.startPort.message}</p>
+              <p className="mt-1 text-sm text-red-500 font-medium">{errors.startPort.message}</p>
             )}
           </div>
 
@@ -358,7 +358,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                     onChange={field.onChange}
                     className="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500/50 cursor-pointer"
                   />
-                  <span className="text-[11px] font-semibold text-slate-600">Tự động xoay IPv6</span>
+                  <span className="text-sm font-medium text-slate-600">Tự động xoay IPv6</span>
                 </label>
               )}
             />
@@ -370,7 +370,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
             {/* Chu kỳ xoay */}
             <div className="space-y-1">
               <div className="flex items-center gap-1">
-                <label className="block text-[11px] font-semibold text-slate-500">Chu kỳ xoay (Phút)</label>
+                <label className="block text-sm font-medium text-slate-500">Chu kỳ xoay (Phút)</label>
                 <div className="group relative cursor-pointer text-slate-400 hover:text-slate-600">
                   <Icon icon="lucide:info" className="w-3 h-3"  />
                   <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 hidden group-hover:block w-48 bg-slate-800 text-[9px] text-white p-2 rounded shadow-lg z-20 pointer-events-none leading-relaxed">
@@ -387,7 +387,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                     placeholder="60"
                     value={field.value?.toString() || ''}
                     onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                    className={`w-full h-9 px-2.5 text-xs bg-white border rounded-lg outline-none transition-all duration-150 ${
+                    className={`w-full h-9 px-2.5 text-sm bg-white border rounded-lg outline-none transition-all duration-150 ${
                       errors.rotationInterval 
                         ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/50' 
                         : 'border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50'
@@ -396,7 +396,7 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                 )}
               />
               {errors.rotationInterval && (
-                <p className="mt-1 text-[10px] text-red-500 font-semibold">{errors.rotationInterval.message}</p>
+                <p className="mt-1 text-sm text-red-500 font-medium">{errors.rotationInterval.message}</p>
               )}
             </div>
           </div>

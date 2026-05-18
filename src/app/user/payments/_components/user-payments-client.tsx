@@ -27,11 +27,11 @@ export function UserPaymentsClient({ transactions }: UserPaymentsClientProps) {
 
   const getStatusChip = (status: string) => {
     return status === 'COMPLETED' ? (
-      <Chip size="sm" variant="soft" color="success" className="font-semibold text-[10px] uppercase">
+      <Chip size="sm" variant="soft" color="success" className="font-medium text-[10px] uppercase">
         Thành công
       </Chip>
     ) : (
-      <Chip size="sm" variant="soft" color="warning" className="font-semibold text-[10px] uppercase">
+      <Chip size="sm" variant="soft" color="warning" className="font-medium text-[10px] uppercase">
         Chờ duyệt
       </Chip>
     );
@@ -39,11 +39,11 @@ export function UserPaymentsClient({ transactions }: UserPaymentsClientProps) {
 
   const getTypeChip = (type: string) => {
     return type === 'DEPOSIT' ? (
-      <Chip size="sm" variant="soft" color="success" className="font-semibold text-[10px] uppercase">
+      <Chip size="sm" variant="soft" color="success" className="font-medium text-[10px] uppercase">
         Nạp tiền
       </Chip>
     ) : (
-      <Chip size="sm" variant="soft" color="accent" className="font-semibold text-[10px] uppercase">
+      <Chip size="sm" variant="soft" color="accent" className="font-medium text-[10px] uppercase">
         Thanh toán
       </Chip>
     );
@@ -72,21 +72,21 @@ export function UserPaymentsClient({ transactions }: UserPaymentsClientProps) {
               <Table.Body className="divide-y divide-slate-100 text-xs">
                 {paginatedTransactions.map((tx: Transaction) => (
                   <Table.Row key={tx.id} className="hover:bg-slate-50/80 transition-colors border-b border-slate-100 last:border-b-0">
-                    <Table.Cell className="py-2.5 px-3 font-mono font-bold text-slate-400">
+                    <Table.Cell className="py-2.5 px-3 font-mono font-medium text-slate-400">
                       #{tx.id.slice(0, 10).toUpperCase()}
                     </Table.Cell>
                     <Table.Cell className="py-2.5 px-3">
                       {getTypeChip(tx.type)}
                     </Table.Cell>
                     <Table.Cell className="py-2.5 px-3">
-                      <span className={`font-bold text-xs ${tx.type === 'DEPOSIT' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                      <span className={`font-semibold text-sm ${tx.type === 'DEPOSIT' ? 'text-emerald-600' : 'text-rose-600'}`}>
                         {tx.type === 'DEPOSIT' ? '+' : '-'}{Number(tx.amount).toLocaleString()}đ
                       </span>
                     </Table.Cell>
                     <Table.Cell className="py-2.5 px-3">
                       {getStatusChip(tx.status)}
                     </Table.Cell>
-                    <Table.Cell className="py-2.5 px-3 text-right text-slate-500 font-semibold">
+                    <Table.Cell className="py-2.5 px-3 text-right text-slate-500 font-medium">
                       {format(new Date(tx.createdAt), 'dd/MM/yyyy HH:mm')}
                     </Table.Cell>
                   </Table.Row>
@@ -106,19 +106,19 @@ export function UserPaymentsClient({ transactions }: UserPaymentsClientProps) {
         {/* Compact Flat Pagination Footer */}
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-3 py-2.5 border-t border-slate-100 text-xs bg-slate-50/50">
-            <span className="text-slate-400 font-semibold">Trang {page} / {totalPages}</span>
+            <span className="text-slate-400 font-medium">Trang {page} / {totalPages}</span>
             <div className="flex items-center gap-1.5">
               <Button
                 isDisabled={page <= 1}
                 onPress={() => setPage(page - 1)}
-                className="px-2.5 py-1 text-xs border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 font-bold h-7 min-w-0 rounded-lg cursor-pointer transition-all"
+                className="px-2.5 py-1 text-sm border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 font-medium h-8 min-w-0 rounded-lg cursor-pointer transition-all"
               >
                 Trước
               </Button>
               <Button
                 isDisabled={page >= totalPages}
                 onPress={() => setPage(page + 1)}
-                className="px-2.5 py-1 text-xs border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 font-bold h-7 min-w-0 rounded-lg cursor-pointer transition-all"
+                className="px-2.5 py-1 text-sm border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 font-medium h-8 min-w-0 rounded-lg cursor-pointer transition-all"
               >
                 Sau
               </Button>
