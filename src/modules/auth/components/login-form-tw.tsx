@@ -60,7 +60,9 @@ export function LoginForm() {
           router.push('/user/proxies');
         }
         
-        router.refresh();
+        setTimeout(() => {
+          router.refresh();
+        }, 100);
       }
     } catch {
       toast.danger('Đã xảy ra lỗi khi đăng nhập');

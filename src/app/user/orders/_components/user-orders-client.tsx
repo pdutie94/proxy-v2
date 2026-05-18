@@ -1,7 +1,7 @@
 'use client';
 
 import { Icon } from '@iconify/react';
-import { Table, Chip, Button, Input, Select, ListBox } from '@heroui/react';
+import { SearchField, Table, Chip, Button, Popover, PopoverTrigger, PopoverContent } from '@heroui/react';
 
 import { format } from 'date-fns';
 import { payOrderAction } from '@/modules/store/actions/purchase.action';
@@ -153,11 +153,12 @@ export function UserOrdersClient({ orders }: UserOrdersClientProps) {
         <p className="text-xs text-slate-400">Danh sách các gói proxy bạn đã đặt mua</p>
       </div>
 
-      {/* Sleek Ultra-Compact Filter & Search Bar */}
-      <div className="flex flex-col gap-2.5 bg-white p-2.5 border border-slate-200 rounded-xl shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      {/* Flat Premium Toolbar - Single Row, No Outer Background/Padding */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 mt-1">
+        {/* Left Side: Tabs & Popovers */}
+        <div className="flex flex-wrap items-center gap-2">
           {/* Tabs */}
-          <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+          <div className="flex items-center gap-1 mr-2 bg-slate-100/60 p-0.5 rounded-lg">
             {itemStrings.map((tab, idx) => (
               <button
                 key={tab}
@@ -165,10 +166,10 @@ export function UserOrdersClient({ orders }: UserOrdersClientProps) {
                   setSelectedTab(idx);
                   resetPage();
                 }}
-                className={`px-2.5 py-1 text-sm font-medium rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+                className={`px-2.5 py-1 text-sm font-medium rounded-md transition-all cursor-pointer whitespace-nowrap border-none ${
                   selectedTab === idx
-                    ? 'bg-slate-100 text-slate-800'
-                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                    ? 'bg-white text-slate-800 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700 bg-transparent'
                 }`}
               >
                 {tab}
@@ -176,243 +177,227 @@ export function UserOrdersClient({ orders }: UserOrdersClientProps) {
             ))}
           </div>
 
-          {/* Right: Search, Status & Sort */}
-          <div className="flex flex-wrap items-center gap-2">
-            {/* Search Input */}
-            <div className="relative w-full sm:w-48">
-              <Input
-                type="text"
-                placeholder="Tìm theo mã đơn..."
-                value={queryValue}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                  setQueryValue(e.target.value);
-                  resetPage();
-                }}
-                className="w-full h-8 pl-8 pr-8 text-sm bg-slate-100/60 hover:bg-slate-100 focus:bg-white placeholder:text-slate-400 border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none transition-all duration-150"
-              />
-              <div className="absolute inset-y-0 left-2.5 flex items-center pointer-events-none text-slate-400">
-                <Icon icon="lucide:search" className="w-3.5 h-3.5 shrink-0" />
-              </div>
-              {queryValue && (
+          {/* Status Filter Popover */}
+          <Popover>
+            <PopoverTrigger>
+              <button className={`h-8 px-2.5 text-sm font-medium rounded-lg flex items-center gap-1.5 cursor-pointer outline-none transition-all duration-150 shadow-none ${
+                filterStatus ? 'bg-blue-50/50 border border-blue-200 text-blue-600' : 'bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 text-slate-600'
+              }`}>
+                <Icon icon="lucide:check-circle" className={`w-4 h-4 ${filterStatus ? 'text-blue-500' : 'text-slate-400'}`} />
+                <span>{filterStatus ? STATUS_LABELS[filterStatus] || 'Trạng thái' : 'Trạng thái'}</span>
+                <Icon icon="lucide:chevron-down" className="w-3.5 h-3.5 text-slate-400" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent placement="bottom start" offset={8} className="p-2 w-44 flex flex-col bg-white border border-slate-200 rounded-lg shadow-md z-50">
+              {[
+                { value: '', label: 'Tất cả trạng thái' },
+                { value: 'PENDING', label: 'Chờ thanh toán' },
+                { value: 'PROCESSING', label: 'Đang xử lý' },
+                { value: 'COMPLETED', label: 'Hoàn tất' },
+                { value: 'FAILED', label: 'Thất bại' },
+                { value: 'CANCELLED', label: 'Đã hủy' }
+              ].map(opt => (
                 <button
+                  key={opt.value}
                   onClick={() => {
-                    setQueryValue('');
+                    setFilterStatus(opt.value);
                     resetPage();
                   }}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full hover:bg-slate-100 cursor-pointer bg-transparent border-none flex items-center justify-center"
+                  className={`w-full text-left px-2 py-1.5 text-sm rounded transition-colors cursor-pointer border-none bg-transparent ${
+                    filterStatus === opt.value
+                      ? 'bg-blue-50 text-blue-600 font-medium'
+                      : 'text-slate-600 hover:bg-slate-50'
+                  }`}
                 >
-                  <Icon icon="lucide:x" width={12} height={12} />
+                  {opt.label}
                 </button>
-              )}
-            </div>
+              ))}
+            </PopoverContent>
+          </Popover>
 
-            {/* Status Select Filter */}
-            <Select
-              selectedKey={filterStatus}
-              onSelectionChange={(key) => { setFilterStatus(key as string); resetPage(); }}
-              className="min-w-[150px]"
+          {/* Reset Filter Button */}
+          {filterStatus && (
+            <button
+              onClick={() => {
+                setFilterStatus('');
+                resetPage();
+              }}
+              className="text-sm font-medium text-red-600 hover:text-red-700 cursor-pointer transition-colors border-none bg-transparent ml-1"
             >
-              <Select.Trigger className="h-8 flex items-center justify-between text-sm font-medium text-slate-600 bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg px-2.5 outline-none cursor-pointer transition-all duration-150">
-                <span>
-                  {filterStatus ? STATUS_LABELS[filterStatus] || 'Tất cả trạng thái' : 'Tất cả trạng thái'}
-                </span>
-                <Select.Indicator>
-                  <Icon icon="lucide:chevron-down" className="w-3 h-3 text-slate-400" />
-                </Select.Indicator>
-              </Select.Trigger>
-              <Select.Popover className="w-[--trigger-width] bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden z-50">
-                <ListBox className="p-1 outline-none">
-                  {[
-                    { value: '', label: 'Tất cả trạng thái' },
-                    { value: 'PENDING', label: 'Chờ thanh toán' },
-                    { value: 'PROCESSING', label: 'Đang xử lý' },
-                    { value: 'COMPLETED', label: 'Hoàn tất' },
-                    { value: 'FAILED', label: 'Thất bại' },
-                    { value: 'CANCELLED', label: 'Đã hủy' }
-                  ].map(opt => (
-                    <ListBox.Item
-                      key={opt.value}
-                      id={opt.value}
-                      textValue={opt.label}
-                      className="flex items-center justify-between px-2 py-1 text-xs rounded text-slate-600 hover:bg-slate-50 cursor-pointer outline-none data-[focused]:bg-slate-100 data-[selected]:bg-slate-100 data-[selected]:text-blue-600 font-medium"
-                    >
-                      {({ isSelected }) => (
-                        <>
-                          <span>{opt.label}</span>
-                          {isSelected && (
-                            <Icon icon="lucide:check" className="w-3.5 h-3.5 text-blue-600" />
-                          )}
-                        </>
-                      )}
-                    </ListBox.Item>
-                  ))}
-                </ListBox>
-              </Select.Popover>
-            </Select>
+              Xóa lọc
+            </button>
+          )}
+        </div>
 
-            {/* Sort Select */}
-            <Select
-              selectedKey={sortSelected[0]}
-              onSelectionChange={(key) => setSortSelected([key as string])}
-              className="min-w-[200px]"
-            >
-              <Select.Trigger className="h-8 flex items-center justify-between text-sm font-medium text-slate-600 bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg px-2.5 outline-none cursor-pointer transition-all duration-150">
-                <span>
-                  {`Sắp xếp: ${sortOptions.find(o => o.value === sortSelected[0])?.label || ''}`}
-                </span>
-                <Select.Indicator>
-                  <Icon icon="lucide:chevron-down" className="w-3 h-3 text-slate-400" />
-                </Select.Indicator>
-              </Select.Trigger>
-              <Select.Popover className="w-[--trigger-width] bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden z-50">
-                <ListBox className="p-1 outline-none">
-                  {sortOptions.map(opt => (
-                    <ListBox.Item
-                      key={opt.value}
-                      id={opt.value}
-                      textValue={`Sắp xếp: ${opt.label} (${opt.directionLabel})`}
-                      className="flex items-center justify-between px-2 py-1 text-xs rounded text-slate-600 hover:bg-slate-50 cursor-pointer outline-none data-[focused]:bg-slate-100 data-[selected]:bg-slate-100 data-[selected]:text-blue-600 font-medium"
-                    >
-                      {({ isSelected }) => (
-                        <>
-                          <span>Sắp xếp: {opt.label} ({opt.directionLabel})</span>
-                          {isSelected && (
-                            <Icon icon="lucide:check" className="w-3.5 h-3.5 text-blue-600" />
-                          )}
-                        </>
-                      )}
-                    </ListBox.Item>
-                  ))}
-                </ListBox>
-              </Select.Popover>
-            </Select>
-          </div>
+        {/* Right Side: Search, Sort */}
+        <div className="flex items-center gap-2">
+          {/* Search Bar */}
+          <SearchField 
+            name="search"
+            aria-label="Tìm theo mã đơn"
+            value={queryValue}
+            onChange={(value) => {
+              setQueryValue(value);
+              resetPage();
+            }}
+          >
+            <SearchField.Group>
+              <SearchField.SearchIcon />
+              <SearchField.Input placeholder="Tìm theo mã đơn..." className="w-[200px]" />
+              <SearchField.ClearButton />
+            </SearchField.Group>
+          </SearchField>
+
+          {/* Sort Popover */}
+          <Popover>
+            <PopoverTrigger>
+              <button className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-50 border border-slate-200 bg-white transition-all duration-150 cursor-pointer outline-none shadow-none" title="Sắp xếp">
+                <Icon icon="lucide:arrow-up-down" className="w-4 h-4" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent placement="bottom end" offset={8} className="p-2 w-44 flex flex-col bg-white border border-slate-200 rounded-lg shadow-md z-50">
+              {sortOptions.map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => {
+                    setSortSelected([opt.value]);
+                    resetPage();
+                  }}
+                  className={`w-full text-left px-2 py-1.5 text-sm rounded transition-colors cursor-pointer border-none bg-transparent ${
+                    sortSelected[0] === opt.value
+                      ? 'bg-blue-50 text-blue-600 font-medium'
+                      : 'text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  {opt.label} ({opt.directionLabel})
+                </button>
+              ))}
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
 
       {/* Orders Table */}
-      <div className="w-full border border-slate-200 rounded-xl bg-white overflow-hidden shadow-sm">
-        <Table className="w-full text-left border-collapse">
-          <Table.ScrollContainer>
-            <Table.Content aria-label="Danh sách đơn hàng">
-              <Table.Header className="border-b border-slate-100 text-slate-400 text-[10px] font-bold uppercase tracking-wider bg-slate-50">
-                <Table.Column isRowHeader className="py-2.5 px-3 w-32">Mã đơn</Table.Column>
-                <Table.Column className="py-2.5 px-3">Loại đơn</Table.Column>
-                <Table.Column className="py-2.5 px-3 w-60">Chi tiết đơn hàng</Table.Column>
-                <Table.Column className="py-2.5 px-3 w-36">Tổng tiền</Table.Column>
-                <Table.Column className="py-2.5 px-3 w-40 text-right">Trạng thái</Table.Column>
-              </Table.Header>
-              <Table.Body className="divide-y divide-slate-100 text-xs">
-                {paginatedOrders.map(({ id, totalAmount, status, createdAt, notes }) => {
-                  let details = { type: 'proxy', count: 1, days: 30, country: 'VN' };
-                  try {
-                    if (notes) details = { ...details, ...JSON.parse(notes) };
-                  } catch {}
+      <Table>
+        <Table.ScrollContainer>
+          <Table.Content aria-label="Danh sách đơn hàng">
+            <Table.Header>
+              <Table.Column isRowHeader className="w-32">Mã đơn</Table.Column>
+              <Table.Column>Loại đơn</Table.Column>
+              <Table.Column className="w-60">Chi tiết đơn hàng</Table.Column>
+              <Table.Column className="w-36">Tổng tiền</Table.Column>
+              <Table.Column className="text-end w-40">Trạng thái</Table.Column>
+            </Table.Header>
+            <Table.Body>
+              {paginatedOrders.map(({ id, totalAmount, status, createdAt, notes }) => {
+                let details = { type: 'proxy', count: 1, days: 30, country: 'VN' };
+                try {
+                  if (notes) details = { ...details, ...JSON.parse(notes) };
+                } catch {}
 
-                  const countryFlag = `https://purecatamphetamine.github.io/country-flag-icons/3x2/${details.country.toUpperCase()}.svg`;
+                const countryFlag = `https://purecatamphetamine.github.io/country-flag-icons/3x2/${details.country.toUpperCase()}.svg`;
 
-                  return (
-                    <Table.Row key={id} className="hover:bg-slate-50/80 transition-colors border-b border-slate-100 last:border-b-0">
-                      <Table.Cell className="py-2.5 px-3 font-mono font-medium text-slate-400">
-                        ORD-{id.slice(0, 8).toUpperCase()}
-                      </Table.Cell>
-                      <Table.Cell className="py-2.5 px-3 whitespace-nowrap">
-                        <div className="flex flex-col gap-0.5">
-                          <span className="font-medium text-slate-800">
-                            Mua {details.type.toUpperCase()}
-                          </span>
-                          <span className="text-[10px] text-slate-400 font-medium mt-0.5">
-                            {format(new Date(createdAt), 'dd/MM/yyyy HH:mm')}
-                          </span>
+                return (
+                  <Table.Row key={id}>
+                    <Table.Cell className="align-top font-mono font-medium text-slate-400">
+                      ORD-{id.slice(0, 8).toUpperCase()}
+                    </Table.Cell>
+                    <Table.Cell className="align-top whitespace-nowrap">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="font-medium text-slate-800">
+                          Mua {details.type.toUpperCase()}
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-medium mt-0.5">
+                          {format(new Date(createdAt), 'dd/MM/yyyy HH:mm')}
+                        </span>
+                      </div>
+                    </Table.Cell>
+                    <Table.Cell className="align-top">
+                      <div className="space-y-1 py-1 max-w-[240px]">
+                        <div className="flex items-center gap-2 whitespace-nowrap">
+                          <span className="text-xs text-slate-500 select-none">Số lượng IP</span>
+                          <div className="flex-grow border-b border-dotted border-slate-300"></div>
+                          <span className="font-mono font-medium text-slate-700">{details.count}</span>
                         </div>
-                      </Table.Cell>
-                      <Table.Cell className="py-2.5 px-3">
-                        <div className="space-y-1 py-1 max-w-[240px]">
-                          <div className="flex items-center gap-2 whitespace-nowrap">
-                            <span className="text-[10px] text-slate-400 select-none">Số lượng IP</span>
-                            <div className="flex-grow border-b border-dotted border-slate-200"></div>
-                            <span className="font-mono font-medium text-slate-700">{details.count}</span>
-                          </div>
-                          <div className="flex items-center gap-2 whitespace-nowrap">
-                            <span className="text-[10px] text-slate-400 select-none">Số ngày</span>
-                            <div className="flex-grow border-b border-dotted border-slate-200"></div>
-                            <span className="font-mono font-medium text-slate-600">{details.days} ngày</span>
-                          </div>
-                          <div className="flex items-center gap-2 whitespace-nowrap">
-                            <span className="text-[10px] text-slate-400 select-none">Quốc gia</span>
-                            <div className="flex-grow border-b border-dotted border-slate-200"></div>
-                            <div className="flex items-center gap-1">
-                              <Image
-                                src={countryFlag}
-                                alt={details.country}
-                                width={14}
-                                height={10}
-                                style={{ borderRadius: '2px', border: '1px solid #E2E8F0', objectFit: 'cover' }}
-                              />
-                              <span className="font-medium text-slate-600">{details.country.toUpperCase()}</span>
-                            </div>
+                        <div className="flex items-center gap-2 whitespace-nowrap">
+                          <span className="text-xs text-slate-500 select-none">Số ngày</span>
+                          <div className="flex-grow border-b border-dotted border-slate-300"></div>
+                          <span className="font-mono font-medium text-slate-600">{details.days} ngày</span>
+                        </div>
+                        <div className="flex items-center gap-2 whitespace-nowrap">
+                          <span className="text-xs text-slate-500 select-none">Quốc gia</span>
+                          <div className="flex-grow border-b border-dotted border-slate-300"></div>
+                          <div className="flex items-center gap-1">
+                            <Image
+                              src={countryFlag}
+                              alt={details.country}
+                              width={14}
+                              height={10}
+                              style={{ borderRadius: '2px', border: '1px solid #E2E8F0', objectFit: 'cover' }}
+                            />
+                            <span className="font-medium text-slate-600">{details.country.toUpperCase()}</span>
                           </div>
                         </div>
-                      </Table.Cell>
-                      <Table.Cell className="py-2.5 px-3 font-semibold text-sm text-slate-800 whitespace-nowrap">
-                        {Number(totalAmount).toLocaleString()}đ
-                      </Table.Cell>
-                      <Table.Cell className="py-2.5 px-3 text-right">
-                        {status === 'PENDING' ? (
-                          <Button
-                            size="sm"
-                            variant="primary"
-                            onPress={() => handlePay(id)}
-                            isDisabled={loadingId !== null}
-                            className="cursor-pointer font-medium h-7 text-xs px-2.5 rounded-lg inline-flex items-center gap-1 border-0 bg-blue-600 hover:bg-blue-700 text-white"
-                          >
-                            {loadingId === id && (
-                              <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                            )}
-                            Thanh toán
-                          </Button>
-                        ) : (
-                          getStatusChip(status)
-                        )}
-                      </Table.Cell>
-                    </Table.Row>
-                  );
-                })}
-                {paginatedOrders.length === 0 && (
-                  <Table.Row>
-                    <Table.Cell colSpan={5} className="py-12 text-center text-slate-400 font-medium">
-                      Danh sách đơn hàng hiện trống.
+                      </div>
+                    </Table.Cell>
+                    <Table.Cell className="align-top font-semibold text-slate-800 whitespace-nowrap">
+                      {Number(totalAmount).toLocaleString()}đ
+                    </Table.Cell>
+                    <Table.Cell className="align-top text-end">
+                      {status === 'PENDING' ? (
+                        <Button
+                          size="sm"
+                          variant="primary"
+                          onPress={() => handlePay(id)}
+                          isDisabled={loadingId !== null}
+                          className="cursor-pointer font-medium h-7 text-xs px-2.5 rounded-lg inline-flex items-center gap-1 border-0 bg-blue-600 hover:bg-blue-700 text-white"
+                        >
+                          {loadingId === id && (
+                            <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                          )}
+                          Thanh toán
+                        </Button>
+                      ) : (
+                        getStatusChip(status)
+                      )}
                     </Table.Cell>
                   </Table.Row>
-                )}
-              </Table.Body>
-            </Table.Content>
-          </Table.ScrollContainer>
-        </Table>
+                );
+              })}
+              {paginatedOrders.length === 0 && (
+                <Table.Row>
+                  <Table.Cell colSpan={5} className="py-12 text-center text-slate-400 font-medium">
+                    Danh sách đơn hàng hiện trống.
+                  </Table.Cell>
+                </Table.Row>
+              )}
+            </Table.Body>
+          </Table.Content>
+        </Table.ScrollContainer>
+      </Table>
 
-        {/* Compact Flat Pagination Footer */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between px-3 py-2.5 border-t border-slate-100 text-xs bg-slate-50/50">
-            <span className="text-slate-400 font-medium">Trang {page} / {totalPages}</span>
-            <div className="flex items-center gap-1.5">
-              <Button
-                isDisabled={page <= 1}
-                onPress={() => setPage(page - 1)}
-                className="px-2.5 py-1 text-sm border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 font-medium h-8 min-w-0 rounded-lg cursor-pointer transition-all"
-              >
-                Trước
-              </Button>
-              <Button
-                isDisabled={page >= totalPages}
-                onPress={() => setPage(page + 1)}
-                className="px-2.5 py-1 text-sm border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 font-medium h-8 min-w-0 rounded-lg cursor-pointer transition-all"
-              >
-                Sau
-              </Button>
-            </div>
+      {/* Compact Flat Pagination Footer */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between px-3 py-2.5 border-t border-slate-100 text-xs bg-slate-50/50 mt-4">
+          <span className="text-slate-400 font-medium">Trang {page} / {totalPages}</span>
+          <div className="flex items-center gap-1.5">
+            <Button
+              isDisabled={page <= 1}
+              onPress={() => setPage(page - 1)}
+              className="px-2.5 py-1 text-sm border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 font-medium h-8 min-w-0 rounded-lg cursor-pointer transition-all"
+            >
+              Trước
+            </Button>
+            <Button
+              isDisabled={page >= totalPages}
+              onPress={() => setPage(page + 1)}
+              className="px-2.5 py-1 text-sm border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 font-medium h-8 min-w-0 rounded-lg cursor-pointer transition-all"
+            >
+              Sau
+            </Button>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

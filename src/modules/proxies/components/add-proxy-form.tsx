@@ -508,6 +508,9 @@ export const AddProxyForm = forwardRef<AddProxyFormRef, AddProxyFormProps>(
                     isSelected={field.value}
                     onChange={field.onChange}
                   >
+                    <Checkbox.Control>
+                      <Checkbox.Indicator />
+                    </Checkbox.Control>
                     Tự động gia hạn
                   </Checkbox>
                 )}

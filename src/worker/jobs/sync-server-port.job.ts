@@ -27,14 +27,14 @@ export async function processSyncServerPort(job: Job) {
     
     let lastPort: number | null = null;
     
-    if (readRes.stdout.trim()) {
+    if (readRes.stdout.trim() && !isNaN(parseInt(readRes.stdout.trim()))) {
       lastPort = parseInt(readRes.stdout.trim());
     } else {
-      // 2. Fallback: Tìm port lớn nhất từ các file service nếu file last_port không có
-      const scanCmd = "find /etc/systemd/system/ -name 'proxy-*.service' 2>/dev/null | grep -oE '[0-9]+' | sort -n | tail -n 1";
+      // 2. Fallback: Tìm port lớn nhất từ các file cơ sở dữ liệu proxies nếu file last_port không có
+      const scanCmd = "(cat /root/proxy-ipv6.txt 2>/dev/null | cut -d'|' -f1; cat /root/proxies.txt 2>/dev/null | cut -d':' -f2) | grep -oE '^[0-9]+$' | sort -n | tail -n 1";
       const scanRes = await sshService.execute(server, scanCmd);
       
-      if (scanRes.stdout.trim()) {
+      if (scanRes.stdout.trim() && !isNaN(parseInt(scanRes.stdout.trim()))) {
         lastPort = parseInt(scanRes.stdout.trim());
       }
     }

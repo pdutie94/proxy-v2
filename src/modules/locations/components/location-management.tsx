@@ -3,7 +3,7 @@
 import { Icon } from '@iconify/react';
 import { useState, useCallback } from 'react';
 import Image from 'next/image';
-import { Button, Table, Chip, Input, TextField, Label, FieldError } from '@heroui/react';
+import { Button, Table, Chip, Input, TextField, Label, FieldError, SearchField } from '@heroui/react';
 
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -96,26 +96,18 @@ export function LocationManagement({ initialLocations }: LocationManagementProps
       {/* Flat Premium Toolbar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-end gap-3 mb-4 mt-1">
         {/* Right Side: Search Input */}
-        <div className="relative w-full sm:w-56">
-          <Input
-            type="text"
-            placeholder="Tìm tên, mã QG..."
-            value={queryValue}
-            onChange={(e) => setQueryValue(e.target.value)}
-            className="w-full h-8 pl-8 pr-8 text-sm bg-slate-100/60 hover:bg-slate-100 focus:bg-white placeholder:text-slate-400 border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none transition-all duration-150"
-          />
-          <div className="absolute inset-y-0 left-2.5 flex items-center pointer-events-none text-slate-400">
-            <Icon icon="lucide:search" width={14} height={14} />
-          </div>
-          {queryValue && (
-            <button
-              onClick={() => setQueryValue('')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full hover:bg-slate-100 cursor-pointer bg-transparent border-none flex items-center justify-center"
-            >
-              <Icon icon="lucide:x" width={12} height={12} />
-            </button>
-          )}
-        </div>
+        <SearchField 
+          name="search"
+          aria-label="Tìm tên, mã QG"
+          value={queryValue}
+          onChange={(value) => setQueryValue(value)}
+        >
+          <SearchField.Group>
+            <SearchField.SearchIcon />
+            <SearchField.Input className="w-[200px]" placeholder="Tìm tên, mã QG..." />
+            <SearchField.ClearButton />
+          </SearchField.Group>
+        </SearchField>
       </div>
 
       {/* Locations Table list */}

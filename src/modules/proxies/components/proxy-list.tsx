@@ -2,7 +2,7 @@
 
 import { useProxies } from '@/hooks/use-proxies';
 import { useServers } from '@/hooks/use-servers';
-import { Button, Table, Chip, Checkbox, Popover, PopoverTrigger, PopoverContent, Selection, Pagination, Input } from "@heroui/react";
+import { SearchField, Label, Button, Table, Chip, Checkbox, Popover, PopoverTrigger, PopoverContent, Selection, Pagination, Input } from "@heroui/react";
 import { Icon } from "@iconify/react";
 import { format } from "date-fns";
 import React, { useState, useCallback, useMemo } from 'react';
@@ -446,6 +446,9 @@ export function ProxyList({ onEdit }: ProxyListProps) {
                       setPage(1);
                     }}
                   >
+                    <Checkbox.Control>
+                      <Checkbox.Indicator />
+                    </Checkbox.Control>
                     <span className="text-sm text-slate-700 hover:text-slate-900">{s.name}</span>
                   </Checkbox>
                 ))}
@@ -517,6 +520,9 @@ export function ProxyList({ onEdit }: ProxyListProps) {
                       setPage(1);
                     }}
                   >
+                    <Checkbox.Control>
+                      <Checkbox.Indicator />
+                    </Checkbox.Control>
                     <span className="text-sm text-slate-700 hover:text-slate-900">{type}</span>
                   </Checkbox>
                 ))}
@@ -554,6 +560,9 @@ export function ProxyList({ onEdit }: ProxyListProps) {
                         setPage(1);
                       }}
                     >
+                      <Checkbox.Control>
+                        <Checkbox.Indicator />
+                      </Checkbox.Control>
                       <span className="text-sm text-slate-700 hover:text-slate-900 truncate" title={email}>{email}</span>
                     </Checkbox>
                   ))}
@@ -585,25 +594,18 @@ export function ProxyList({ onEdit }: ProxyListProps) {
         {/* Right Side: Search, Sort, Columns */}
         <div className="flex items-center gap-2">
           {/* Search Bar */}
-          <div className="relative w-full sm:w-56">
-            <Input
-              type="text"
-              placeholder="Tìm kiếm..."
-              value={queryValue}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => onHandleQueryValueChange(e.target.value)}
-            />
-            <div className="absolute inset-y-0 left-2.5 flex items-center pointer-events-none text-slate-400">
-              <Icon icon="lucide:search" width={16} height={16} />
-            </div>
-            {queryValue && (
-              <button
-                onClick={() => onHandleQueryValueChange('')}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full hover:bg-slate-100 cursor-pointer bg-transparent border-none flex items-center justify-center"
-              >
-                <Icon icon="lucide:x" width={14} height={14} />
-              </button>
-            )}
-          </div>
+          <SearchField 
+            name="search"
+            aria-label="Tìm kiếm"
+            value={queryValue}
+            onChange={onHandleQueryValueChange}
+          >
+            <SearchField.Group>
+              <SearchField.SearchIcon />
+              <SearchField.Input placeholder="Tìm kiếm..." />
+              <SearchField.ClearButton />
+            </SearchField.Group>
+          </SearchField>
 
           <Popover>
             <PopoverTrigger>
@@ -654,6 +656,9 @@ export function ProxyList({ onEdit }: ProxyListProps) {
                     isSelected={isColumnVisible(col.key)}
                     onChange={() => toggleColumn(col.key)}
                   >
+                    <Checkbox.Control>
+                      <Checkbox.Indicator />
+                    </Checkbox.Control>
                     <span className="text-sm text-slate-700 hover:text-slate-900">{col.label}</span>
                   </Checkbox>
                 ))}
@@ -677,7 +682,11 @@ export function ProxyList({ onEdit }: ProxyListProps) {
                   <Checkbox
                     aria-label="Select all"
                     slot="selection"
-                  />
+                  >
+                    <Checkbox.Control>
+                      <Checkbox.Indicator />
+                    </Checkbox.Control>
+                  </Checkbox>
                 </Table.Column>
                 {isColumnVisible('server') && <Table.Column isRowHeader>Máy chủ</Table.Column>}
                 {isColumnVisible('info') && <Table.Column className="w-auto">Thông tin Proxy</Table.Column>}
@@ -696,7 +705,11 @@ export function ProxyList({ onEdit }: ProxyListProps) {
                       <Checkbox
                         aria-label="Select row"
                         slot="selection"
-                      />
+                      >
+                        <Checkbox.Control>
+                          <Checkbox.Indicator />
+                        </Checkbox.Control>
+                      </Checkbox>
                     </Table.Cell>
                     {isColumnVisible('server') && (
                       <Table.Cell className="align-top ">

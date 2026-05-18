@@ -19,5 +19,15 @@ export default async function TransactionsPage() {
     orderBy: { createdAt: 'desc' },
   });
 
-  return <TransactionsClient transactions={transactions} />;
+  const serializedTransactions = transactions.map(tx => ({
+    ...tx,
+    amount: tx.amount.toString(),
+    createdAt: tx.createdAt.toISOString(),
+    user: tx.user ? {
+      ...tx.user,
+      balance: tx.user.balance.toString()
+    } : null
+  }));
+
+  return <TransactionsClient transactions={serializedTransactions} />;
 }

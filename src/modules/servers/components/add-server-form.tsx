@@ -307,6 +307,9 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                   onChange={field.onChange}
                   className="text-sm font-medium text-slate-600 select-none cursor-pointer"
                 >
+                  <Checkbox.Control>
+                    <Checkbox.Indicator />
+                  </Checkbox.Control>
                   Tự động xoay IPv6
                 </Checkbox>
               )}

@@ -1,7 +1,7 @@
 'use client';
 
 import { Icon } from '@iconify/react';
-import { Table, Chip, Button, Popover, PopoverTrigger, PopoverContent, Pagination, Input } from '@heroui/react';
+import { SearchField, Label, Table, Chip, Button, Popover, PopoverTrigger, PopoverContent, Pagination, Input } from '@heroui/react';
 import { format } from 'date-fns';
 import { approveTransactionAction, rejectTransactionAction } from '@/modules/wallet/actions/admin-transaction.action';
 import { toast } from '@heroui/react';
@@ -194,34 +194,21 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
         </div>
 
         {/* Right Side: Search Input */}
-        <div className="flex items-center gap-2">
-          <div className="relative w-full sm:w-56">
-            <Input
-              type="text"
-              placeholder="Tìm email người dùng..."
-              value={queryValue}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                setQueryValue(e.target.value);
-                setPage(1);
-              }}
-              className="w-full h-8 pl-8 pr-8 text-sm bg-slate-100/60 hover:bg-slate-100 focus:bg-white placeholder:text-slate-400 border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-lg outline-none transition-all duration-150"
-            />
-            <div className="absolute inset-y-0 left-2.5 flex items-center pointer-events-none text-slate-400">
-              <Icon icon="lucide:search" width={14} height={14} />
-            </div>
-            {queryValue && (
-              <button
-                onClick={() => {
-                  setQueryValue('');
-                  setPage(1);
-                }}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full hover:bg-slate-100 cursor-pointer bg-transparent border-none flex items-center justify-center"
-              >
-                <Icon icon="lucide:x" width={12} height={12} />
-              </button>
-            )}
-          </div>
-        </div>
+        <SearchField 
+          name="search"
+          aria-label="Tìm email người dùng"
+          value={queryValue}
+          onChange={(value) => {
+            setQueryValue(value);
+            setPage(1);
+          }}
+        >
+          <SearchField.Group>
+            <SearchField.SearchIcon />
+            <SearchField.Input className="w-[280px]" placeholder="Tìm email người dùng..." />
+            <SearchField.ClearButton />
+          </SearchField.Group>
+        </SearchField>
       </div>
 
       {/* Transactions Table list */}
@@ -232,7 +219,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
               <Table.Column isRowHeader>Người dùng</Table.Column>
               <Table.Column className="w-36">Số tiền</Table.Column>
               <Table.Column className="w-28">Loại</Table.Column>
-              <Table.Column className="w-28">Trạng thái</Table.Column>
+              <Table.Column className="w-30">Trạng thái</Table.Column>
               <Table.Column className="w-40">Thời gian</Table.Column>
               <Table.Column className="w-44 text-end">Thao tác</Table.Column>
             </Table.Header>

@@ -123,6 +123,9 @@ export default function SettingsPage() {
                   isDisabled={isLoading}
                   className="text-sm font-medium text-slate-700 select-none cursor-pointer"
                 >
+                  <Checkbox.Control>
+                    <Checkbox.Indicator />
+                  </Checkbox.Control>
                   <div className="flex flex-col gap-0.5 ml-1">
                     <span className="text-sm font-medium text-slate-700">Bắt buộc xác thực Email khi đăng ký tài khoản</span>
                     <span className="text-xs text-slate-400 font-medium">Người dùng không thể mua hàng nếu chưa xác nhận Email bằng mã OTP.</span>

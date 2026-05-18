@@ -21,7 +21,9 @@ export interface JobWithDetails extends ServerJob {
   proxy?: { port: number } | null;
 }
 
-export interface TransactionWithUser extends Transaction {
+export interface TransactionWithUser extends Omit<Transaction, 'amount' | 'createdAt'> {
+  amount: number | string | Prisma.Decimal;
+  createdAt: Date | string;
   user?: {
     email: string;
     balance: number | string | Prisma.Decimal;

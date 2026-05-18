@@ -48,31 +48,32 @@ export function UserBalanceClient({ user }: UserBalanceClientProps) {
             <h2 className="text-base font-semibold text-slate-800 mb-4">Phương thức nạp tiền</h2>
             
             {/* Payment Method Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-              <div className="border-2 border-blue-500 bg-blue-50/20 p-5 rounded-2xl flex flex-col items-center gap-2.5 cursor-pointer hover:scale-[1.02] transition-all">
-                <Icon icon="lucide:landmark" className="w-6 h-6 text-blue-500"  />
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="border border-blue-500 bg-blue-50/20 p-3.5 rounded-md flex flex-col items-center gap-2 cursor-pointer transition-colors hover:bg-blue-50/30">
+                <Icon icon="lucide:landmark" className="w-5 h-5 text-blue-500" />
                 <span className="text-sm font-medium text-slate-700">Ngân hàng</span>
               </div>
-              <div className="border border-slate-200 p-5 rounded-2xl flex flex-col items-center gap-2.5 cursor-pointer hover:border-blue-500 hover:scale-[1.02] transition-all bg-white">
-                <Icon icon="lucide:smartphone" className="w-6 h-6 text-slate-500"  />
+              <div className="border border-slate-200 p-3.5 rounded-md flex flex-col items-center gap-2 cursor-pointer transition-colors hover:bg-slate-50 bg-white">
+                <Icon icon="lucide:smartphone" className="w-5 h-5 text-slate-500" />
                 <span className="text-sm font-medium text-slate-600">Ví điện tử</span>
               </div>
-              <div className="border border-slate-200 p-5 rounded-2xl flex flex-col items-center gap-2.5 cursor-pointer hover:border-blue-500 hover:scale-[1.02] transition-all bg-white">
-                <Icon icon="lucide:credit-card" className="w-6 h-6 text-slate-500"  />
+              <div className="border border-slate-200 p-3.5 rounded-md flex flex-col items-center gap-2 cursor-pointer transition-colors hover:bg-slate-50 bg-white">
+                <Icon icon="lucide:credit-card" className="w-5 h-5 text-slate-500" />
                 <span className="text-sm font-medium text-slate-600">Thẻ cào</span>
               </div>
             </div>
 
             {/* Amount and Action */}
-            <div className="mt-8 space-y-4 max-w-sm">
-              <TextField>
-                <Label>Số tiền cần nạp (VNĐ)</Label>
+            <div className="mt-6 space-y-4 max-w-sm">
+              <TextField className="w-full">
+                <Label className="block text-xs font-medium text-slate-600 mb-1">Số tiền cần nạp (VNĐ)</Label>
                 <div className="relative">
                   <Input
                     type="number"
                     value={depositAmount}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDepositAmount(e.target.value)}
                     placeholder="50000"
+                    className="w-full"
                   />
                   <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400 select-none">VNĐ</span>
                 </div>
@@ -80,7 +81,7 @@ export function UserBalanceClient({ user }: UserBalanceClientProps) {
               <Button 
                 variant="primary" 
                 size="sm"
-                className="w-full font-semibold cursor-pointer"
+                className="w-full font-medium h-9 text-sm rounded-lg bg-blue-600 hover:bg-blue-700 text-white border-0 cursor-pointer transition-colors"
               >
                 Tiếp tục nạp tiền
               </Button>

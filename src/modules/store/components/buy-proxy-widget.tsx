@@ -116,7 +116,7 @@ export function BuyProxyWidget() {
         setModal(null);
         setOrderId(null);
         router.push('/user/proxies');
-        router.refresh();
+
       } else {
         toast.danger(result.message);
         if (result.message?.includes('Số dư')) {

@@ -94,7 +94,7 @@ export function BuyProxyModal({ open, onClose }: BuyProxyModalProps) {
         setStep(0);
         setOrderId(null);
         router.push('/user/proxies'); 
-        router.refresh(); 
+
       } 
       else { 
         toast.danger(result.message); 

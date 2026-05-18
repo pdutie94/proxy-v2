@@ -79,23 +79,25 @@ export function UserProfileClient({ user }: UserProfileClientProps) {
             </h2>
             
             <div className="space-y-4 max-w-md">
-              <TextField>
-                <Label>Địa chỉ Email</Label>
+              <TextField className="w-full">
+                <Label className="block text-xs font-medium text-slate-600 mb-1">Địa chỉ Email</Label>
                 <Input
                   type="email"
                   value={user.email}
                   readOnly
                   disabled
+                  className="w-full"
                 />
               </TextField>
 
-              <TextField>
-                <Label>Họ và tên</Label>
+              <TextField className="w-full">
+                <Label className="block text-xs font-medium text-slate-600 mb-1">Họ và tên</Label>
                 <Input
                   type="text"
                   value={name || ''}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
                   placeholder="Nhập tên của bạn"
+                  className="w-full"
                 />
               </TextField>
 
@@ -105,6 +107,9 @@ export function UserProfileClient({ user }: UserProfileClientProps) {
                   onChange={setNotifications}
                   className="text-sm font-medium text-slate-600 select-none cursor-pointer"
                 >
+                  <Checkbox.Control>
+                    <Checkbox.Indicator />
+                  </Checkbox.Control>
                   Nhận thông báo qua Email
                 </Checkbox>
               </div>
@@ -124,35 +129,38 @@ export function UserProfileClient({ user }: UserProfileClientProps) {
             </div>
             
             <div className="space-y-4 max-w-md">
-              <TextField>
-                <Label>Mật khẩu hiện tại</Label>
+              <TextField className="w-full">
+                <Label className="block text-xs font-medium text-slate-600 mb-1">Mật khẩu hiện tại</Label>
                 <Input
                   type="password"
                   value={currentPassword}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCurrentPassword(e.target.value)}
                   placeholder="••••••••"
+                  className="w-full"
                 />
               </TextField>
 
               <hr className="border-slate-100 my-1" />
 
-              <TextField>
-                <Label>Mật khẩu mới</Label>
+              <TextField className="w-full">
+                <Label className="block text-xs font-medium text-slate-600 mb-1">Mật khẩu mới</Label>
                 <Input
                   type="password"
                   value={newPassword}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewPassword(e.target.value)}
                   placeholder="Nhập mật khẩu mới"
+                  className="w-full"
                 />
               </TextField>
 
-              <TextField>
-                <Label>Xác nhận mật khẩu mới</Label>
+              <TextField className="w-full">
+                <Label className="block text-xs font-medium text-slate-600 mb-1">Xác nhận mật khẩu mới</Label>
                 <Input
                   type="password"
                   value={confirmPassword}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConfirmPassword(e.target.value)}
                   placeholder="Xác nhận mật khẩu mới"
+                  className="w-full"
                 />
               </TextField>
             </div>
@@ -164,7 +172,7 @@ export function UserProfileClient({ user }: UserProfileClientProps) {
               size="sm" 
               isDisabled={loading}
               onPress={handleSave}
-              className="cursor-pointer font-semibold"
+              className="cursor-pointer font-medium h-9 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white border-0 transition-colors flex items-center gap-1.5"
              >
                {loading && (
                  <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>

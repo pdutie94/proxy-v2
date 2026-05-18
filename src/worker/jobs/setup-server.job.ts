@@ -148,7 +148,7 @@ EOF`,
     await ssh.execute(server, 'tar xzf /tmp/gost.tar.gz -C /usr/bin/ gost && chmod +x /usr/bin/gost');
 
     // 6. Khởi tạo cấu trúc dữ liệu
-    await ssh.execute(server, 'mkdir -p /root/proxy-state');
+    await ssh.execute(server, 'mkdir -p /root/proxy-state /etc/gost');
     await ssh.execute(server, 'touch /root/proxy-ipv6.txt /root/proxies.txt');
 
     // 7. Triển khai các Scripts

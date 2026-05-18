@@ -31,6 +31,10 @@ export const JobProgressModal = ({ jobId, open, onClose, onCompleted }: JobProgr
   const [error, setError] = useState<string | null>(null);
   const [isPolling, setIsPolling] = useState(!!(open && jobId));
 
+
+
+
+
   const fetchJobStatus = useCallback(async () => {
     if (!jobId) return;
 
@@ -41,7 +45,7 @@ export const JobProgressModal = ({ jobId, open, onClose, onCompleted }: JobProgr
       if (result.success) {
         setJob(result.data);
         
-        if (result.data.status === 'COMPLETED') {
+        if (result.data.status === 'COMPLETED' || result.data.status === 'FAILED') {
           setIsPolling(false);
           if (onCompleted) onCompleted();
         }
@@ -51,7 +55,7 @@ export const JobProgressModal = ({ jobId, open, onClose, onCompleted }: JobProgr
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
     }
-  }, [jobId, onCompleted]);
+  }, [jobId, onCompleted, setIsPolling, setJob, setError]);
 
   useEffect(() => {
     let intervalId: ReturnType<typeof setInterval>;
