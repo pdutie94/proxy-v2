@@ -2,7 +2,7 @@
 
 import { Icon } from '@iconify/react';
 import { useUsers } from '@/hooks/use-users';
-import { SearchField, Label, Button, Table, Chip, Pagination, Popover, PopoverTrigger, PopoverContent, Input } from "@heroui/react";
+import { SearchField, Button, Table, Chip, Pagination, Popover, PopoverTrigger, PopoverContent, Input, Skeleton, EmptyState } from "@heroui/react";
 
 import { format } from "date-fns";
 import { User } from '@prisma/client';
@@ -56,11 +56,37 @@ export function UserList({ onEdit }: UserListProps) {
 
   if (isLoading) {
     return (
-      <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-3.5">
-        <div className="h-6 bg-slate-100/80 rounded w-1/4 animate-pulse mb-4" />
-        <div className="space-y-2.5">
+      <div className="space-y-4">
+        {/* Flat Premium Toolbar Skeleton */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 mt-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Skeleton className="h-8 w-24 rounded-lg" />
+          </div>
+          <Skeleton className="h-9 w-64 rounded-lg" />
+        </div>
+
+        {/* Realistic Table Skeleton */}
+        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-3">
+          {/* Table Header */}
+          <div className="grid grid-cols-5 gap-4 pb-2 border-b border-slate-100">
+            <Skeleton className="h-4 w-2/3 rounded" />
+            <Skeleton className="h-4 w-1/2 rounded" />
+            <Skeleton className="h-4 w-1/2 rounded" />
+            <Skeleton className="h-4 w-2/3 rounded" />
+            <Skeleton className="h-4 w-12 rounded justify-self-end" />
+          </div>
+          {/* Table Body Rows */}
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="h-9 bg-slate-50 rounded-lg animate-pulse" />
+            <div key={i} className="grid grid-cols-5 gap-4 py-3 border-b border-slate-50 items-center">
+              <Skeleton className="h-4 w-4/5 rounded" />
+              <Skeleton className="h-5 w-16 rounded-full" />
+              <Skeleton className="h-5 w-16 rounded-full" />
+              <Skeleton className="h-4 w-2/3 rounded" />
+              <div className="flex gap-2 justify-end">
+                <Skeleton className="h-7 w-7 rounded-md" />
+                <Skeleton className="h-7 w-7 rounded-md" />
+              </div>
+            </div>
           ))}
         </div>
       </div>
@@ -187,7 +213,14 @@ export function UserList({ onEdit }: UserListProps) {
               <Table.Column>Ngày đăng ký</Table.Column>
               <Table.Column className="text-end">Thao tác</Table.Column>
             </Table.Header>
-            <Table.Body>
+            <Table.Body
+              renderEmptyState={() => (
+                <EmptyState className="flex h-full w-full flex-col items-center justify-center gap-4 text-center py-12">
+                  <Icon className="size-6 text-slate-400" icon="gravity-ui:tray" />
+                  <span className="text-sm text-slate-500 font-medium">Không tìm thấy người dùng nào.</span>
+                </EmptyState>
+              )}
+            >
               {paginatedUsers.map((user: User) => (
                 <Table.Row key={user.id}>
                   <Table.Cell className="align-top  font-medium text-slate-800">
@@ -235,13 +268,6 @@ export function UserList({ onEdit }: UserListProps) {
                   </Table.Cell>
                 </Table.Row>
               ))}
-              {paginatedUsers.length === 0 && (
-                <Table.Row>
-                  <Table.Cell colSpan={5} className="py-12 text-center text-slate-400 font-medium">
-                    Không tìm thấy người dùng nào.
-                  </Table.Cell>
-                </Table.Row>
-              )}
             </Table.Body>
           </Table.Content>
         </Table.ScrollContainer>

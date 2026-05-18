@@ -5,7 +5,7 @@ import { useLogs } from "@/hooks/use-logs";
 import { useState, useCallback, useMemo } from "react";
 import { ServerJob, Server, Proxy } from "@prisma/client";
 import { Icon } from '@iconify/react';
-import { Button, Table, Pagination, Chip, Input, SearchField, Label } from "@heroui/react";
+import { Button, Table, Pagination, Chip, SearchField, Skeleton, EmptyState } from "@heroui/react";
 
 type LogEntry = ServerJob & {
   server?: Server | null;
@@ -111,21 +111,43 @@ export default function LogsPage() {
     return (
       <div className="space-y-4">
         {/* Page Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 pb-3">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-1">
           <div className="space-y-1">
             <h1 className="text-lg font-semibold text-slate-900">Nhật ký hệ thống</h1>
             <p className="text-xs text-slate-400">Đang tải lịch sử hoạt động...</p>
           </div>
         </div>
 
-        {/* Skeleton lines with pulse animation */}
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-3.5">
-          <div className="h-6 bg-slate-100/80 rounded w-1/4 animate-pulse mb-4" />
-          <div className="space-y-2.5">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-9 bg-slate-50 rounded-lg animate-pulse" />
+        {/* Flat Premium Toolbar Skeleton */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 mt-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            {[...Array(4)].map((_, idx) => (
+              <Skeleton key={idx} className="h-8 w-16 rounded-lg" />
             ))}
           </div>
+          <Skeleton className="h-9 w-64 rounded-lg" />
+        </div>
+
+        {/* Realistic Table Skeleton */}
+        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-3">
+          {/* Table Header */}
+          <div className="grid grid-cols-5 gap-4 pb-2 border-b border-slate-100">
+            <Skeleton className="h-4 w-1/2 rounded" />
+            <Skeleton className="h-4 w-3/5 rounded" />
+            <Skeleton className="h-4 w-1/2 rounded" />
+            <Skeleton className="h-4 w-1/3 rounded" />
+            <Skeleton className="h-4 w-12 rounded justify-self-end" />
+          </div>
+          {/* Table Body Rows */}
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="grid grid-cols-5 gap-4 py-3 border-b border-slate-50 items-center">
+              <Skeleton className="h-4 w-4/5 rounded font-mono" />
+              <Skeleton className="h-4 w-4/5 rounded" />
+              <Skeleton className="h-4 w-1/2 rounded" />
+              <Skeleton className="h-5 w-16 rounded-full" />
+              <Skeleton className="h-7 w-7 rounded-md justify-self-end" />
+            </div>
+          ))}
         </div>
       </div>
     );
@@ -144,9 +166,9 @@ export default function LogsPage() {
           size="sm"
           onPress={() => setIsDeleteModalOpen(true)}
           isDisabled={logs.length === 0 || isClearing}
-          className="cursor-pointer font-medium text-sm h-9 px-3 flex items-center gap-1.5 self-start sm:self-auto rounded-lg bg-red-500 text-white"
+          className="cursor-pointer font-medium text-sm h-8 w-36 flex items-center gap-1.5 self-start sm:self-auto rounded-lg"
         >
-          <Icon icon="lucide:trash-2" className="w-3.5 h-3.5 shrink-0" />
+          <Icon icon="lucide:trash-2" className="w-4 h-4 shrink-0" />
           Dọn dẹp nhật ký
         </Button>
       </div>
@@ -202,7 +224,14 @@ export default function LogsPage() {
               <Table.Column>Trạng thái</Table.Column>
               <Table.Column className="text-end">Thao tác</Table.Column>
             </Table.Header>
-            <Table.Body>
+            <Table.Body
+              renderEmptyState={() => (
+                <EmptyState className="flex h-full w-full flex-col items-center justify-center gap-4 text-center py-12">
+                  <Icon className="size-6 text-slate-400" icon="gravity-ui:tray" />
+                  <span className="text-sm text-slate-500 font-medium">Chưa có nhật ký nào phù hợp.</span>
+                </EmptyState>
+              )}
+            >
               {paginatedLogs.map((log: LogEntry) => (
                 <Table.Row key={log.id}>
                   <Table.Cell className="align-top  text-slate-500 whitespace-nowrap font-medium">
@@ -238,13 +267,6 @@ export default function LogsPage() {
                   </Table.Cell>
                 </Table.Row>
               ))}
-              {paginatedLogs.length === 0 && (
-                <Table.Row>
-                  <Table.Cell colSpan={5} className="py-12 text-center text-slate-400 font-medium">
-                    Chưa có nhật ký nào phù hợp.
-                  </Table.Cell>
-                </Table.Row>
-              )}
             </Table.Body>
           </Table.Content>
         </Table.ScrollContainer>
@@ -341,7 +363,7 @@ export default function LogsPage() {
               <Button
                 size="sm"
                 onPress={() => setIsDeleteModalOpen(false)}
-                className="cursor-pointer font-medium text-sm h-9 px-3 rounded-lg border border-slate-200 bg-white text-slate-600"
+                className="cursor-pointer font-medium text-sm h-9 px-3 border border-slate-200 bg-white text-slate-600"
               >
                 Hủy bỏ
               </Button>
@@ -350,7 +372,7 @@ export default function LogsPage() {
                 variant="danger"
                 onPress={handleDeleteAll}
                 isDisabled={isClearing}
-                className="cursor-pointer font-medium text-sm h-9 px-3 rounded-lg flex items-center gap-1.5 bg-red-500 text-white"
+                className="cursor-pointer font-medium text-sm h-9 px-3 flex items-center gap-1.5 bg-red-500 text-white"
               >
                 {isClearing && (
                   <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>

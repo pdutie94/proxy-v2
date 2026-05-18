@@ -5,9 +5,9 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { userSchema, UserSchema } from '../schemas/user.schema';
 import { useUsers } from '@/hooks/use-users';
-import { Input, Select, ListBox, TextField, Label, FieldError } from "@heroui/react";
+import { Select, ListBox, TextField, Label, FieldError, InputGroup } from "@heroui/react";
 
-import { useCallback, forwardRef, useImperativeHandle, useEffect } from 'react';
+import { useCallback, forwardRef, useImperativeHandle, useEffect, useState } from 'react';
 import { User } from '@prisma/client';
 
 interface AddUserFormProps {
@@ -22,6 +22,8 @@ export interface AddUserFormRef {
 export const AddUserForm = forwardRef<AddUserFormRef, AddUserFormProps>(
   ({ onClose, user }, ref) => {
     const { createMutation, updateMutation } = useUsers();
+    const [isVisible, setIsVisible] = useState(false);
+    const toggleVisibility = () => setIsVisible(!isVisible);
     
     const { control, handleSubmit, formState: { errors }, reset } = useForm<UserSchema>({
       resolver: zodResolver(userSchema),
@@ -68,12 +70,17 @@ export const AddUserForm = forwardRef<AddUserFormRef, AddUserFormProps>(
           render={({ field, fieldState }) => (
             <TextField isRequired isInvalid={!!fieldState.error}>
               <Label>Địa chỉ Email</Label>
-              <Input
-                type="email"
-                placeholder="vidu@example.com"
-                value={field.value}
-                onChange={field.onChange}
-              />
+              <InputGroup>
+                <InputGroup.Prefix>
+                  <Icon icon="lucide:mail" className="w-3.5 h-3.5 text-slate-400" />
+                </InputGroup.Prefix>
+                <InputGroup.Input
+                  type="email"
+                  placeholder="vidu@example.com"
+                  value={field.value}
+                  onChange={field.onChange}
+                />
+              </InputGroup>
               <FieldError />
             </TextField>
           )}
@@ -85,12 +92,26 @@ export const AddUserForm = forwardRef<AddUserFormRef, AddUserFormProps>(
           render={({ field, fieldState }) => (
             <TextField isRequired={!user} isInvalid={!!fieldState.error}>
               <Label>{user ? "Mật khẩu mới (Để trống nếu không đổi)" : "Mật khẩu"}</Label>
-              <Input
-                type="password"
-                placeholder="Tối thiểu 6 ký tự"
-                value={field.value}
-                onChange={field.onChange}
-              />
+              <InputGroup>
+                <InputGroup.Prefix>
+                  <Icon icon="lucide:lock" className="w-3.5 h-3.5 text-slate-400" />
+                </InputGroup.Prefix>
+                <InputGroup.Input
+                  type={isVisible ? "text" : "password"}
+                  placeholder="Tối thiểu 6 ký tự"
+                  value={field.value}
+                  onChange={field.onChange}
+                />
+                <InputGroup.Suffix>
+                  <button 
+                    type="button" 
+                    onClick={toggleVisibility} 
+                    className="focus:outline-none cursor-pointer text-slate-400 hover:text-slate-600 flex items-center justify-center p-0.5 rounded-full"
+                  >
+                    {isVisible ? <Icon icon="lucide:eye-off" className="w-3.5 h-3.5" /> : <Icon icon="lucide:eye" className="w-3.5 h-3.5" />}
+                  </button>
+                </InputGroup.Suffix>
+              </InputGroup>
               <FieldError />
             </TextField>
           )}

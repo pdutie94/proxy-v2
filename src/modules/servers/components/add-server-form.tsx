@@ -5,9 +5,9 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { serverSchema, ServerSchema } from '../schemas/server.schema';
 import { useServers } from '@/hooks/use-servers';
-import { Input, Select, ListBox, Checkbox, TextField, Label, FieldError } from "@heroui/react";
+import { Select, ListBox, Checkbox, TextField, Label, FieldError, InputGroup, Description } from "@heroui/react";
 
-import { useCallback, forwardRef, useImperativeHandle, useEffect, useMemo } from 'react';
+import { useCallback, forwardRef, useImperativeHandle, useEffect, useMemo, useState } from 'react';
 import { Server } from '@prisma/client';
 import { useLocations } from '@/modules/locations/hooks/use-locations';
 
@@ -24,6 +24,8 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
   ({ onClose, server }, ref) => {
     const { createMutation, updateMutation } = useServers();
     const { data: locationsData } = useLocations();
+    const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+    const togglePasswordVisibility = () => setIsPasswordVisible(!isPasswordVisible);
 
     const locationOptions = useMemo(() => {
       const options = (locationsData || []).map(loc => ({
@@ -98,12 +100,17 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
             render={({ field, fieldState }) => (
               <TextField isRequired isInvalid={!!fieldState.error}>
                 <Label>Tên Máy chủ</Label>
-                <Input
-                  type="text"
-                  placeholder="Ví dụ: US-West-01"
-                  value={field.value || ''}
-                  onChange={field.onChange}
-                />
+                <InputGroup>
+                  <InputGroup.Prefix>
+                    <Icon icon="lucide:server" className="w-3.5 h-3.5 text-slate-400" />
+                  </InputGroup.Prefix>
+                  <InputGroup.Input
+                    type="text"
+                    placeholder="Ví dụ: US-West-01"
+                    value={field.value || ''}
+                    onChange={field.onChange}
+                  />
+                </InputGroup>
                 <FieldError />
               </TextField>
             )}
@@ -116,12 +123,17 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
             render={({ field, fieldState }) => (
               <TextField isRequired isInvalid={!!fieldState.error}>
                 <Label>Địa chỉ IP / Hostname</Label>
-                <Input
-                  type="text"
-                  placeholder="Ví dụ: 1.2.3.4"
-                  value={field.value || ''}
-                  onChange={field.onChange}
-                />
+                <InputGroup>
+                  <InputGroup.Prefix>
+                    <Icon icon="lucide:globe" className="w-3.5 h-3.5 text-slate-400" />
+                  </InputGroup.Prefix>
+                  <InputGroup.Input
+                    type="text"
+                    placeholder="Ví dụ: 1.2.3.4"
+                    value={field.value || ''}
+                    onChange={field.onChange}
+                  />
+                </InputGroup>
                 <FieldError />
               </TextField>
             )}
@@ -136,12 +148,17 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
             render={({ field, fieldState }) => (
               <TextField isRequired isInvalid={!!fieldState.error}>
                 <Label>Cổng SSH</Label>
-                <Input
-                  type="number"
-                  placeholder="22"
-                  value={field.value?.toString() || ''}
-                  onChange={(e) => field.onChange(parseInt(e.target.value) || 22)}
-                />
+                <InputGroup>
+                  <InputGroup.Prefix>
+                    <Icon icon="lucide:terminal" className="w-3.5 h-3.5 text-slate-400" />
+                  </InputGroup.Prefix>
+                  <InputGroup.Input
+                    type="number"
+                    placeholder="22"
+                    value={field.value?.toString() || ''}
+                    onChange={(e) => field.onChange(parseInt(e.target.value) || 22)}
+                  />
+                </InputGroup>
                 <FieldError />
               </TextField>
             )}
@@ -154,12 +171,17 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
             render={({ field, fieldState }) => (
               <TextField isRequired isInvalid={!!fieldState.error}>
                 <Label>Tài khoản SSH</Label>
-                <Input
-                  type="text"
-                  placeholder="root"
-                  value={field.value || ''}
-                  onChange={field.onChange}
-                />
+                <InputGroup>
+                  <InputGroup.Prefix>
+                    <Icon icon="lucide:user" className="w-3.5 h-3.5 text-slate-400" />
+                  </InputGroup.Prefix>
+                  <InputGroup.Input
+                    type="text"
+                    placeholder="root"
+                    value={field.value || ''}
+                    onChange={field.onChange}
+                  />
+                </InputGroup>
                 <FieldError />
               </TextField>
             )}
@@ -176,12 +198,26 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                 <Label>
                   {server ? "Mật khẩu SSH (Để trống nếu không đổi)" : "Mật khẩu SSH"}
                 </Label>
-                <Input
-                  type="password"
-                  placeholder="Mật khẩu"
-                  value={field.value || ''}
-                  onChange={field.onChange}
-                />
+                <InputGroup>
+                  <InputGroup.Prefix>
+                    <Icon icon="lucide:lock" className="w-3.5 h-3.5 text-slate-400" />
+                  </InputGroup.Prefix>
+                  <InputGroup.Input
+                    type={isPasswordVisible ? "text" : "password"}
+                    placeholder="Mật khẩu"
+                    value={field.value || ''}
+                    onChange={field.onChange}
+                  />
+                  <InputGroup.Suffix>
+                    <button 
+                      type="button" 
+                      onClick={togglePasswordVisibility} 
+                      className="focus:outline-none cursor-pointer text-slate-400 hover:text-slate-600 flex items-center justify-center p-0.5 rounded-full"
+                    >
+                      {isPasswordVisible ? <Icon icon="lucide:eye-off" className="w-3.5 h-3.5" /> : <Icon icon="lucide:eye" className="w-3.5 h-3.5" />}
+                    </button>
+                  </InputGroup.Suffix>
+                </InputGroup>
                 <FieldError />
               </TextField>
             )}
@@ -202,12 +238,17 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                     </div>
                   </div>
                 </div>
-                <Input
-                  type="text"
-                  placeholder="Ví dụ: 2001:19f0:4401:903"
-                  value={field.value || ''}
-                  onChange={field.onChange}
-                />
+                <InputGroup>
+                  <InputGroup.Prefix>
+                    <Icon icon="lucide:network" className="w-3.5 h-3.5 text-slate-400" />
+                  </InputGroup.Prefix>
+                  <InputGroup.Input
+                    type="text"
+                    placeholder="Ví dụ: 2001:19f0:4401:903"
+                    value={field.value || ''}
+                    onChange={field.onChange}
+                  />
+                </InputGroup>
                 <FieldError />
               </TextField>
             )}
@@ -257,12 +298,17 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
             render={({ field, fieldState }) => (
               <TextField isRequired isInvalid={!!fieldState.error}>
                 <Label>Số lượng Proxy tối đa</Label>
-                <Input
-                  type="number"
-                  placeholder="100"
-                  value={field.value?.toString() || ''}
-                  onChange={(e) => field.onChange(parseInt(e.target.value) || 100)}
-                />
+                <InputGroup>
+                  <InputGroup.Prefix>
+                    <Icon icon="lucide:hash" className="w-3.5 h-3.5 text-slate-400" />
+                  </InputGroup.Prefix>
+                  <InputGroup.Input
+                    type="number"
+                    placeholder="100"
+                    value={field.value?.toString() || ''}
+                    onChange={(e) => field.onChange(parseInt(e.target.value) || 100)}
+                  />
+                </InputGroup>
                 <FieldError />
               </TextField>
             )}
@@ -285,12 +331,17 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                     </div>
                   </div>
                 </div>
-                <Input
-                  type="number"
-                  placeholder="10000"
-                  value={field.value?.toString() || ''}
-                  onChange={(e) => field.onChange(parseInt(e.target.value) || 10000)}
-                />
+                <InputGroup>
+                  <InputGroup.Prefix>
+                    <Icon icon="lucide:key-round" className="w-3.5 h-3.5 text-slate-400" />
+                  </InputGroup.Prefix>
+                  <InputGroup.Input
+                    type="number"
+                    placeholder="10000"
+                    value={field.value?.toString() || ''}
+                    onChange={(e) => field.onChange(parseInt(e.target.value) || 10000)}
+                  />
+                </InputGroup>
                 <FieldError />
               </TextField>
             )}
@@ -305,12 +356,16 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                 <Checkbox
                   isSelected={field.value}
                   onChange={field.onChange}
-                  className="text-sm font-medium text-slate-600 select-none cursor-pointer"
                 >
                   <Checkbox.Control>
                     <Checkbox.Indicator />
                   </Checkbox.Control>
-                  Tự động xoay IPv6
+                  <Checkbox.Content>
+                    <Label htmlFor="auto-rotate">Tự động xoay IPv6</Label>
+                    <Description>
+                      Hệ thống tự động đổi toàn bộ IP Proxy sau chu kỳ thiết lập
+                    </Description>
+                  </Checkbox.Content>
                 </Checkbox>
               )}
             />
@@ -334,12 +389,17 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                       </div>
                     </div>
                   </div>
-                  <Input
-                    type="number"
-                    placeholder="60"
-                    value={field.value?.toString() || ''}
-                    onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                  />
+                  <InputGroup>
+                    <InputGroup.Prefix>
+                      <Icon icon="lucide:clock" className="w-3.5 h-3.5 text-slate-400" />
+                    </InputGroup.Prefix>
+                    <InputGroup.Input
+                      type="number"
+                      placeholder="60"
+                      value={field.value?.toString() || ''}
+                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                    />
+                  </InputGroup>
                   <FieldError />
                 </TextField>
               )}

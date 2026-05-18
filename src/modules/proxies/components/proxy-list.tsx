@@ -2,7 +2,7 @@
 
 import { useProxies } from '@/hooks/use-proxies';
 import { useServers } from '@/hooks/use-servers';
-import { SearchField, Label, Button, Table, Chip, Checkbox, Popover, PopoverTrigger, PopoverContent, Selection, Pagination, Input } from "@heroui/react";
+import { SearchField, Button, Table, Chip, Checkbox, Popover, PopoverTrigger, PopoverContent, Selection, Pagination, Skeleton, EmptyState } from "@heroui/react";
 import { Icon } from "@iconify/react";
 import { format } from "date-fns";
 import React, { useState, useCallback, useMemo } from 'react';
@@ -311,11 +311,58 @@ export function ProxyList({ onEdit }: ProxyListProps) {
 
   if (isLoading) {
     return (
-      <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-3.5 animate-pulse">
-        <div className="h-6 bg-slate-100/80 rounded w-1/4 mb-4" />
-        <div className="space-y-2.5">
+      <div className="space-y-4">
+        {/* Flat Premium Toolbar Skeleton */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 mt-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Skeleton className="h-8 w-20 rounded-lg" />
+            <Skeleton className="h-8 w-20 rounded-lg" />
+            <Skeleton className="h-8 w-20 rounded-lg" />
+            {userRole === 'ADMIN' && <Skeleton className="h-8 w-20 rounded-lg" />}
+          </div>
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-9 w-48 rounded-lg" />
+            <Skeleton className="h-8 w-8 rounded-lg" />
+            <Skeleton className="h-8 w-8 rounded-lg" />
+          </div>
+        </div>
+
+        {/* Realistic Table Skeleton */}
+        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-3">
+          {/* Table Header */}
+          <div className="grid grid-cols-7 gap-4 pb-2 border-b border-slate-100 items-center">
+            <Skeleton className="h-4 w-4 rounded" />
+            <Skeleton className="h-4 w-3/4 rounded" />
+            <Skeleton className="h-4 w-4/5 rounded" />
+            <Skeleton className="h-4 w-2/3 rounded" />
+            <Skeleton className="h-4 w-1/3 rounded" />
+            {userRole === 'ADMIN' ? <Skeleton className="h-4 w-2/3 rounded" /> : <div />}
+            <Skeleton className="h-4 w-12 rounded justify-self-end" />
+          </div>
+          {/* Table Body Rows */}
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="h-10 bg-slate-50 rounded-lg animate-pulse" />
+            <div key={i} className="grid grid-cols-7 gap-4 py-3 border-b border-slate-50 items-center">
+              <Skeleton className="h-4 w-4 rounded" />
+              <div className="space-y-1.5">
+                <Skeleton className="h-4 w-2/3 rounded" />
+                <Skeleton className="h-4 w-12 rounded-full" />
+              </div>
+              <div className="space-y-1">
+                <Skeleton className="h-3 w-4/5 rounded" />
+                <Skeleton className="h-3 w-2/3 rounded" />
+                <Skeleton className="h-3 w-1/2 rounded" />
+              </div>
+              <div className="space-y-1">
+                <Skeleton className="h-3.5 w-4/5 rounded" />
+                <Skeleton className="h-3.5 w-2/3 rounded" />
+              </div>
+              <Skeleton className="h-4 w-3/4 rounded" />
+              {userRole === 'ADMIN' ? <Skeleton className="h-4 w-3/4 rounded" /> : <div />}
+              <div className="flex gap-2 justify-end">
+                <Skeleton className="h-7 w-7 rounded-md" />
+                <Skeleton className="h-7 w-7 rounded-md" />
+              </div>
+            </div>
           ))}
         </div>
       </div>
@@ -698,7 +745,14 @@ export function ProxyList({ onEdit }: ProxyListProps) {
                 )}
                 <Table.Column className="text-end">Thao tác</Table.Column>
               </Table.Header>
-              <Table.Body>
+              <Table.Body
+                renderEmptyState={() => (
+                  <EmptyState className="flex h-full w-full flex-col items-center justify-center gap-4 text-center py-12">
+                    <Icon className="size-6 text-slate-400" icon="gravity-ui:tray" />
+                    <span className="text-sm text-slate-500 font-medium">Danh sách Proxy hiện đang trống.</span>
+                  </EmptyState>
+                )}
+              >
                 {paginatedProxies.map((proxy: ProxyWithServer) => (
                   <Table.Row key={proxy.id} id={proxy.id}>
                     <Table.Cell className="pr-0 align-top">
@@ -802,56 +856,42 @@ export function ProxyList({ onEdit }: ProxyListProps) {
                       </Table.Cell>
                     )}
                     {isColumnVisible('status') && (
-                      <Table.Cell className="align-top">
-                        {proxy.status === 'ACTIVE' ? getStatusChip(proxy.status) : getStatusChip(proxy.status)}
+                      <Table.Cell className="align-top ">
+                        {getStatusChip(proxy.status)}
                       </Table.Cell>
                     )}
                     {isColumnVisible('comment') && (
                       <Table.Cell className="align-top">
-                        {proxy.comment ? (
-                          <div className="group relative cursor-pointer text-slate-400 hover:text-slate-600">
-                            <Icon icon="lucide:file-text" width={16} height={16} />
-                            <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 hidden group-hover:block w-36 bg-slate-800 text-[10px] text-white p-2 rounded shadow-lg z-20 pointer-events-none leading-relaxed">
-                              {proxy.comment}
-                            </div>
-                          </div>
-                        ) : '-'}
+                        <div className="text-slate-600 font-medium max-w-[200px] truncate" title={proxy.comment || ''}>
+                          {proxy.comment || '---'}
+                        </div>
                       </Table.Cell>
                     )}
                     {isColumnVisible('user') && userRole === 'ADMIN' && (
-                      <Table.Cell className="align-top max-w-[120px] overflow-hidden text-ellipsis whitespace-nowrap text-slate-600">
+                      <Table.Cell className="align-top  text-slate-600 font-medium whitespace-nowrap">
                         {proxy.user?.email || 'Hệ thống'}
                       </Table.Cell>
                     )}
                     <Table.Cell className="align-top text-right">
                       <div className="inline-flex items-center gap-1 justify-end">
-                        {/* Copy Proxy Button */}
-                        <button
-                          onClick={() => {
-                            const host = proxy.server?.host || '0.0.0.0';
-                            const text = `${host}:${proxy.port}:${proxy.username}:${proxy.password}`;
-                            copyToClipboard(text).then(success => {
-                              if (success) toast.success('Đã copy proxy');
-                              else toast.danger('Lỗi khi copy');
-                            });
-                          }}
-                          className="w-7 h-7 rounded-md bg-transparent hover:bg-slate-100 text-slate-500 hover:text-slate-800 border-none flex items-center justify-center cursor-pointer transition-colors"
-                          title="Sao chép Proxy (host:port:user:pass)"
-                        >
-                          <Icon icon="lucide:clipboard" width={14} height={14} />
-                        </button>
-
                         {/* Rotate Button */}
                         <button
-                          onClick={() => rotateProxyMutation.mutate(proxy.id, { onSuccess: (job) => setActiveJobId(job.id) })}
-                          disabled={proxy.status !== 'ACTIVE' || rotateProxyMutation.isPending}
-                          className="w-7 h-7 rounded-md bg-transparent hover:bg-emerald-50 text-slate-500 hover:text-emerald-600 border-none flex items-center justify-center cursor-pointer transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
-                          title="Đổi IP (Rotate)"
+                          onClick={() => {
+                            rotateProxyMutation.mutate(proxy.id, {
+                              onSuccess: (data) => {
+                                if (data?.jobId) setActiveJobId(data.jobId);
+                                toast.success('Đã bắt đầu xoay IP');
+                              }
+                            });
+                          }}
+                          disabled={proxy.status !== 'ACTIVE' || !proxy.server?.provider?.includes('ipv6') || rotateProxyMutation.isPending}
+                          className="w-7 h-7 rounded-md bg-transparent hover:bg-amber-50 text-amber-600 hover:text-amber-700 border-none flex items-center justify-center cursor-pointer transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                          title="Xoay IP (Chỉ hỗ trợ IPv6 Server)"
                         >
                           {rotateProxyMutation.isPending && rotateProxyMutation.variables === proxy.id ? (
-                            <span className="w-3.5 h-3.5 border-2 border-emerald-600/30 border-t-emerald-600 rounded-full animate-spin"></span>
+                            <span className="w-3.5 h-3.5 border-2 border-amber-600/30 border-t-amber-600 rounded-full animate-spin shrink-0"></span>
                           ) : (
-                            <Icon icon="lucide:refresh-cw" width={14} height={14} />
+                            <Icon icon="lucide:rotate-cw" className="w-3.5 h-3.5" />
                           )}
                         </button>
 
@@ -913,15 +953,8 @@ export function ProxyList({ onEdit }: ProxyListProps) {
                     </Table.Cell>
                   </Table.Row>
                 ))}
-                {paginatedProxies.length === 0 && (
-                  <Table.Row>
-                    <Table.Cell colSpan={renderedColumnsCount} className="py-12 text-center text-slate-400 font-medium">
-                      Danh sách Proxy hiện đang trống.
-                    </Table.Cell>
-                  </Table.Row>
-                )}
               </Table.Body>
-            </Table.Content>
+          </Table.Content>
           </Table.ScrollContainer>
           {totalPages > 1 && (
             <Table.Footer>

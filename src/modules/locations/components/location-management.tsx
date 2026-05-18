@@ -3,7 +3,7 @@
 import { Icon } from '@iconify/react';
 import { useState, useCallback } from 'react';
 import Image from 'next/image';
-import { Button, Table, Chip, Input, TextField, Label, FieldError, SearchField } from '@heroui/react';
+import { Button, Table, Chip, Input, TextField, Label, FieldError, SearchField, EmptyState } from '@heroui/react';
 
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -84,11 +84,12 @@ export function LocationManagement({ initialLocations }: LocationManagementProps
           <p className="text-xs text-slate-400">Quản lý danh sách quốc gia và khu vực đặt máy chủ</p>
         </div>
         <Button
+          variant="primary"
           size="sm"
           onPress={() => setIsModalOpen(true)}
-          className="cursor-pointer font-medium text-sm h-9 px-3 flex items-center gap-1.5 self-start sm:self-auto rounded-lg bg-blue-600 text-white"
+          className="cursor-pointer font-medium text-sm h-8 flex items-center gap-1.5 self-start sm:self-auto rounded-lg"
         >
-          <Icon icon="lucide:plus" className="w-3.5 h-3.5 shrink-0" />
+          <Icon icon="lucide:plus" className="w-4 h-4 shrink-0" />
           Thêm vị trí
         </Button>
       </div>
@@ -120,7 +121,14 @@ export function LocationManagement({ initialLocations }: LocationManagementProps
               <Table.Column>Sử dụng</Table.Column>
               <Table.Column className="text-end">Thao tác</Table.Column>
             </Table.Header>
-            <Table.Body>
+            <Table.Body
+              renderEmptyState={() => (
+                <EmptyState className="flex h-full w-full flex-col items-center justify-center gap-4 text-center py-12">
+                  <Icon className="size-6 text-slate-400" icon="gravity-ui:tray" />
+                  <span className="text-sm text-slate-500 font-medium">Danh sách vị trí hiện đang trống.</span>
+                </EmptyState>
+              )}
+            >
               {filteredLocations.map((loc) => (
                 <Table.Row key={loc.id}>
                   <Table.Cell className="align-top  font-semibold text-slate-800 whitespace-nowrap">
@@ -158,13 +166,6 @@ export function LocationManagement({ initialLocations }: LocationManagementProps
                   </Table.Cell>
                 </Table.Row>
               ))}
-              {filteredLocations.length === 0 && (
-                <Table.Row>
-                  <Table.Cell colSpan={4} className="py-12 text-center text-slate-400 font-medium">
-                    Danh sách vị trí hiện đang trống.
-                  </Table.Cell>
-                </Table.Row>
-              )}
             </Table.Body>
           </Table.Content>
         </Table.ScrollContainer>
@@ -230,7 +231,7 @@ export function LocationManagement({ initialLocations }: LocationManagementProps
               <Button
                 size="sm"
                 onPress={() => setIsModalOpen(false)}
-                className="cursor-pointer font-medium text-sm h-9 px-3 rounded-lg border border-slate-200 bg-white text-slate-600"
+                className="cursor-pointer font-medium text-sm h-9 px-3 border border-slate-200 bg-white text-slate-600"
               >
                 Hủy bỏ
               </Button>
@@ -238,7 +239,7 @@ export function LocationManagement({ initialLocations }: LocationManagementProps
                 size="sm"
                 onPress={() => handleSubmit(onSubmit)()}
                 isDisabled={isSubmitting}
-                className="cursor-pointer font-medium text-sm h-9 px-3 rounded-lg flex items-center gap-1.5 bg-blue-600 text-white"
+                className="cursor-pointer font-medium text-sm h-9 px-3 flex items-center gap-1.5 bg-blue-600 text-white"
               >
                 {isSubmitting && (
                   <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
@@ -276,7 +277,7 @@ export function LocationManagement({ initialLocations }: LocationManagementProps
               <Button
                 size="sm"
                 onPress={() => setDeleteLoc(null)}
-                className="cursor-pointer font-medium text-sm h-9 px-3 rounded-lg border border-slate-200 bg-white text-slate-600"
+                className="cursor-pointer font-medium text-sm h-9 px-3 border border-slate-200 bg-white text-slate-600"
               >
                 Hủy bỏ
               </Button>
@@ -285,7 +286,7 @@ export function LocationManagement({ initialLocations }: LocationManagementProps
                 variant="danger"
                 onPress={handleDelete}
                 isDisabled={isDeleting !== null}
-                className="cursor-pointer font-medium text-sm h-9 px-3 rounded-lg flex items-center gap-1.5 bg-red-500 text-white"
+                className="cursor-pointer font-medium text-sm h-9 px-3 flex items-center gap-1.5 bg-red-500 text-white"
               >
                 {isDeleting && (
                   <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>

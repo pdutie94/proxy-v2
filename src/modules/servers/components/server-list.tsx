@@ -2,7 +2,7 @@
 
 import { Icon } from '@iconify/react';
 import { useServers, ServerWithLocation } from '@/hooks/use-servers';
-import { SearchField, Label, Button, Table, Chip, Popover, PopoverTrigger, PopoverContent, Pagination, Checkbox, Input } from "@heroui/react";
+import { SearchField, Button, Table, Chip, Popover, PopoverTrigger, PopoverContent, Pagination, Checkbox, Skeleton, EmptyState } from "@heroui/react";
 
 import { Server } from '@prisma/client';
 import { useState, useCallback, useMemo } from 'react';
@@ -159,11 +159,46 @@ export function ServerList({ onEdit, onAdd }: ServerListProps) {
 
   if (isLoading) {
     return (
-      <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-3.5 animate-pulse">
-        <div className="h-6 bg-slate-100/80 rounded w-1/4 mb-4" />
-        <div className="space-y-2.5">
+      <div className="space-y-4">
+        {/* Flat Premium Toolbar Skeleton */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 mt-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Skeleton className="h-8 w-24 rounded-lg" />
+            <Skeleton className="h-8 w-24 rounded-lg" />
+          </div>
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-9 w-64 rounded-lg" />
+            <Skeleton className="h-8 w-8 rounded-lg" />
+            <Skeleton className="h-8 w-8 rounded-lg" />
+          </div>
+        </div>
+
+        {/* Realistic Table Skeleton */}
+        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-3">
+          {/* Table Header */}
+          <div className="grid grid-cols-7 gap-4 pb-2 border-b border-slate-100">
+            <Skeleton className="h-4 w-3/4 rounded" />
+            <Skeleton className="h-4 w-1/2 rounded" />
+            <Skeleton className="h-4 w-12 rounded" />
+            <Skeleton className="h-4 w-1/2 rounded" />
+            <Skeleton className="h-4 w-1/3 rounded" />
+            <Skeleton className="h-4 w-12 rounded" />
+            <Skeleton className="h-4 w-12 rounded justify-self-end" />
+          </div>
+          {/* Table Body Rows */}
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="h-9 bg-slate-50 rounded-lg animate-pulse" />
+            <div key={i} className="grid grid-cols-7 gap-4 py-3 border-b border-slate-50 items-center">
+              <Skeleton className="h-4 w-4/5 rounded" />
+              <Skeleton className="h-4 w-2/3 rounded font-mono" />
+              <Skeleton className="h-4 w-6 rounded" />
+              <Skeleton className="h-5 w-16 rounded-full" />
+              <Skeleton className="h-4 w-12 rounded" />
+              <Skeleton className="h-4 w-8 rounded font-mono" />
+              <div className="flex gap-2 justify-end">
+                <Skeleton className="h-7 w-7 rounded-md" />
+                <Skeleton className="h-7 w-7 rounded-md" />
+              </div>
+            </div>
           ))}
         </div>
       </div>
@@ -403,7 +438,14 @@ export function ServerList({ onEdit, onAdd }: ServerListProps) {
               {isColumnVisible('lastPort') && <Table.Column>Cổng cuối (SV)</Table.Column>}
               <Table.Column className="text-end">Thao tác</Table.Column>
             </Table.Header>
-            <Table.Body>
+            <Table.Body
+              renderEmptyState={() => (
+                <EmptyState className="flex h-full w-full flex-col items-center justify-center gap-4 text-center py-12">
+                  <Icon className="size-6 text-slate-400" icon="gravity-ui:tray" />
+                  <span className="text-sm text-slate-500 font-medium">Không tìm thấy máy chủ nào.</span>
+                </EmptyState>
+              )}
+            >
               {paginatedServers.map((server: ServerWithLocation) => (
                 <Table.Row key={server.id}>
                   {isColumnVisible('name') && (
@@ -418,19 +460,17 @@ export function ServerList({ onEdit, onAdd }: ServerListProps) {
                   )}
                   {isColumnVisible('location') && (
                     <Table.Cell className="align-top  text-slate-600">
-                      {server.location ? (
-                        <div className="inline-flex items-center cursor-help" title={server.location.name}>
-                          <img 
-                            src={`https://purecatamphetamine.github.io/country-flag-icons/3x2/${server.location.countryCode.toUpperCase()}.svg`} 
-                            width={16} 
-                            height={11}
-                            alt={server.location.countryCode}
-                            className="rounded-sm border border-slate-200/80 shrink-0"
+                      <div className="flex items-center gap-1.5 font-medium">
+                        {server.location?.countryCode ? (
+                          <span 
+                            className={`fi fi-${server.location.countryCode.toLowerCase()} rounded-[3px] shadow-[0_0_1px_rgba(0,0,0,0.3)] shrink-0`} 
+                            style={{ width: '15px', height: '11px' }}
                           />
-                        </div>
-                      ) : (
-                        <span className="text-slate-400">---</span>
-                      )}
+                        ) : (
+                          <Icon icon="lucide:globe" className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        )}
+                        <span>{server.location?.name || 'Chưa định vị'}</span>
+                      </div>
                     </Table.Cell>
                   )}
                   {isColumnVisible('status') && (
@@ -439,12 +479,12 @@ export function ServerList({ onEdit, onAdd }: ServerListProps) {
                     </Table.Cell>
                   )}
                   {isColumnVisible('maxProxies') && (
-                    <Table.Cell className="align-top  font-medium text-slate-600">
-                      {server.maxProxies}
+                    <Table.Cell className="align-top  text-slate-600 font-medium">
+                      {server.maxProxies} IP
                     </Table.Cell>
                   )}
                   {isColumnVisible('lastPort') && (
-                    <Table.Cell className="align-top  font-mono text-slate-500 font-medium">
+                    <Table.Cell className="align-top  font-mono text-slate-500">
                       {server.lastPort || '---'}
                     </Table.Cell>
                   )}
@@ -454,9 +494,25 @@ export function ServerList({ onEdit, onAdd }: ServerListProps) {
                       <button
                         onClick={() => onEdit(server)}
                         className="w-7 h-7 rounded-md bg-transparent hover:bg-slate-100 text-slate-500 hover:text-slate-800 border-none flex items-center justify-center cursor-pointer transition-colors"
-                        title="Chỉnh sửa thông tin"
+                        title="Chỉnh sửa"
                       >
                         <Icon icon="lucide:edit-3" className="w-3.5 h-3.5" />
+                      </button>
+
+                      {/* Setup Server Button */}
+                      <button
+                        onClick={() => {
+                          setupMutation.mutate(server.id, {
+                            onSuccess: (data) => {
+                              if (data?.jobId) setActiveJobId(data.jobId);
+                              toast.success('Đã bắt đầu thiết lập server');
+                            },
+                          });
+                        }}
+                        className="w-7 h-7 rounded-md bg-transparent hover:bg-blue-50 text-blue-500 hover:text-blue-700 border-none flex items-center justify-center cursor-pointer transition-colors"
+                        title="Thiết lập server (SSH)"
+                      >
+                        <Icon icon="lucide:terminal" className="w-3.5 h-3.5" />
                       </button>
 
                       <Popover
@@ -471,22 +527,7 @@ export function ServerList({ onEdit, onAdd }: ServerListProps) {
                             <Icon icon="lucide:more-vertical" className="w-3.5 h-3.5" />
                           </button>
                         </PopoverTrigger>
-                        <PopoverContent placement="bottom end" offset={4} className="p-2 w-48 flex flex-col bg-white border border-slate-200 rounded-lg shadow-md z-50">
-                          <button
-                            onClick={() => {
-                              setOpenPopoverId(null);
-                              setupMutation.mutate(server.id, {
-                                onSuccess: (data) => {
-                                  if (data?.jobId) setActiveJobId(data.jobId);
-                                  toast.success('Đã bắt đầu thiết lập server');
-                                },
-                              });
-                            }}
-                            className="w-full text-left px-2.5 py-1.5 text-xs rounded text-slate-600 hover:bg-slate-50 flex items-center gap-2 cursor-pointer border-none bg-transparent"
-                          >
-                            <Icon icon="lucide:settings" className="w-3.5 h-3.5 text-slate-400" />
-                            <span>Cài đặt máy chủ</span>
-                          </button>
+                        <PopoverContent placement="bottom end" offset={8} className="p-1.5 w-40 flex flex-col bg-white border border-slate-200 rounded-lg shadow-md z-50">
                           <button
                             onClick={() => {
                               setOpenPopoverId(null);
@@ -534,13 +575,6 @@ export function ServerList({ onEdit, onAdd }: ServerListProps) {
                   </Table.Cell>
                 </Table.Row>
               ))}
-              {paginatedServers.length === 0 && (
-                <Table.Row>
-                  <Table.Cell colSpan={renderedColumnsCount} className="py-12 text-center text-slate-400 font-medium">
-                    Không tìm thấy máy chủ nào.
-                  </Table.Cell>
-                </Table.Row>
-              )}
             </Table.Body>
           </Table.Content>
         </Table.ScrollContainer>

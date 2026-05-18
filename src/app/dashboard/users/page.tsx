@@ -44,9 +44,9 @@ export default function UsersPage() {
           variant="primary"
           size="sm"
           onPress={toggleModal}
-          className="cursor-pointer font-bold text-xs h-9 px-3 flex items-center gap-1.5 self-start sm:self-auto rounded-lg"
+          className="cursor-pointer font-medium text-sm h-8 flex items-center gap-1.5 self-start sm:self-auto px-3"
         >
-          <Icon icon="lucide:plus" className="w-3.5 h-3.5 shrink-0"  />
+          <Icon icon="lucide:plus" className="w-4 h-4 shrink-0"  />
           Thêm người dùng
         </Button>
       </div>
@@ -83,7 +83,7 @@ export default function UsersPage() {
               <Button
                 size="sm"
                 onPress={toggleModal}
-                className="cursor-pointer font-bold text-xs h-8 px-3 rounded-lg border border-slate-200 bg-white text-slate-600"
+                className="cursor-pointer font-bold text-xs h-8 px-3 border border-slate-200 bg-white text-slate-600"
               >
                 Hủy bỏ
               </Button>
@@ -92,7 +92,7 @@ export default function UsersPage() {
                 variant="primary"
                 onPress={handlePrimaryAction}
                 isDisabled={createMutation.isPending || updateMutation.isPending}
-                className="cursor-pointer font-bold text-xs h-8 px-3 rounded-lg flex items-center gap-1.5"
+                className="cursor-pointer font-bold text-xs h-8 px-3 flex items-center gap-1.5"
               >
                 {(createMutation.isPending || updateMutation.isPending) && (
                   <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
