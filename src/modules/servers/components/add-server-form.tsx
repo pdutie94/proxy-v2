@@ -199,9 +199,6 @@ export const AddServerForm = forwardRef<AddServerFormRef, AddServerFormProps>(
                   {server ? "Mật khẩu SSH (Để trống nếu không đổi)" : "Mật khẩu SSH"}
                 </Label>
                 <InputGroup>
-                  <InputGroup.Prefix>
-                    <Icon icon="lucide:lock" className="w-3.5 h-3.5 text-slate-400" />
-                  </InputGroup.Prefix>
                   <InputGroup.Input
                     type={isPasswordVisible ? "text" : "password"}
                     placeholder="Mật khẩu"
